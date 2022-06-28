@@ -1,0 +1,43 @@
+.nopadding {
+    padding :0.5 !important;
+    margin: 0 !important;
+ }
+
+ .Approved{
+    width: 20px;
+    height: 20px;
+    background-repeat: no-repeat;
+   background-image: url("/assets/images/epma/Approved.svg");
+}
+
+.PendingApproval{
+    width: 25px;
+    height: 24px;
+    background-repeat: no-repeat;
+   background-image: url("/assets/images/epma/PendingApproval.svg");
+}
+
+.zeropadding{
+   padding: 0px;
+   height: 24px;
+}
+.colwidth{
+   width: 33%;
+}
+
+table tbody {
+  display: block;
+  height: 60vh;
+  overflow-y: scroll;
+}
+
+table thead, table tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+.btn-link-rec {
+   font-weight: 400;
+   color: #2a93ba;
+   text-decoration: none;
+}

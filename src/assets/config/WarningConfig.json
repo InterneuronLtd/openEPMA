@@ -1,0 +1,203 @@
+{
+  "uris": {
+    "baseuri": "SYNAPSE_DYNAMIC_URI",
+    "fdburi": "FDB_API_URI/api/fdb/GetFDBWarnings"
+  },
+  "enablelogging": true,
+  "warningTypes": [],
+  "warningSeverity": [
+    {
+      "matchcriteria": {
+        "warningType": [
+          "sensitivity"
+        ],
+        "patientspecific": true,
+        "matchcondition": []
+      },
+      "severity": 4,
+      "overriderequired": true
+    },
+    {
+      "matchcriteria": {
+        "warningType": [
+          "contraindication"
+        ],
+        "patientspecific": true,
+        "matchcondition": [
+          {
+            "keycolumn": "fdbseverity",
+            "keyvalue": "Specific"
+          }
+        ]
+      },
+      "severity": 4,
+      "overriderequired": true
+    },
+    {
+      "matchcriteria": {
+        "warningType": [
+          "contraindication",
+          "precaution"
+        ],
+        "patientspecific": true,
+        "matchcondition": [
+          {
+            "keycolumn": "fdbseverity",
+            "keyvalue": "Related"
+          }
+        ]
+      },
+      "severity": 4,
+      "overriderequired": false
+    },
+    {
+      "matchcriteria": {
+        "warningType": [
+          "contraindication"
+        ],
+        "patientspecific": true,
+        "matchcondition": [
+          {
+            "keycolumn": "fdbseverity",
+            "keyvalue": "UnRelated"
+          }
+        ]
+      },
+      "severity": 2,
+      "overriderequired": false
+    },
+    {
+      "matchcriteria": {
+        "warningType": [
+          "precaution"
+        ],
+        "patientspecific": true,
+        "matchcondition": [
+          {
+            "keycolumn": "fdbseverity",
+            "keyvalue": "Specific"
+          }
+        ]
+      },
+      "severity": 4,
+      "overriderequired": false
+    },
+    {
+      "matchcriteria": {
+        "warningType": [
+          "drugwarnings"
+        ],
+        "patientspecific": true,
+        "matchcondition": []
+      },
+      "severity": 3,
+      "overriderequired": false
+    },
+    {
+      "matchcriteria": {
+        "warningType": [
+          "drugwarnings"
+        ],
+        "patientspecific": false,
+        "matchcondition": []
+      },
+      "severity": 2,
+      "overriderequired": false
+    },
+    {
+      "matchcriteria": {
+        "warningType": [
+          "drugdoubling",
+          "duplicatetherapy",
+          "drugequivalance"
+        ],
+        "patientspecific": true,
+        "matchcondition": []
+      },
+      "severity": 3,
+      "overriderequired": false
+    },
+    {
+      "matchcriteria": {
+        "warningType": [
+          "druginteraction"
+        ],
+        "patientspecific": true,
+        "matchcondition": [
+          {
+          "keycolumn": "fdbseverity",
+          "keyvalue": "LowRisk"
+        }
+      ]
+      },
+      "severity": 2,
+      "overriderequired": false
+    },{
+      "matchcriteria": {
+        "warningType": [
+          "druginteraction"
+        ],
+        "patientspecific": true,
+        "matchcondition": [
+          {
+          "keycolumn": "fdbseverity",
+          "keyvalue": "ModerateRisk"
+        }
+      ]
+      },
+      "severity": 2,
+      "overriderequired": false
+    },
+    {
+      "matchcriteria": {
+        "warningType": [
+          "druginteraction"
+        ],
+        "patientspecific": true,
+        "matchcondition": [
+          {
+          "keycolumn": "fdbseverity",
+          "keyvalue": "SignificantRisk"
+        }
+      ]
+      },
+      "severity": 4,
+      "overriderequired": false
+    },{
+      "matchcriteria": {
+        "warningType": [
+          "druginteraction"
+        ],
+        "patientspecific": true,
+        "matchcondition": [
+          {
+          "keycolumn": "fdbseverity",
+          "keyvalue": "HighRisk"
+        }
+      ]
+      },
+      "severity": 4,
+      "overriderequired": true
+    },{
+      "matchcriteria": {
+        "warningType": [
+          "sideeffects"
+        ],
+        "patientspecific": true,
+        "matchcondition": []
+      },
+      "severity": 1,
+      "overriderequired": false
+    },{
+      "matchcriteria": {
+        "warningType": [
+          "sideeffects"
+        ],
+        "patientspecific": false,
+        "matchcondition": []
+      },
+      "severity": 1,
+      "overriderequired": false
+    }
+  ]
+}

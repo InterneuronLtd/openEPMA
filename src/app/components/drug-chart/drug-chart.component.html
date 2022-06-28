@@ -1,0 +1,101 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<!-- top static timelime  which display timeonly -->
+<div id="drugcomponent" *ngIf="!errorgeneratingevents">
+
+  
+    <div #timecomponentid id="timecomponentid"></div>
+    <div class="hidescrollbar" style="height: 60vh;   width: 100%; overflow-y: auto;">
+        <div *ngFor="let GroupsType of appService.DrugeGroupsType;let indexOfelement=index;">
+            <div [attr.id]="'accordion'+ indexOfelement">
+                <div>
+                    <div style="cursor: pointer; font-size: 13px; background-color: #eff1f5; border: none; border-bottom: 1px solid #BBB;"
+                        data-toggle="" [attr.data-target]="'#collapse'+indexOfelement" aria-expanded="true"
+                        aria-controls="'collapse'+indexOfelement">
+                        <b><span style="padding-left: 20px;">{{GroupsType}}</span></b>
+                    </div>
+                    <div [attr.id]="'collapse'+indexOfelement" class="collapse show"
+                        [attr.data-parent]="'#accordion'+indexOfelement">
+                        <div>
+                            <div [id]="GroupsType"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div *ngIf="errorgeneratingevents">
+    There was an unexpected event loading the drug chart.
+</div>
+<div hidden>
+
+    <div *ngFor="let val of appService.Prescription;let indexOfelement=index;">
+        <div [id]=val.prescription_id>
+            <app-prescription-template [prescription]=val componenttype="timeline">
+            </app-prescription-template>
+        </div>
+    </div>
+
+</div>
+
+
+<div  *ngIf="showContextMenu">
+    <div class="contextmenu" [ngStyle]="{'left.px': contextmenuX, 'top.px': contextmenuY}">
+        <div class="dropdown-menu show" aria-labelledby="dropdownMenuButton">
+            <div class="p-0 pl-2 border-bottom" >
+                {{displayeventtime | date:'dd MMM, HH:mm'}}
+               </div>
+            <div *ngFor="let menu of menuArray;let indexOfelement=index;">
+                <a class="dropdown-item" (click)="menuclick(menu)" href="#">{{menu}}</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div *ngIf="showAdministrationForm">
+    <app-medication-administration [dose]="selectedDose" [prescription]="PrescriptionAdmistration"
+        [editpopuptypetype]="editpopuptypetype" (hideAdministrationForm)="hideAdministrationForm($event)">
+    </app-medication-administration>
+</div>
+<div *ngIf="doctorConformationModel">
+    <app-doctor-confirmation [dose]="selectedDose" [prescription]="PrescriptionAdmistration"
+        (hideAdministrationForm)="hideAdministrationForm($event)">
+    </app-doctor-confirmation>
+</div>
+
+
+
+
+
+
+<div *ngIf="showEditpopup">
+    <app-timelineinfo [dose]="selectedDose" [prescription]="PrescriptionAdmistration"
+        [editpopuptypetype]="editpopuptypetype" (hideAdministrationForm)="hideAdministrationForm($event)">
+    </app-timelineinfo>
+</div>
+
+
+
+
+
+

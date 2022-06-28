@@ -1,0 +1,14 @@
+div.ex1 {
+  
+    height: 127px;
+   
+    overflow-y: scroll;
+  }
+
+  .ck-editor__editable {
+    max-height: 200px !important;
+}
+
+.ck-editor__main{
+    border-color: #f00e0e !important;
+}

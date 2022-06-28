@@ -1,0 +1,63 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div *ngIf="drugInformationPopup" class="modal fade bd-example-modal-lg" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal
+    tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+    aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md  modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <h3 class="popover-title popover-header">
+                Medication
+                <div class="close close-adminstration" (click)="closePopup()"></div>
+             </h3>
+            
+            <div class="modal-body">
+                <div class="p-card-template p-1">
+                    <div class="width-s2">
+                        <div class='{{"layers-container therapy-type "  + therapyType() }}'>
+                             
+                        </div>
+                    </div>
+                    <div class="width-s3">
+                         <div>
+                            <span><span class="bold">{{primaryMedication.name}} </span> <span *ngIf="primaryMedication.__ingredients.length==1"> ({{primaryMedication.__ingredients[0].name}}) </span></span> 
+                            <span *ngIf="primaryMedication.form"><br> <span class="dose-label">PHARMACEUTICAL FORM </span> <span class="bold">{{primaryMedication.form}}</span> </span>
+                            <span>
+                              <br> 
+                              <span class="dose-label">CONCENTRATION</span>
+                              <div style="max-height:100px;overflow-y:auto;overflow-x:hidden">                                  
+                                    <span *ngFor="let ingred of primaryMedication.__ingredients">                                                                                
+                                        {{ingred.name}} <span *ngIf="ingred.strengthneumeratorunit" class="bold"> - {{ingred.strengthneumerator | number}} {{ingred.strengthneumeratorunit}}</span>
+                                                        <span *ngIf="ingred.strengthdenominatorunit" class="bold"> / {{ingred.strengthdenominator | number}} {{ingred.strengthdenominatorunit}}</span>                                        
+                                         <br>                                     
+                                    </span>
+                               </div> 
+                            </span>
+                            <span *ngIf="primaryMedication.doseformunitofmeasure"><span class="dose-label">ADMINISTRATION UNIT </span> <span class="bold">{{primaryMedication.doseformunitofmeasure}}</span> </span>
+                
+                         </div>
+                    </div>
+                     
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>

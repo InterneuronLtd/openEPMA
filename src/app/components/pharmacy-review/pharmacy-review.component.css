@@ -1,0 +1,217 @@
+
+
+  .Pharmacist_review_complete{
+    width: 40px;
+    height: 40px;
+    background-repeat: no-repeat;
+   background-image: url("/assets/images/epma/review/Pharmacist_Review_Complete.svg");
+   background-size: 40px;
+}
+
+.Pharmacist_review_not_required{
+    width: 40px;
+    height: 40px;
+    background-repeat: no-repeat;
+   background-image: url("/assets/images/epma/review/Pharmacist_Review_Not_Required.svg");
+   background-size: 40px;
+}
+
+.Pharmacist_reviewed_back_to_prescriber{
+    width: 40px;
+    height: 40px;
+    background-repeat: no-repeat;
+   background-image: url("/assets/images/epma/review/Pharmacist_Reviewed_Back_To_Prescriber.svg");
+   background-size: 40px;
+}
+
+.Waiting_for_pharmacist_review{
+    width: 40px;
+    height: 40px;
+    background-repeat: no-repeat;
+   background-image: url("/assets/images/epma/review/Waiting_For_Pharmacist_Review.svg");
+   background-size: 40px;
+}
+
+.ContinuousInfusion {
+    width:50px;
+    height:50px; background-size : cover;
+    background-image: url(/assets/images/epma/therapy/Continuous_Infusion.svg);
+}
+
+.TabletorCapsule {
+    width:50px;
+    height:50px; background-size : cover;
+    background-image: url(/assets/images/epma/therapy/Tablet_Or_Capsule.svg);
+}
+.therapy {
+    width:50px;
+    height:50px; background-size : cover;
+    background-image: url(/assets/images/epma/therapy/Medication_Type_Not_Defined.svg);
+}
+.BasicFluids {
+    width:50px;
+    height:50px; background-size : cover;
+    background-image: url(/assets/images/epma/therapy/Basic_Fluids.svg);
+}
+.Injection {
+    width:50px;
+    height:50px; background-size : cover;
+    background-image: url(/assets/images/epma/therapy/Injection.svg);
+}
+.Inhalation {
+    width:50px;
+    height:50px; background-size : cover;
+    background-image: url(/assets/images/epma/therapy/Inhalation.svg);
+}
+.empa-template-dose-label,.empa-template-induction-label ,.induction-label{
+    color: #7891D8;
+    font-weight: bold;
+}
+.empa-template-bold{
+    font-size: 1em;
+    line-height: 14px;
+    color: #646464;
+    font-weight: bold;
+}
+
+.strickout {
+    text-decoration: line-through;
+}
+
+
+.p-popover{
+    height: auto;
+
+    min-height: auto;
+    flex: 0 0 auto;
+    -webkit-box-flex: 0;
+    order: 0;
+    overflow: hidden;
+    display: flex;
+}
+.p-popover-header {
+    border-bottom: 1px solid #dcdcdc;
+    margin: 0rem -.75rem 0 -.75rem;
+    padding: 5px;
+}
+
+.p-popover-header-width-s1 {
+    width: 50px;
+    min-width: 50px;
+    height: auto;
+    min-height: auto;
+    flex: 0 0 auto;
+    -webkit-box-flex: 0;
+    align-self: flex-start;
+    order: 0;
+    overflow: hidden;
+}
+.p-popover-header-width-s2 {
+    width: auto;
+    max-width: 500px;
+    min-width: auto;
+    height: auto;
+    max-height: auto;
+    flex: 0 0 auto;
+    -webkit-box-flex: 0;
+    align-self: flex-start;
+    order: 0;
+    overflow: hidden;
+}
+.p-popover-header-width-s3 {
+    width: 180px;
+    min-width: 180px;
+    height: auto;
+    min-height: auto;
+    flex: 0 0 auto;
+    -webkit-box-flex: 0;
+    align-self: flex-start;
+    order: 0;
+    overflow: hidden;
+}
+
+.p-popover-body-width-s1 {
+
+    height: auto;
+    min-height: auto;
+    flex: 0 0 auto;
+    -webkit-box-flex: 0;
+    align-self: flex-start;
+    order: 0;
+    overflow: hidden;
+}
+.p-popover-body-width-s2 {
+    width: 30%;
+
+    min-width: 30%;
+    height: auto;
+    min-height: auto;
+    flex: 0 0 auto;
+    -webkit-box-flex: 0;
+    align-self: flex-start;
+    order: 0;
+    overflow: hidden;
+}
+.selectedreview{
+    text-decoration: line-through
+
+}
+.p-popover-body-width-s3 {
+    width: 35%;
+    padding-left: 0.2em;
+    min-width: 35%;
+    height: auto;
+    min-height: auto;
+    flex: 0 0 auto;
+    -webkit-box-flex: 0;
+    align-self: flex-start;
+    order: 0;
+    overflow: hidden;
+}
+
+hr.new4 {
+    border: 1px solid rgb(204 198 198);
+  }
+
+  .Edit_Therapy{
+    width: 40px;
+    height: 24px;
+    background-repeat: no-repeat;
+   background-image: url("/assets/images/epma/menu/Edit_Therapy.svg");
+}
+.p-popover-body-width-s4 {
+    width: 35%;
+
+    min-width: 35%;
+    height: auto;
+    min-height: auto;
+    flex: 0 0 auto;
+    -webkit-box-flex: 0;
+    align-self: flex-start;
+    order: 0;
+    overflow: hidden;
+}
+
+.modal-dialogtemp, .modal-contenttemp {
+    /* 80% of window height */
+    height: 92%;
+}
+
+.modal-bodytemp {
+    /* 100% = dialog height, 120px = header + footer */
+    max-height: calc(100% - 60px);
+    overflow-y: auto;
+}
+
+[class*="col-"] {
+  align-self: center;
+}
+
+
+.close-adminstration {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAYdJREFUeNq0VdFtgzAQNVEH8AZtN+gGhQ2SDZoJyH+kJK3U75YJyAZlg5AJ8AiMwAb0jM7UPnzGNMqTLCQbv2ffvTsnfd+LJElECKePTwmfFzKtTod9F9o3cIcEgPgNPrmHfBSBUYDQeZEAEGvCMkBM0cLYgJCiAivm1JcF5BpPMBrc68C5AZ68Ebchg5vUkxBhIhs8jYFJomTIfOt67lkbgIZo5yHPcHQMuW9dItcAWyAnBNodChNHSToMhVkvyN7cEYDwpJ4wHE3SiMhIbpniSPZKmF/bN0iZGJceEUpeMnsHFz5EuEKLaIGz7fMZco1HmoMQvtBlzlxEbUQJmJhTJ3HuMrjaAu0M+RhzJvFsjRiBOoYcY15GitR/Nj3sW49IEXALFSk8rVw5vQhr4UJ+3BpCJgzcuu6s1aRdg8gPfNY3NrsKyDdcu97iI/JfKOtWk14k0IoZk/Q51D47s08mhGuHPUZG1Mk7EH8vfpMtB71iZabWaVsspop7/EeBe2Il7oxfAQYArevp53qUQ7cAAAAASUVORK5CYII=);
+    width: 24px;
+    height: 24px;
+    margin-top: -3px;
+    cursor: pointer;
+  }

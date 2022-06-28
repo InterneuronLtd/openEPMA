@@ -1,0 +1,199 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div class="modal fade bd-example-modal-lg" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal
+    tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+    aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg  modal-dialog-centered" role="document">
+        <div class="modal-content" id="titration-chart">
+            <h3 class="popover-title popover-header">
+                Dose Titration
+                <div *ngIf="!showSpinner" class="close close-adminstration" (click)="closePopup()"></div>
+            </h3>
+
+            <div [hidden]="!this.appService.AuthoriseAction('epma_confirm_doctorsorder')"  class="modal-body" style="padding: 0rem;" id="popup">
+                <div class="row" style="margin: 0; border: 1px solid #ccc;border-left: 3px solid white;">
+                    <div class="col-4"><strong>{{prescription.titrationtype}}</strong></div>
+                    <div class="col-8" style="padding: 0;">
+                        <div #visualization id="visualization"></div>
+                    </div>
+                </div>
+                <div class="row" style="margin: 0; border: 1px solid #ccc;border-left: 3px solid orange;">
+                    <div class="col-4" style="padding: 0;">
+                        <app-prescription-template [prescription]="prescription"
+                            componenttype="titration">
+                        </app-prescription-template>
+                    </div>
+                    <div class="col-8" style="padding: 0;">
+                        <div #visualization1 id="visualization1"></div>
+                    </div>
+                </div>
+                <div *ngIf="!isOnlyShowChart" class="row" style="margin: 0; border-left: 3px solid orange;">
+                    <div class="col-12">
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="row mt-1">
+                                    <div class="col-12">
+                                        <span class="text-muted">Planned Time</span>
+                                    </div>
+                                </div>
+                                <div class="row mt-1">
+                                    <div class="col-12 flex">
+                                        <span>{{stardate}}</span>
+                                        <span class="ml-2">{{startime}}</span>
+                                    </div>
+                                </div>
+                                <div class="row mt-1">
+                                    <div class="col-12 flex">
+                                        <span class="text-muted">Dose</span>
+                                    </div>
+                                </div>
+                                <div class="row mt-1">
+                                    <div class="col-12 flex">
+                                        <span *ngIf="appService.GetCurrentPosology(prescription).dosetype=='units'" style="display: flex;">
+                                            <input type="number" min="0" positiveNumbersOnly
+                                                class="epma-adminstration-form-control" style="width:80px"
+                                                [(ngModel)]="doseEvent.titrateddosesize">
+                                            <strong *ngIf="medication.producttype.toLowerCase() !='vtm'">{{doseEvent.titrateddoseunit}}</strong>
+                                            <select class="form-control"  [(ngModel)]="doseEvent.titrateddoseunit" 
+                                                *ngIf="medication.producttype.toLowerCase() =='vtm'">
+                                                <option *ngFor="let un of vtm_dose_units">
+                                                    {{un}}
+                                                </option>
+                                            </select>
+                                        </span>
+                                        <span *ngIf="appService.GetCurrentPosology(prescription).dosetype=='strength'">
+                                            <input positiveNumbersOnly type="number" min="0"
+                                                class="epma-adminstration-form-control" style="width:80px"
+                                                (change)="volumeFordose()"
+                                                [(ngModel)]="doseEvent.titratedstrengthneumerator"
+                                                value="doseEvent.titratedstrengthneumerator">
+                                            <strong>{{doseEvent.titratedstrengthneumeratorunits}} </strong>
+                                            / <input positiveNumbersOnly type="number" min="0"
+                                                class="epma-adminstration-form-control" style="width:80px"
+                                                (change)="doseForVolume()"
+                                                [(ngModel)]="doseEvent.titratedstrengthdenominator"
+                                                value="doseEvent.titratedstrengthdenominator">
+                                            <strong>{{doseEvent.titratedstrengthdenominatorunits}} </strong>
+                                        </span>
+                                        <span *ngIf="appService.GetCurrentPosology(prescription).dosetype=='descriptive'">
+                                            <input type="text"  
+                                                class="form-control" maxlength="1000"
+                                               
+                                                [(ngModel)]="doseEvent.titrateddescriptivedose"
+                                                 >
+ 
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="row mt-1">
+                                    <div class="col-12 flex">
+                                        <div class="text-danger">{{validatiommessage}}</div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="col-8">
+                                <div class="row mt-1">
+                                    <div class="col-12 flex">
+                                        <span class="text-muted">Application</span>
+                                    </div>
+                                </div>
+                                <div class="row mt-1">
+                                    <div class="col-12 flex">
+                                        <!-- <input [(ngModel)]="isUptoDate" id="isUptoDate" name="isUptoDate"
+                                            type="checkbox" style="margin-right: 10px;margin-top: 5px;">  -->
+                                            <label for="isUptoDate" style="margin-bottom:0rem">Use dose, until
+                                            (including)</label>
+                                        <select [(ngModel)]="uptoDateType" name="uptoDateType"
+                                            class="epma-adminstration-form-control"
+                                            style="width: 150px;margin-left: 10px;">
+                                            <option *ngFor="let d of titationDateArray">{{d}}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <!-- <div class="row mt-1" *ngIf="uptoDateType=='SelectedDate' && isUptoDate">
+                                    <div class="col-12 flex">
+                                        <span style="display: flex;" >
+                                            <input onkeydown="event.preventDefault()" type="text" [minDate]="minDate" [maxDate]="maxDate"  [(ngModel)]="tititrateddate"  placeholder="Start Date" class="epma-adminstration-form-control" style="width:90px;height: 30px;"  bsDatepicker
+                                           [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true }" />                                 
+                                           <input type="text" name="titratedtime" [(ngModel)]="titratedtime" style="width:70px;height: 30px;" class="epma-adminstration-form-control" placeholder="HH:mm" [appTimepicker]="timepicker2">
+                                            <app-time-picker #timepicker2 (onTimeSelected)="onTitratedTimeSelected($event)"></app-time-picker>
+                                        </span> 
+                                    </div>
+                                </div>   -->
+                                <div class="row mt-1">
+                                    <div class="col-12 flex">
+                                        <span class="text-muted">Comments</span>
+                                    </div>
+                                </div>
+                                <div class="row mt-1">
+                                    <div class="col-12 flex">
+                                        <input type="text" [(ngModel)]="comments" name="comments" placeholder="comments"
+                                             class="form-control ">
+                                    </div>
+                                </div>
+                                <!-- <span style="display: flex;margin-top: 5px;">
+                                    <input id="isAdministation" [(ngModel)]="isAdministation" name="isAdministation" type="checkbox"  type="checkbox" style="margin-right: 10px;margin-top: 5px;"> <label for="isAdministation">Mark this administration as given</label>                        
+                                    <span style="display: flex;" *ngIf="isAdministation">
+                                        <input type="text" [minDate]="minDate" [maxDate]="maxDate"  [(ngModel)]="administereddate"  placeholder="Start Date" class="epma-adminstration-form-control" style="width:90px;height: 30px;"  bsDatepicker
+                                       [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true }" />                                 
+                                       <input type="text" name="administeredtime" [(ngModel)]="administeredtime" style="width:60px;height: 30px;" class="epma-adminstration-form-control" placeholder="HH:mm" [appTimepicker]="timepicker3">
+                                        <app-time-picker #timepicker3 (onTimeSelected)="onAdministredTimeSelected($event)"></app-time-picker>
+                                    </span>
+                                </span> -->
+
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+
+            </div>
+            <div *ngIf="!isOnlyShowChart && this.appService.AuthoriseAction('epma_confirm_doctorsorder')" class="modal-footer" style="padding: 0.4rem 0rem;">
+
+                <div class="container">
+
+                    <div class="row">
+                        <div class="col-6">
+
+                        </div>
+                        <div class="col-6 text-right">
+                            <button type="button" class="btn btn-sm btn-info mr-3" (click)="saveTitratedDose()"
+                                [disabled]="showSpinner"> <span class="spinner-border spinner-border-sm"
+                                    *ngIf="showSpinner" role="status" aria-hidden="true"></span> Confirm</button>
+                            <button *ngIf="!showSpinner" data-dismiss="modal" type="button" class="btn btn-sm btn-secondary"
+                                (click)="closePopup()">Cancel</button>
+                        </div>
+
+                    </div>
+
+
+                </div>
+            </div>
+
+            <div *ngIf="!this.appService.AuthoriseAction('epma_confirm_doctorsorder')" class="p-2 rounded alert-danger">
+                This dose needs to be confirmed by a prescriber prior to administration. Please contact a prescriber to confirm.
+            </div>
+            
+        </div>
+    </div>
+</div>

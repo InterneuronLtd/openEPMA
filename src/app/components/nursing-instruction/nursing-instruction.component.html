@@ -1,0 +1,71 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div class="modal fade bd-example-modal-lg" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal
+tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
+<div class="modal-dialog modal-lg  modal-dialog-centered" role="document">
+    <div class="modal-content">
+        <h3 class="popover-title popover-header">
+            Nursing Instructions
+            <div class="close close-medication" (click)="closeNursingInstructionPopup()"></div>
+         </h3>
+        
+        <div class="modal-body" style="max-height: 30rem;overflow: auto;">     
+			<div class="row mt-n2">
+				<div class="col-12">
+					 <table *ngIf="medusaInstruction.length>0">
+                         <th>
+                            Medusa Links
+                         </th>
+                         <tr *ngFor="let m of medusaInstruction">
+                                <td><div class="emp-comment-block" [innerHtml]="m.instruction | parseUrl"></div></td>
+                         </tr>
+                     </table>
+				</div>
+			</div> 
+            <div class="row mt-2">
+				<div class="col-12">
+					 <table *ngIf="endorsement.length>0">
+                         <th>
+                            Endorsements
+                         </th>
+                         <tr *ngFor="let m of endorsement">
+                                <td><div class="emp-comment-block"  [innerHtml]="m.instruction | parseUrl"></div></td>
+                         </tr>
+                     </table>
+				</div>
+			</div>             
+        </div>
+        <div class="modal-footer" style="padding: 0.4rem 0rem;">
+            <div class="container">               
+                <div class="row">
+                    <div class="col-6">                         
+                    </div>
+                    <div class="col-6 text-right">                        
+                        <button  data-dismiss="modal"  type="button" class="btn btn-sm btn-secondary" (click)="closeNursingInstructionPopup()">Close</button>
+                    </div>
+                     
+                </div>               
+            </div>
+        </div>     
+    </div>
+</div>
+</div>

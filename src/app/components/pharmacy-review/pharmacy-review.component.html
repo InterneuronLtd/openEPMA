@@ -1,0 +1,1533 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div>
+    <div *ngIf="!changestatus && !showDetails" class="modal fade bd-example-modal-lg"
+        [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
+        data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialogtemp  modal-xl  modal-dialog-centered" role="document">
+            <div class="modal-content modal-contenttemp">
+                <h3 *ngIf="!showspinner" class="popover-title popover-header">
+                    Comments ({{medicinename}})
+                    <div class="close close-adminstration" (click)="closePopup()"></div>
+                </h3>
+
+                <div *ngIf="showspinner" class="spinner-border spinner-border-sm" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+
+                <div *ngIf="!showspinner" class="modal-body modal-bodytemp">
+
+                    <div class="row">
+                        <div class=" col-3">
+                            <h5>Date</h5>
+                        </div>
+                        <div class=" col-5">
+                            <h5>Comments</h5>
+                        </div>
+                        <div class=" col-2">
+                            <h5>Recorded By</h5>
+                        </div>
+                        <div class=" col-2">
+                            <h5>Status</h5>
+                        </div>
+                    </div>
+                    <hr class="new4">
+                <div >
+                  <div *ngFor="let review of prescriptionreviewstatus; let i = index;let lastindex = last;">
+                        <div  class="row">
+                            <div class=" col-3"> {{review.modifieddatetime | date:"dd-MMM-yyyy HH:mm"}}</div>
+                            <div class=" col-5 text-break">{{review.reviewcomments}}</div>
+                            <div class=" col-2">{{review.modifiedby}}</div>
+                            <div class=" col-2">
+                                <div class="Pharmacist_review_not_required"
+                                    *ngIf="review.status == 'b86d30f4-d8db-484e-9c6f-1e67fbd89c8e'"></div>
+                                <div class="Waiting_for_pharmacist_review"
+                                    *ngIf="review.status == 'd219dd6d-aafc-4aa3-bad0-5ffcc87d0134'"></div>
+                                <div class="Pharmacist_review_complete"
+                                    *ngIf="review.status == '19d89468-bdf2-46af-8899-75455d3048ef'"></div>
+                                <div class="Pharmacist_reviewed_back_to_prescriber"
+                                    *ngIf="review.status == '8fb36f43-4b5f-487b-aa79-ed95d34ea70e'"></div>
+                            </div>
+                        </div>
+                        <div  class="row">
+                            <div *ngIf="!lastindex && presCreatedMessage !='MOA Added' && (review.precriptionedited || review.__isprescriptionevent)">
+                                <br />
+                                <h6 class="ml-3">Changes </h6>
+                                <h5 class="ml-3" *ngIf="review.__isprescriptionevent">
+                                    {{review.__prescriptionEventStatus}} </h5>
+                            </div>
+                            <div *ngIf="lastindex">
+                                <br />
+                                <h6 class="ml-3">{{presCreatedMessage}} </h6>
+
+                            </div>
+                            <div class=" col-12">
+
+                                <div class="card" *ngIf="review.precriptionedited || lastindex">
+                                    <table
+                                        (click)="assignPrescription(review.__oldprescriptiondata,review.__newprescriptiondata,lastindex)"
+                                        data-toggle="modal" data-target="#exampleModal">
+                                        <tr>
+
+                                            <td style="width: 30px;">
+                                                <div class='{{therapyType }}'></div>
+                                            </td>
+
+                                            <td
+                                                *ngIf="review.__newprescriptiondata && review.__newprescriptiondata.isinfusion">
+                                                <span
+                                                    *ngFor="let med of  review.__newprescriptiondata.__medications; let i = index">
+                                                    <span class="empa-template-bold">{{med.name}} </span>
+                                                    <span *ngIf="med.__ingredients.length==1">
+                                                        ({{med.__ingredients[0].name}}) </span>
+                                                    <span
+                                                        *ngIf="i!= review.__newprescriptiondata.__medications.length-1">
+                                                        <br />
+                                                    </span>
+                                                </span>
+                                                <!-- olddata -->
+                                                <span class="empa-template-bold font-italic strickout"
+                                                    *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].strengthneumerator != appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].strengthneumerator && (appService.GetCurrentPosology(review.__newprescriptiondata).infusiontypeid=='rate' || appService.GetCurrentPosology(review.__newprescriptiondata).infusiontypeid=='bolus') && appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].strengthneumerator">
+                                                    -
+                                                    {{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].strengthneumerator
+                                                    |
+                                                    number}}{{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].strengthneumeratorunit}}
+                                                </span>
+                                                <span class="empa-template-bold"
+                                                    *ngIf="(appService.GetCurrentPosology(review.__newprescriptiondata).infusiontypeid=='rate' || appService.GetCurrentPosology(review.__newprescriptiondata).infusiontypeid=='bolus') && appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].strengthneumerator">
+                                                    -
+                                                    {{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].strengthneumerator
+                                                    |
+                                                    number}}{{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].strengthneumeratorunit}}
+                                                </span>
+                                                <br />
+                                                <span class="empa-template-dose-label">TOTAL VOLUME </span>
+                                                <!-- olddata -->
+                                                <span
+                                                    *ngIf=" appService.GetCurrentPosology(review.__oldprescriptiondata).totalinfusionvolume != appService.GetCurrentPosology(review.__newprescriptiondata).totalinfusionvolume">
+                                                    <span
+                                                        class="empa-template-bold font-italic strickout">{{appService.GetCurrentPosology(review.__oldprescriptiondata).totalinfusionvolume}}ml</span>
+                                                    - </span>
+                                                <span
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).totalinfusionvolume">
+                                                    <span
+                                                        class="empa-template-bold">{{appService.GetCurrentPosology(review.__newprescriptiondata).totalinfusionvolume}}ml</span>
+                                                    - </span>
+                                                <span class="empa-template-dose-label">RATE: </span>
+                                                <span *ngIf="review.__newprescriptiondata.titration"
+                                                    class="empa-template-bold">Titrate</span>
+
+                                                <span class="empa-template-dose-label"
+                                                    *ngIf="review.__newprescriptiondata.titration"> TARGET 
+                                                    {{review.__newprescriptiondata.titrationtype}}
+                                                    <span *ngIf="review.__newprescriptiondata.titrationtargetmin">
+                                                        {{review.__newprescriptiondata.titrationtargetmin}}
+                                                        {{review.__newprescriptiondata.titrationtargetunits}}</span>
+                                                    <span *ngIf="review.__newprescriptiondata.titrationtargetmax">
+                                                        -
+                                                        {{review.__newprescriptiondata.titrationtargetmax}}
+                                                        {{review.__newprescriptiondata.titrationtargetunits}}</span>
+                                                </span>
+
+                                                <span
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).infusiontypeid=='ci' && !review.__newprescriptiondata.titration">
+                                                    <!-- olddata -->
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='variable' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency != appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
+                                                        <span
+                                                            class="empa-template-bold font-italic strickout">Variable</span>
+                                                    </span>
+
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='variable'">
+                                                        <span class="empa-template-bold">Variable</span>
+                                                    </span>
+                                                    <!-- olddata -->
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='protocol' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency != appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
+                                                        <span
+                                                            class="empa-template-bold font-italic strickout">Protocol</span>
+                                                    </span>
+
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='protocol'">
+                                                        <span class="empa-template-bold">Protocol</span>
+                                                    </span>
+                                                    <!-- olddata -->
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency != 'variable' && appService.GetCurrentPosology(review.__newprescriptiondata).frequency!='protocol'">
+                                                        <span
+                                                            *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).infusionrate != appService.GetCurrentPosology(review.__oldprescriptiondata).infusionrate"
+                                                            class=" empa-template-bold font-italic strickou">
+                                                            {{appService.GetCurrentPosology(review.__oldprescriptiondata).infusionrate
+                                                            |
+                                                            number}}
+                                                            <span
+                                                                *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].doseunit">{{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].doseunit}}</span>
+                                                            <span
+                                                                *ngIf="!appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].doseunit">ml/h</span>
+                                                        </span>
+                                                        <span class="empa-template-bold">
+                                                            {{appService.GetCurrentPosology(review.__newprescriptiondata).infusionrate
+                                                            |
+                                                            number}}
+                                                            <span
+                                                                *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].doseunit">{{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].doseunit}}</span>
+                                                            <span
+                                                                *ngIf="!appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].doseunit">ml/h</span>
+                                                        </span>
+                                                    </span>
+                                                    <span
+                                                        *ngFor="let med of review.__newprescriptiondata.__medications">
+                                                        <span *ngIf="med.form.indexOf('Inhalation')==-1"><span> -
+                                                                CONTINUOUS
+                                                                INFUSION</span>
+                                                        </span>
+                                                    </span>
+
+                                                </span>
+
+                                                <span
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).infusiontypeid=='rate' && !review.__newprescriptiondata.titration">
+                                                    <!-- olddata -->
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='variable' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency != appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
+                                                        <span
+                                                            class="empa-template-bold font-italic strickout">Variable</span>
+                                                    </span>
+
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='variable'">
+                                                        <span class="empa-template-bold">Variable</span>
+                                                    </span>
+                                                    <!-- olddata -->
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='protocol' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency != appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
+                                                        <span
+                                                            class="empa-template-bold font-italic strickout">Protocol</span>
+                                                    </span>
+
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='protocol'">
+                                                        <span class="empa-template-bold">Protocol</span>
+                                                    </span>
+
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency!='variable' && appService.GetCurrentPosology(review.__newprescriptiondata).frequency!='protocol'">
+                                                        <!-- olddata -->
+                                                        <span
+                                                            *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).infusionrate != appService.GetCurrentPosology(review.__oldprescriptiondata).infusionrate"
+                                                            class="empa-template-bold font-italic strickout">{{appService.GetCurrentPosology(review.__oldprescriptiondata).infusionrate
+                                                            | number}}
+                                                            <span
+                                                                *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].doseunit">{{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].doseunit}}</span>
+                                                            <span
+                                                                *ngIf="!appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].doseunit">ml/h</span>
+                                                        </span>
+
+                                                        <span
+                                                            class="empa-template-bold">{{appService.GetCurrentPosology(review.__newprescriptiondata).infusionrate
+                                                            | number}}
+                                                            <span
+                                                                *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].doseunit">{{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].doseunit}}</span>
+                                                            <span
+                                                                *ngIf="!appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].doseunit">ml/h</span>
+                                                        </span>
+                                                        - <span class="empa-template-dose-label">DURATION </span>
+                                                        <span
+                                                            *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).infusionduration != appService.GetCurrentPosology(review.__oldprescriptiondata).infusionduration"
+                                                            class="empa-template-dose-label font-italic strickout">
+                                                            {{appService.GetCurrentPosology(review.__oldprescriptiondata).infusionduration}}h
+                                                        </span>
+                                                        <span class="empa-template-dose-label">
+                                                            {{appService.GetCurrentPosology(review.__newprescriptiondata).infusionduration}}h
+                                                        </span>
+                                                    </span>
+                                                </span>
+
+
+                                                <span
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).infusiontypeid=='bolus' && !review.__newprescriptiondata.titration">
+                                                    <span> BOLUS</span>
+                                                    <!-- olddata -->
+                                                    <span class="empa-template-dose-label font-italic strickout"
+                                                        *ngIf=" appService.GetCurrentPosology(review.__oldprescriptiondata).infusionduration != appService.GetCurrentPosology(review.__newprescriptiondata).infusionduration">
+                                                        -
+                                                        {{appService.GetCurrentPosology(review.__oldprescriptiondata).infusionduration}}h
+                                                    </span>
+                                                    <span class="empa-template-dose-label"
+                                                        *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).infusionduration">
+                                                        -
+                                                        DURATION
+                                                        {{appService.GetCurrentPosology(review.__newprescriptiondata).infusionduration}}h
+                                                    </span>
+                                                </span>
+
+                                                <span
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).__dose.length>0 && (appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].dosesize || appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].strengthneumerator || appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].descriptivedose)">
+                                                    <span class="empa-template-dose-label"> - DOSE </span>
+                                                    <!-- olddata -->
+                                                    <span
+                                                        *ngIf=" appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].dosesize != appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].dosesize && appService.GetCurrentPosology(review.__newprescriptiondata).dosetype=='units'">
+                                                        <span
+                                                            class="empa-template-bold font-italic strickout">{{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].dosesize|
+                                                            number}}
+                                                            {{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].doseunit}}</span>
+                                                    </span>
+
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).dosetype=='units'">
+                                                        <span
+                                                            class="empa-template-bold">{{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].dosesize|
+                                                            number}}
+                                                            {{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].doseunit}}</span>
+                                                    </span>
+
+
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).dosetype=='strength'">
+                                                        <!-- olddata -->
+                                                        <span
+                                                            *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].strengthneumerator != appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].strengthneumerator"
+                                                            class="empa-template-bold font-italic strickout">{{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].strengthneumerator
+                                                            |
+                                                            number}}{{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].strengthneumeratorunit}}
+                                                            /
+                                                            {{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].strengthdenominator
+                                                            |
+                                                            number}}{{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].strengthdenominatorunit}}</span>
+
+                                                        <span
+                                                            class="empa-template-bold">{{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].strengthneumerator
+                                                            |
+                                                            number}}{{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].strengthneumeratorunit}}
+                                                            /
+                                                            {{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].strengthdenominator
+                                                            |
+                                                            number}}{{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].strengthdenominatorunit}}</span>
+                                                    </span>
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).dosetype=='descriptive'">
+                                                        <!-- olddata -->
+                                                        <span
+                                                            *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].descriptivedose != appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].descriptivedose"
+                                                            class="empa-template-bold font-italic strickout">{{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].descriptivedose}}</span>
+                                                        <span
+                                                            class="empa-template-bold">{{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].descriptivedose}}</span>
+                                                    </span>
+
+                                                </span>
+
+
+                                                <!-- olddata -->
+                                                <span class="empa-template-dose-text font-italic strickout"
+                                                    *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='mor' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency!=appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
+                                                    - Morning
+                                                </span>
+                                                <span class="empa-template-dose-text"
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='mor'">
+                                                    - Morning
+                                                </span>
+                                                <!-- olddata -->
+                                                <span class="empa-template-dose-text font-italic strickout"
+                                                    *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='mid' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency!=appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
+                                                    - Noon
+                                                </span>
+                                                <span class="empa-template-dose-text"
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='mid'">
+                                                    - Noon
+                                                </span>
+                                                <!-- olddata -->
+                                                <span class="empa-template-dose-text font-italic strickout"
+                                                    *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='eve' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency!=appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
+                                                    Evening
+                                                </span>
+                                                <span class="empa-template-dose-text"
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='eve'">
+                                                    Evening
+                                                </span>
+                                                <!-- olddata -->
+                                                <span class="empa-template-dose-text font-italic strickout"
+                                                    *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='stat' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency!=appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
+                                                    - Stat. dose
+                                                </span>
+                                                <span class="empa-template-dose-text"
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='stat'">
+                                                    - Stat. dose
+                                                </span>
+                                                <!-- olddata -->
+                                                <span class="empa-template-dose-text font-italic strickout"
+                                                    *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='x' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency!=appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
+                                                    - {{appService.GetCurrentPosology(review.__oldprescriptiondata).frequencysize}}
+                                                    times
+                                                    per day
+                                                </span>
+                                                <span class="empa-template-dose-text"
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='x'">
+                                                    - {{appService.GetCurrentPosology(review.__newprescriptiondata).frequencysize}}
+                                                    times
+                                                    per day
+                                                </span>
+                                                <!-- olddata -->
+                                                <span class="empa-template-dose-text font-italic strickout"
+                                                    *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='h' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency!=appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
+                                                    - Every
+                                                    {{appService.GetCurrentPosology(review.__oldprescriptiondata).frequencysize}}
+                                                    hours
+                                                </span>
+                                                <span class="empa-template-dose-text"
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='h'">
+                                                    - Every
+                                                    {{appService.GetCurrentPosology(review.__newprescriptiondata).frequencysize}}
+                                                    hours
+                                                </span>
+                                                <!-- olddata -->
+                                                <span class="empa-template-dose-text font-italic strickout"
+                                                    *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).prn != appService.GetCurrentPosology(review.__newprescriptiondata).prn && appService.GetCurrentPosology(review.__oldprescriptiondata).prn">
+                                                    - When needed</span>
+                                                <span class="empa-template-dose-text"
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).prn"> - When
+                                                    needed</span>
+
+                                                <span>
+                                                    <br />
+
+                                                    <span *ngIf="!review.__newprescriptiondata.linkedinfusionid">
+                                                        <span class="empa-template-induction-label">FROM
+                                                        </span>
+                                                        <span
+                                                            *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).prescriptionstartdate">
+                                                            <span
+                                                                *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).prescriptionstartdate != appService.GetCurrentPosology(review.__newprescriptiondata).prescriptionstartdate"
+                                                                class="empa-template-dose-text font-italic strickout">{{appService.GetCurrentPosology(review.__oldprescriptiondata).prescriptionstartdate
+                                                                | date :
+                                                                "dd-MMM-yyyy HH:mm"}} </span>
+                                                            <span
+                                                                class="empa-template-dose-text">{{appService.GetCurrentPosology(review.__newprescriptiondata).prescriptionstartdate
+                                                                | date :
+                                                                "dd-MMM-yyyy HH:mm"}} </span></span>
+                                                        <span
+                                                            *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).prescriptionenddate || appService.GetCurrentPosology(review.__oldprescriptiondata).prescriptionenddate != appService.GetCurrentPosology(review.__newprescriptiondata).prescriptionenddate"
+                                                            class="empa-template-induction-label">UNTIL </span>
+                                                        <!-- olddata -->
+                                                        <span
+                                                            *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).prescriptionenddate != appService.GetCurrentPosology(review.__newprescriptiondata).prescriptionenddate">
+                                                            <span
+                                                                class="empa-template-dose-text font-italic strickout">{{appService.GetCurrentPosology(review.__oldprescriptiondata).prescriptionenddate
+                                                                | date :
+                                                                "dd-MMM-yyyy HH:mm " }} </span></span>
+
+                                                        <span
+                                                            *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).prescriptionenddate">
+                                                            <span
+                                                                class="empa-template-dose-text">{{appService.GetCurrentPosology(review.__newprescriptiondata).prescriptionenddate
+                                                                | date :
+                                                                "dd-MMM-yyyy HH:mm"}} </span></span>
+                                                    </span>
+                                                    <span *ngIf="review.__newprescriptiondata.indication"><span
+                                                            class="empa-template-induction-label">INDICATION </span>
+                                                        <span class="empa-template-dose-text">
+                                                            {{appService.GetIndication(review.__newprescriptiondata)}}
+
+                                                        </span></span>
+                                                    <span *ngIf="review.__newprescriptiondata.comments"><span
+                                                            class="empa-template-induction-label">COMMENTS </span>
+                                                        <span
+                                                            class="empa-template-dose-text">{{review.__newprescriptiondata.comments}}
+                                                        </span></span>
+                                                </span>
+                                            </td>
+                                            <td
+                                                *ngIf="review.__newprescriptiondata && !review.__newprescriptiondata.isinfusion">
+
+                                                <span
+                                                    *ngFor="let med of review.__newprescriptiondata.__medications"><span
+                                                        class="empa-template-bold">{{med.name}} </span> <span
+                                                        *ngIf="med.__ingredients.length==1">
+                                                        ({{med.__ingredients[0].name}}) </span></span>
+                                                <br />
+                                                <span class="empa-template-dose-label">DOSE </span>
+                                                <!-- olddata -->
+                                                <span
+                                                    *ngIf="review.__oldprescriptiondata.titration && review.__oldprescriptiondata.titration !=review.__newprescriptiondata.titration"
+                                                    class="empa-template-bold font-italic strickout">Titrate</span>
+                                                <span class="empa-template-dose-label font-italic strickout"
+                                                    *ngIf="review.__newprescriptiondata.titration && review.__oldprescriptiondata.titration !=review.__newprescriptiondata.titration">
+                                                    TARGET {{review.__oldprescriptiondata.titrationtype}}
+                                                    <span *ngIf="review.__oldprescriptiondata.titrationtargetmin">
+                                                        {{review.__oldprescriptiondata.titrationtargetmin}}
+                                                        {{review.__oldprescriptiondata.titrationtargetunits}}</span>
+                                                    <span *ngIf="review.__oldprescriptiondata.titrationtargetmax">
+                                                        -
+                                                        {{review.__oldprescriptiondata.titrationtargetmax}}
+                                                        {{review.__oldprescriptiondata.titrationtargetunits}}</span>
+                                                </span>
+                                                <!-- olddata -->
+
+                                                <span *ngIf="review.__newprescriptiondata.titration"
+                                                    class="empa-template-bold">Titrate</span>
+
+                                                <span class="empa-template-dose-label"
+                                                    *ngIf="review.__newprescriptiondata.titration"> TARGET 
+                                                    {{review.__newprescriptiondata.titrationtype}}
+                                                    <span *ngIf="review.__newprescriptiondata.titrationtargetmin">
+                                                        {{review.__newprescriptiondata.titrationtargetmin}}
+                                                        {{review.__newprescriptiondata.titrationtargetunits}}</span>
+                                                    <span *ngIf="review.__newprescriptiondata.titrationtargetmax">
+                                                        -
+                                                        {{review.__newprescriptiondata.titrationtargetmax}}
+                                                        {{review.__newprescriptiondata.titrationtargetunits}}</span>
+                                                </span>
+                                                <span
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).dosetype=='units' && !review.__newprescriptiondata.titration">
+
+
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='x' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='h' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='stat' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='mor'  || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='mid' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='eve'">
+                                                        <!-- olddata --> <span class="font-italic strickout"
+                                                            *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].dosesize != appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].dosesize">{{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].dosesize
+                                                            | number}}
+                                                            {{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].doseunit}}
+                                                        </span>
+                                                        <!-- olddata -->
+                                                        <span class="empa-template-bold"
+                                                            *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).__dose.length>0">{{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].dosesize
+                                                            | number}}
+                                                            {{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].doseunit}}</span>
+                                                    </span>
+                                                    <!-- olddata -->
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='variable' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency != appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
+                                                        <span
+                                                            class="empa-template-bold font-italic strickout">Variable</span>
+                                                    </span>
+                                                    <!-- olddata -->
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='variable'">
+                                                        <span class="empa-template-bold">Variable</span>
+                                                    </span>
+                                                    <!-- olddata -->
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='protocol' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency != appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
+                                                        <span
+                                                            class="empa-template-bold font-italic strickout">Protocol</span>
+                                                    </span>
+                                                    <!-- olddata -->
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='protocol'">
+                                                        <span class="empa-template-bold">Protocol</span>
+                                                    </span>
+
+                                                </span>
+                                                <span
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).dosetype=='strength' && !review.__newprescriptiondata.titration">
+
+
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='x' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='h' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='stat' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='mor'  || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='mid' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='eve'">
+                                                        <!-- olddata -->
+                                                        <span class="font-italic strickout"
+                                                            *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].strengthneumerator != appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].strengthneumerator">
+                                                            {{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].strengthneumerator
+                                                            |
+                                                            number}}{{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].strengthneumeratorunit}}
+                                                            /
+                                                            {{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].strengthdenominator
+                                                            |
+                                                            number}}{{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].strengthdenominatorunit}}
+                                                        </span>
+                                                        <!-- olddata -->
+                                                        <span class="empa-template-bold"
+                                                            *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].strengthneumerator">
+                                                            {{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].strengthneumerator
+                                                            |
+                                                            number}}{{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].strengthneumeratorunit}}
+                                                            /
+                                                            {{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].strengthdenominator
+                                                            |
+                                                            number}}{{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].strengthdenominatorunit}}
+                                                        </span>
+                                                    </span>
+                                                    <!-- olddata -->
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='variable' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency != appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
+                                                        <span
+                                                            class="empa-template-bold font-italic strickout">Variable</span>
+                                                    </span>
+
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='variable'">
+                                                        <span class="empa-template-bold">Variable</span>
+                                                    </span>
+                                                    <!-- olddata -->
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='protocol' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency != appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
+                                                        <span
+                                                            class="empa-template-bold font-italic strickout">Protocol</span>
+                                                    </span>
+
+                                                    <span
+                                                        *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='protocol'">
+                                                        <span class="empa-template-bold">Protocol</span>
+                                                    </span>
+
+
+                                                </span>
+                                                <!-- olddata -->
+                                                <span
+                                                    *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).dosetype=='descriptive' && !review.__newprescriptiondata.titration && appService.GetCurrentPosology(review.__oldprescriptiondata).dosetype != appService.GetCurrentPosology(review.__newprescriptiondata).dosetype">
+                                                    <span
+                                                        class="empa-template-bold font-italic strickout">{{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].descriptivedose}}</span>
+                                                </span>
+
+                                                <span
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).dosetype=='descriptive' && !review.__newprescriptiondata.titration">
+                                                    <span
+                                                        class="empa-template-bold">{{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].descriptivedose}}</span>
+                                                </span>
+
+                                                <!-- olddata -->
+                                                <span class="empa-template-dose-text font-italic strickout"
+                                                    *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='mor' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency!=appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
+                                                    - Morning
+                                                </span>
+                                                <span class="empa-template-dose-text"
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='mor'">
+                                                    - Morning
+                                                </span>
+                                                <!-- olddata -->
+                                                <span class="empa-template-dose-text font-italic strickout"
+                                                    *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='mid' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency!=appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
+                                                    - Noon
+                                                </span>
+                                                <span class="empa-template-dose-text"
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='mid'">
+                                                    - Noon
+                                                </span>
+                                                <!-- olddata -->
+                                                <span class="empa-template-dose-text font-italic strickout"
+                                                    *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='eve' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency!=appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
+                                                    Evening
+                                                </span>
+                                                <span class="empa-template-dose-text"
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='eve'">
+                                                    Evening
+                                                </span>
+                                                <!-- olddata -->
+                                                <span class="empa-template-dose-text font-italic strickout"
+                                                    *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='stat' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency!=appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
+                                                    - Stat. dose
+                                                </span>
+                                                <span class="empa-template-dose-text"
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='stat'">
+                                                    - Stat. dose
+                                                </span>
+                                                <!-- olddata -->
+                                                <span class="empa-template-dose-text font-italic strickout"
+                                                    *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='x' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequencysize != appService.GetCurrentPosology(review.__newprescriptiondata).frequencysize">
+                                                    - {{appService.GetCurrentPosology(review.__oldprescriptiondata).frequencysize}}
+                                                    times
+                                                    per day
+                                                </span>
+                                                <span class="empa-template-dose-text"
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='x'">
+                                                    - {{appService.GetCurrentPosology(review.__newprescriptiondata).frequencysize}}
+                                                    times
+                                                    per day
+                                                </span>
+                                                <!-- olddata -->
+                                                <span class="empa-template-dose-text font-italic strickout"
+                                                    *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='h' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequencysize != appService.GetCurrentPosology(review.__newprescriptiondata).frequencysize">
+                                                    - Every
+                                                    {{appService.GetCurrentPosology(review.__oldprescriptiondata).frequencysize}}
+                                                    hours
+                                                </span>
+                                                <span class="empa-template-dose-text"
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='h'">
+                                                    - Every
+                                                    {{appService.GetCurrentPosology(review.__newprescriptiondata).frequencysize}}
+                                                    hours
+                                                </span>
+                                                <!-- olddata -->
+                                                <span class="empa-template-dose-text font-italic strickout"
+                                                    *ngIf=" GetChoosenDays(review.__oldprescriptiondata) != GetChoosenDays(review.__newprescriptiondata) && appService.GetCurrentPosology(review.__oldprescriptiondata).daysofweek && appService.GetCurrentPosology(review.__oldprescriptiondata).daysofweek.length>2">
+                                                    - Every
+                                                    {{GetChoosenDays(review.__oldprescriptiondata)}}
+                                                </span>
+                                                <span class="empa-template-dose-text"
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).daysofweek && appService.GetCurrentPosology(review.__newprescriptiondata).daysofweek.length>2">
+                                                    - Every
+                                                    {{GetChoosenDays(review.__newprescriptiondata)}}
+                                                </span>
+                                                <!-- olddata -->
+                                                <span class="empa-template-dose-text font-italic strickout"
+                                                    *ngIf=" appService.GetCurrentPosology(review.__oldprescriptiondata).dosingdaysfrequencysize != appService.GetCurrentPosology(review.__newprescriptiondata).dosingdaysfrequencysize && appService.GetCurrentPosology(review.__oldprescriptiondata).dosingdaysfrequencysize && appService.GetCurrentPosology(review.__oldprescriptiondata).dosingdaysfrequencysize>0">
+                                                    -
+                                                    Every
+                                                    {{appService.GetCurrentPosology(review.__oldprescriptiondata).dosingdaysfrequencysize}}
+                                                    {{appService.GetCurrentPosology(review.__oldprescriptiondata).dosingdaysfrequency}}
+                                                </span>
+                                                <span class="empa-template-dose-text"
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).dosingdaysfrequencysize && appService.GetCurrentPosology(review.__newprescriptiondata).dosingdaysfrequencysize>0">
+                                                    -
+                                                    Every
+                                                    {{appService.GetCurrentPosology(review.__newprescriptiondata).dosingdaysfrequencysize}}
+                                                    {{appService.GetCurrentPosology(review.__newprescriptiondata).dosingdaysfrequency}}
+                                                </span>
+                                                <!-- olddata -->
+                                                <span class="empa-template-dose-text font-italic strickout"
+                                                    *ngIf="GetAdditionalcondition(review.__oldprescriptiondata) != GetAdditionalcondition(review.__newprescriptiondata) && GetAdditionalcondition(review.__oldprescriptiondata)!='No additional criteria'">
+                                                    –
+                                                    {{GetAdditionalcondition(review.__oldprescriptiondata)}}
+                                                </span>
+
+                                                <span class="empa-template-dose-text"
+                                                    *ngIf="GetAdditionalcondition(review.__newprescriptiondata)!='No additional criteria'">
+                                                    –
+                                                    {{GetAdditionalcondition(review.__newprescriptiondata)}}
+                                                </span>
+                                                <!-- olddata -->
+                                                <span class="empa-template-dose-text font-italic strickout"
+                                                    *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).prn != appService.GetCurrentPosology(review.__newprescriptiondata).prn && appService.GetCurrentPosology(review.__oldprescriptiondata).prn">
+                                                    - When needed</span>
+                                                <span class="empa-template-dose-text"
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).prn"> - When
+                                                    needed</span>
+
+                                                     <!-- olddata -->
+                                                <span class="empa-template-dose-text font-italic strickout"
+                                                *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).doctorsorder != appService.GetCurrentPosology(review.__newprescriptiondata).doctorsorder && appService.GetCurrentPosology(review.__oldprescriptiondata).doctorsorder">
+                                                - Prescriber to confirm</span>
+                                                <span class="empa-template-dose-text"
+                                                *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).doctorsorder"> - Prescriber to confirm</span>
+
+                                                  
+                                                <!-- olddata -->
+
+                                                <span class="empa-template-dose-text  font-italic strickout"
+                                                    *ngIf="GetRoutes(review.__oldprescriptiondata) != GetRoutes(review.__newprescriptiondata) && review.__oldprescriptiondata.__routes.length>0">
+                                                    <span> - {{GetRoutes(review.__oldprescriptiondata)}}
+                                                    </span></span>
+                                                <span class="empa-template-dose-text"
+                                                    *ngIf="review.__newprescriptiondata.__routes.length>0"> <span>
+                                                        -
+                                                        {{GetRoutes(review.__newprescriptiondata)}} </span></span>
+
+                                                <br />
+
+                                                <span class="empa-template-induction-label">FROM
+                                                </span>
+                                                <!-- olddata -->
+                                                <span
+                                                    *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).prescriptionstartdate != appService.GetCurrentPosology(review.__newprescriptiondata).prescriptionstartdate ">
+                                                    <span
+                                                        class="empa-template-dose-text font-italic strickout">{{appService.GetCurrentPosology(review.__oldprescriptiondata).prescriptionstartdate
+                                                        | date :
+                                                        "dd-MMM-yyyy HH:mm " }} </span></span>
+
+                                                <span
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).prescriptionstartdate">
+                                                    <span
+                                                        class="empa-template-dose-text">{{appService.GetCurrentPosology(review.__newprescriptiondata).prescriptionstartdate
+                                                        | date :
+                                                        "dd-MMM-yyyy HH:mm"}} </span></span>
+
+                                                <span
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).prescriptionenddate || appService.GetCurrentPosology(review.__oldprescriptiondata).prescriptionenddate != appService.GetCurrentPosology(review.__newprescriptiondata).prescriptionenddate"
+                                                    class="empa-template-induction-label">UNTIL </span>
+                                                <!-- olddata -->
+                                                <span
+                                                    *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).prescriptionenddate != appService.GetCurrentPosology(review.__newprescriptiondata).prescriptionenddate">
+                                                    <span
+                                                        class="empa-template-dose-text font-italic strickout">{{appService.GetCurrentPosology(review.__oldprescriptiondata).prescriptionenddate
+                                                        | date :
+                                                        "dd-MMM-yyyy HH:mm " }} </span></span>
+
+                                                <span
+                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).prescriptionenddate">
+                                                    <span
+                                                        class="empa-template-dose-text">{{appService.GetCurrentPosology(review.__newprescriptiondata).prescriptionenddate
+                                                        | date :
+                                                        "dd-MMM-yyyy HH:mm"}} </span></span>
+
+                                                <span *ngIf="review.__newprescriptiondata.indication"><span
+                                                        class="empa-template-induction-label">INDICATION </span>
+                                                    <span
+                                                        class="empa-template-dose-text">{{appService.GetIndication(review.__newprescriptiondata)}}
+                                                    </span></span>
+                                                <span *ngIf="review.__newprescriptiondata.comments"><span
+                                                        class="empa-template-induction-label">COMMENTS </span>
+                                                    <span
+                                                        *ngIf="review.__oldprescriptiondata.comments != review.__newprescriptiondata.comments"
+                                                        class="empa-template-dose-text font-italic strickout">{{review.__oldprescriptiondata.comments}}
+                                                        &nbsp; </span>
+                                                    <span
+                                                        class="empa-template-dose-text">{{review.__newprescriptiondata.comments}}</span>
+                                                </span>
+
+
+                                            </td>
+
+                                        </tr>
+                                    </table>
+
+                                </div>
+                            </div>
+                      
+                        </div>
+                        <hr class="new4">
+
+                    </div>
+                </div> 
+                    <div *ngIf="MoaPriscription">
+                        <br />
+                        <h6 class="ml-3">MOA Medication</h6>
+
+                    </div>
+                    <div *ngIf="MoaPriscription">
+                        <div class="card">
+                    <app-prescription-template [prescription]=MoaPriscription componenttype="medicationOrderSet">
+                    </app-prescription-template>
+                        </div>
+               
+                    <hr class="new4">
+                    </div>
+
+                </div>
+
+
+
+                <div *ngIf="!showspinner" class="modal-footer" style="padding: 0.4rem 0rem;">
+
+                    <div class="container">
+
+                        <div class="row">
+                            <div   class="col-2 text-left">
+                               
+                                <button *ngIf="appService.AuthoriseAction('epma_add_pharmacyreviewcomments_ip') && (appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled)) && appService.bannerWarningStatus && appService.warningServiceIPContext.existingWarningsStatus" data-dismiss="modal" type="button" class="btn btn-sm btn-primary"
+                                    (click)="changestatus = true">Add Comments</button>
+                            </div>
+                            <div   class="col-6 text-left">                           
+                               
+                                <div  *ngIf="showActionButton">
+                                <button data-dismiss="modal" type="button" class="btn btn-sm btn-primary"
+                                    *ngIf="showEditPrescription && appService.AuthoriseAction('epma_edit_ip') && (appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled)) && appService.bannerWarningStatus && appService.warningServiceIPContext.existingWarningsStatus" (click)="editTherapy()">Edit Prescription</button>
+                                </div>
+                            </div>
+
+                            <div class="col-4 text-right">
+                                <button data-dismiss="modal" type="button" class="btn btn-sm btn-success"
+                                    (click)="closePopup()">Close</button>
+                            </div>
+
+                        </div>
+
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div *ngIf="showDetails" class="modal fade bd-example-modal-lg"
+        [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
+        data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-xl  modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="p-0 modal-header">
+                    <b> Details of edit</b>
+                    <button type="button" class="close" data-dismiss="modal" (click)="showDetails = false"
+                        aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div>
+                    <div class="modal-body">
+                        <div class="p-popover">
+                            <div class="p-popover-body-width-s1">
+                            </div>
+                            <div class="p-popover-body-width-s2">
+                                <span class="text-muted" *ngIf="!appService.GetCurrentPosology(oldprescription).infusiontypeid">DOSE</span>
+                                <span class="text-muted" *ngIf="appService.GetCurrentPosology(oldprescription).infusiontypeid">RATE</span>
+                            </div>
+                            <div class="p-popover-body-width-s3">
+                                <span *ngIf="oldprescription.titration">
+                                    <span *ngIf="oldprescription.titration" class="empa-template-bold">Titrate</span>
+                                    <span class="empa-template-dose-label" *ngIf="oldprescription.titration"> TARGET 
+                                        {{oldprescription.titrationtype}}
+                                        <span *ngIf="oldprescription.titrationtargetmin">
+                                            {{oldprescription.titrationtargetmin}}
+                                            {{oldprescription.titrationtargetunits}}</span>
+                                        <span *ngIf="oldprescription.titrationtargetmax"> -
+                                            {{oldprescription.titrationtargetmax}}
+                                            {{oldprescription.titrationtargetunits}}</span>
+                                    </span>
+                                </span>
+                                <span *ngIf="appService.GetCurrentPosology(oldprescription).infusiontypeid && !oldprescription.titration">
+                                    <span *ngIf="appService.GetCurrentPosology(oldprescription).infusiontypeid=='bolus'">
+                                        <span>BOLUS</span>
+                                    </span>
+                                    <span *ngIf="appService.GetCurrentPosology(oldprescription).infusiontypeid=='ci'">
+                                        <span *ngFor="let med of oldprescription.__medications">
+                                            <span *ngIf="med.form.indexOf('Inhalation')==-1"><span>CONTINUOUS INFUSION -
+                                                </span>
+                                            </span>
+                                        </span>
+
+                                        <span *ngIf="appService.GetCurrentPosology(oldprescription).frequency=='variable'">
+                                            <span class="empa-template-bold">Variable</span>
+                                        </span>
+                                        <span *ngIf="appService.GetCurrentPosology(oldprescription).frequency=='protocol'">
+                                            <span class="empa-template-bold">Protocol</span>
+                                        </span>
+                                        <span
+                                            *ngIf="appService.GetCurrentPosology(oldprescription).frequency!='variable' && appService.GetCurrentPosology(oldprescription).frequency!='protocol'">
+                                            <span> {{appService.GetCurrentPosology(oldprescription).infusionrate | number}}
+                                                <span
+                                                    *ngIf="appService.GetCurrentPosology(oldprescription).__dose[0].doseunit">{{appService.GetCurrentPosology(oldprescription).__dose[0].doseunit}}</span>
+                                                <span *ngIf="!appService.GetCurrentPosology(oldprescription).__dose[0].doseunit">ml/h</span>
+                                            </span>
+                                        </span>
+                                    </span>
+                                    <span *ngIf="appService.GetCurrentPosology(oldprescription).infusiontypeid=='rate'">
+                                        <span>RATE - </span>
+                                        <span *ngIf="appService.GetCurrentPosology(oldprescription).frequency=='variable'">
+                                            <span class="empa-template-bold">Variable</span>
+                                        </span>
+                                        <span *ngIf="appService.GetCurrentPosology(oldprescription).frequency=='protocol'">
+                                            <span class="empa-template-bold">Protocol</span>
+                                        </span>
+                                        <span
+                                            *ngIf="appService.GetCurrentPosology(oldprescription).frequency!='variable' && appService.GetCurrentPosology(oldprescription).frequency!='protocol'">
+                                            <span>{{appService.GetCurrentPosology(oldprescription).infusionrate | number}}
+                                                <span
+                                                    *ngIf="appService.GetCurrentPosology(oldprescription).__dose[0].doseunit">{{appService.GetCurrentPosology(oldprescription).__dose[0].doseunit}}</span>
+                                                <span *ngIf="!appService.GetCurrentPosology(oldprescription).__dose[0].doseunit">ml/h</span>
+                                            </span> - <span>DURATION
+                                            </span> {{appService.GetCurrentPosology(oldprescription).infusionduration}}h
+                                        </span>
+
+                                    </span>
+                                </span>
+                                <span *ngIf="!appService.GetCurrentPosology(oldprescription).infusiontypeid && !oldprescription.titration">
+                                    <span *ngIf="oldprescription.titration" class="empa-template-bold">Titrate</span>
+                                    <span
+                                        *ngIf="appService.GetCurrentPosology(oldprescription).frequency!='variable' && appService.GetCurrentPosology(oldprescription).frequency!='protocol'">
+                                        <span
+                                            *ngIf="appService.GetCurrentPosology(oldprescription).dosetype=='units' && !oldprescription.titration">
+                                            <span
+                                                class="empa-template-bold">{{appService.GetCurrentPosology(oldprescription).__dose[0].dosesize|
+                                                number}} {{appService.GetCurrentPosology(oldprescription).__dose[0].doseunit}}</span>
+                                        </span>
+                                        <span
+                                            *ngIf="appService.GetCurrentPosology(oldprescription).dosetype=='strength' && !oldprescription.titration">
+                                            <span
+                                                class="empa-template-bold">{{appService.GetCurrentPosology(oldprescription).__dose[0].strengthneumerator
+                                                |
+                                                number}}{{appService.GetCurrentPosology(oldprescription).__dose[0].strengthneumeratorunit}}
+                                                /
+                                                {{appService.GetCurrentPosology(oldprescription).__dose[0].strengthdenominator |
+                                                number}}{{appService.GetCurrentPosology(oldprescription).__dose[0].strengthdenominatorunit}}</span>
+                                        </span>
+                                        <span
+                                            *ngIf="appService.GetCurrentPosology(oldprescription).dosetype=='descriptive' && !oldprescription.titration">
+                                            <span
+                                                class="empa-template-bold">{{appService.GetCurrentPosology(oldprescription).__dose[0].descriptivedose}}</span>
+                                        </span>
+                                    </span>
+                                    <span
+                                        *ngIf="appService.GetCurrentPosology(oldprescription).frequency=='variable' && !oldprescription.titration">
+                                        <span class="empa-template-bold">Variable</span>
+                                    </span>
+                                    <span
+                                        *ngIf="appService.GetCurrentPosology(oldprescription).frequency=='protocol' && !oldprescription.titration">
+                                        <span class="empa-template-bold">Protocol</span>
+                                    </span>
+
+                                </span>
+
+                            </div>
+                            <div class="p-popover-body-width-s4">
+                                <span *ngIf="editedprescription.titration">
+                                    <span *ngIf="editedprescription.titration" class="empa-template-bold">Titrate</span>
+                                    <span class="empa-template-dose-label" *ngIf="editedprescription.titration"> TARGET
+                                        {{editedprescription.titrationtype}}
+                                        <span *ngIf="editedprescription.titrationtargetmin">
+                                            {{editedprescription.titrationtargetmin}}
+                                            {{editedprescription.titrationtargetunits}}</span>
+                                        <span *ngIf="editedprescription.titrationtargetmax"> -
+                                            {{editedprescription.titrationtargetmax}}
+                                            {{editedprescription.titrationtargetunits}}</span>
+                                    </span>
+                                </span>
+                                <span
+                                    *ngIf="appService.GetCurrentPosology(editedprescription).infusiontypeid && !editedprescription.titration">
+                                    <span *ngIf="appService.GetCurrentPosology(editedprescription).infusiontypeid=='bolus'">
+                                        <span>BOLUS</span>
+                                    </span>
+                                    <span *ngIf="appService.GetCurrentPosology(editedprescription).infusiontypeid=='ci'">
+                                        <span *ngFor="let med of editedprescription.__medications">
+                                            <span *ngIf="med.form.indexOf('Inhalation')==-1"><span>CONTINUOUS INFUSION -
+                                                </span>
+                                            </span>
+                                        </span>
+
+                                        <span *ngIf="appService.GetCurrentPosology(editedprescription).frequency=='variable'">
+                                            <span class="empa-template-bold">Variable</span>
+                                        </span>
+                                        <span *ngIf="appService.GetCurrentPosology(editedprescription).frequency=='protocol'">
+                                            <span class="empa-template-bold">Protocol</span>
+                                        </span>
+                                        <span
+                                            *ngIf="appService.GetCurrentPosology(editedprescription).frequency!='variable' && appService.GetCurrentPosology(editedprescription).frequency!='protocol'">
+                                            <span> {{appService.GetCurrentPosology(editedprescription).infusionrate | number}}
+                                                <span
+                                                    *ngIf="appService.GetCurrentPosology(editedprescription).__dose[0].doseunit">{{appService.GetCurrentPosology(editedprescription).__dose[0].doseunit}}</span>
+                                                <span
+                                                    *ngIf="!appService.GetCurrentPosology(editedprescription).__dose[0].doseunit">ml/h</span>
+                                            </span>
+                                        </span>
+                                    </span>
+                                    <span *ngIf="appService.GetCurrentPosology(editedprescription).infusiontypeid=='rate'">
+                                        <span>RATE - </span>
+                                        <span *ngIf="appService.GetCurrentPosology(editedprescription).frequency=='variable'">
+                                            <span class="empa-template-bold">Variable</span>
+                                        </span>
+                                        <span *ngIf="appService.GetCurrentPosology(editedprescription).frequency=='protocol'">
+                                            <span class="empa-template-bold">Protocol</span>
+                                        </span>
+                                        <span
+                                            *ngIf="appService.GetCurrentPosology(editedprescription).frequency!='variable' && appService.GetCurrentPosology(editedprescription).frequency!='protocol'">
+                                            <span>{{appService.GetCurrentPosology(editedprescription).infusionrate | number}}
+                                                <span
+                                                    *ngIf="appService.GetCurrentPosology(editedprescription).__dose[0].doseunit">{{appService.GetCurrentPosology(editedprescription).__dose[0].doseunit}}</span>
+                                                <span
+                                                    *ngIf="!appService.GetCurrentPosology(editedprescription).__dose[0].doseunit">ml/h</span>
+                                            </span> - <span>DURATION
+                                            </span> {{appService.GetCurrentPosology(editedprescription).infusionduration}}h
+                                        </span>
+
+                                    </span>
+                                </span>
+                                <span
+                                    *ngIf="!appService.GetCurrentPosology(editedprescription).infusiontypeid && !editedprescription.titration">
+                                    <span *ngIf="editedprescription.titration" class="empa-template-bold">Titrate</span>
+                                    <span
+                                        *ngIf="appService.GetCurrentPosology(editedprescription).frequency!='variable' && appService.GetCurrentPosology(editedprescription).frequency!='protocol'">
+                                        <span
+                                            *ngIf="appService.GetCurrentPosology(editedprescription).dosetype=='units' && !editedprescription.titration">
+                                            <span
+                                                class="empa-template-bold">{{appService.GetCurrentPosology(editedprescription).__dose[0].dosesize|
+                                                number}} {{appService.GetCurrentPosology(editedprescription).__dose[0].doseunit}}</span>
+                                        </span>
+                                        <span
+                                            *ngIf="appService.GetCurrentPosology(editedprescription).dosetype=='strength' && !editedprescription.titration">
+                                            <span
+                                                class="empa-template-bold">{{appService.GetCurrentPosology(editedprescription).__dose[0].strengthneumerator
+                                                |
+                                                number}}{{appService.GetCurrentPosology(editedprescription).__dose[0].strengthneumeratorunit}}
+                                                /
+                                                {{appService.GetCurrentPosology(editedprescription).__dose[0].strengthdenominator |
+                                                number}}{{appService.GetCurrentPosology(editedprescription).__dose[0].strengthdenominatorunit}}</span>
+                                        </span>
+                                        <span
+                                            *ngIf="appService.GetCurrentPosology(editedprescription).dosetype=='descriptive' && !editedprescription.titration">
+                                            <span
+                                                class="empa-template-bold">{{appService.GetCurrentPosology(editedprescription).__dose[0].descriptivedose}}</span>
+                                        </span>
+                                    </span>
+                                    <span
+                                        *ngIf="appService.GetCurrentPosology(editedprescription).frequency=='variable' && !editedprescription.titration">
+                                        <span class="empa-template-bold">Variable</span>
+                                    </span>
+                                    <span
+                                        *ngIf="appService.GetCurrentPosology(editedprescription).frequency=='protocol' && !editedprescription.titration">
+                                        <span class="empa-template-bold">Protocol</span>
+                                    </span>
+
+                                </span>
+
+                            </div>
+
+                        </div>
+                        <div class="p-popover"
+                            *ngIf="appService.GetCurrentPosology(oldprescription).infusiontypeid && appService.GetCurrentPosology(oldprescription).__dose.length>0 && (appService.GetCurrentPosology(oldprescription).__dose[0].dosesize || appService.GetCurrentPosology(oldprescription).__dose[0].strengthneumerator || appService.GetCurrentPosology(oldprescription).__dose[0].descriptivedose)">
+                            <div class="p-popover-body-width-s1">
+                            </div>
+                            <div class="p-popover-body-width-s2">
+                                <span class="text-muted">DOSE</span>
+                            </div>
+                            <div class="p-popover-body-width-s3">
+                                <span *ngIf="appService.GetCurrentPosology(oldprescription).dosetype=='units'">
+                                    <span class="empa-template-bold">{{appService.GetCurrentPosology(oldprescription).__dose[0].dosesize|
+                                        number}}
+                                        {{appService.GetCurrentPosology(oldprescription).__dose[0].doseunit}}</span>
+                                </span>
+                                <span *ngIf="appService.GetCurrentPosology(oldprescription).dosetype=='strength'">
+                                    <span
+                                        class="empa-template-bold">{{appService.GetCurrentPosology(oldprescription).__dose[0].strengthneumerator
+                                        |
+                                        number}}{{appService.GetCurrentPosology(oldprescription).__dose[0].strengthneumeratorunit}} /
+                                        {{appService.GetCurrentPosology(oldprescription).__dose[0].strengthdenominator |
+                                        number}}{{appService.GetCurrentPosology(oldprescription).__dose[0].strengthdenominatorunit}}</span>
+                                </span>
+                                <span *ngIf="appService.GetCurrentPosology(oldprescription).dosetype=='descriptive'">
+                                    <span
+                                        class="empa-template-bold">{{appService.GetCurrentPosology(oldprescription).__dose[0].descriptivedose}}</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="p-popover" *ngIf="oldprescription.__medications.length>0 && primaryMedication.form">
+                            <div class="p-popover-body-width-s1">
+                            </div>
+                            <div class="p-popover-body-width-s2">
+                                <span class="text-muted">MEDICATION FORM</span>
+                            </div>
+                            <div class="p-popover-body-width-s3">
+                                <span *ngFor="let med of oldprescription.__medications"><span
+                                        *ngIf="med.form">{{med.form}}</span></span>
+                            </div>
+                            <div class="p-popover-body-width-s4">
+                                <span *ngFor="let med of editedprescription.__medications"><span
+                                        *ngIf="med.form">{{med.form}}</span></span>
+                            </div>
+                        </div>
+                        <div class="p-popover">
+                            <div class="p-popover-body-width-s1">
+                            </div>
+                            <div class="p-popover-body-width-s2">
+                                <span class="text-muted">DOSE INTERVAL</span>
+                            </div>
+                            <div class="p-popover-body-width-s3">
+                                <span class="dose-text" *ngIf="appService.GetCurrentPosology(oldprescription).frequency=='mor'">
+                                    Morning
+                                </span>
+                                <span class="dose-text" *ngIf="appService.GetCurrentPosology(oldprescription).frequency=='mid'">
+                                    Noon
+                                </span>
+                                <span class="dose-text" *ngIf="appService.GetCurrentPosology(oldprescription).frequency=='eve'">
+                                    Evening
+                                </span>
+                                <span class="dose-text" *ngIf="appService.GetCurrentPosology(oldprescription).frequency=='stat'">
+                                    Stat. dose
+                                </span>
+                                <span class="dose-text" *ngIf="appService.GetCurrentPosology(oldprescription).frequency=='x'">
+                                    {{appService.GetCurrentPosology(oldprescription).frequencysize}} time(s) per day
+                                </span>
+                                <span class="dose-text" *ngIf="appService.GetCurrentPosology(oldprescription).frequency=='h'">
+                                    Every {{appService.GetCurrentPosology(oldprescription).frequencysize}} hours
+                                </span>
+                                <span class="dose-text"
+                                    *ngIf="appService.GetCurrentPosology(oldprescription).daysofweek && appService.GetCurrentPosology(oldprescription).daysofweek.length>2">
+                                    Every {{chosenDaysold}}</span>
+                                <span class="dose-text"
+                                    *ngIf="appService.GetCurrentPosology(oldprescription).dosingdaysfrequencysize && appService.GetCurrentPosology(oldprescription).dosingdaysfrequencysize>0">
+                                    Every {{appService.GetCurrentPosology(oldprescription).dosingdaysfrequencysize}}
+                                    {{appService.GetCurrentPosology(oldprescription).dosingdaysfrequency}}</span>
+                                <span class="dose-text"
+                                    *ngIf="prescriptionAdditionalConditionsold !='No additional criteria'">
+                                    – {{prescriptionAdditionalConditionsold}}</span>
+                                <span *ngIf="appService.GetCurrentPosology(oldprescription).prn">When needed</span>
+                                <span *ngIf="appService.GetCurrentPosology(oldprescription).doctorsorder"> - Prescriber to confirm</span>
+                              
+                            </div>
+                            <div class="p-popover-body-width-s4">
+                                <span class="dose-text" *ngIf="appService.GetCurrentPosology(editedprescription).frequency=='mor'">
+                                    Morning
+                                </span>
+                                <span class="dose-text" *ngIf="appService.GetCurrentPosology(editedprescription).frequency=='mid'">
+                                    Noon
+                                </span>
+                                <span class="dose-text" *ngIf="appService.GetCurrentPosology(editedprescription).frequency=='eve'">
+                                    Evening
+                                </span>
+                                <span class="dose-text" *ngIf="appService.GetCurrentPosology(editedprescription).frequency=='stat'">
+                                    Stat. dose
+                                </span>
+                                <span class="dose-text" *ngIf="appService.GetCurrentPosology(editedprescription).frequency=='x'">
+                                    {{appService.GetCurrentPosology(editedprescription).frequencysize}} times per day
+                                </span>
+                                <span class="dose-text" *ngIf="appService.GetCurrentPosology(editedprescription).frequency=='h'">
+                                    Every {{appService.GetCurrentPosology(editedprescription).frequencysize}} hours
+                                </span>
+                                <span class="dose-text"
+                                    *ngIf="appService.GetCurrentPosology(editedprescription).daysofweek && appService.GetCurrentPosology(editedprescription).daysofweek.length>2">
+                                    Every {{chosenDaysnew}}</span>
+                                <span class="dose-text"
+                                    *ngIf="appService.GetCurrentPosology(editedprescription).dosingdaysfrequencysize && appService.GetCurrentPosology(editedprescription).dosingdaysfrequencysize>0">
+                                    Every {{appService.GetCurrentPosology(editedprescription).dosingdaysfrequencysize}}
+                                    {{appService.GetCurrentPosology(editedprescription).dosingdaysfrequency}}</span>
+                                <span class="dose-text"
+                                    *ngIf="prescriptionAdditionalConditionsnew !='No additional criteria'">
+                                    – {{prescriptionAdditionalConditionsnew}}</span>
+                                <span *ngIf="appService.GetCurrentPosology(editedprescription).prn">When needed</span>
+                                <span *ngIf="appService.GetCurrentPosology(editedprescription).doctorsorder">- Prescriber to confirm</span>
+                            </div>
+                        </div>
+                        <div class="p-popover">
+                            <div class="p-popover-body-width-s1">
+                            </div>
+                            <div class="p-popover-body-width-s2">
+                                <span class="text-muted">ADMINISTRATION TIME</span>
+                            </div>
+                            <div class="p-popover-body-width-s3"
+                                *ngIf="appService.GetCurrentPosology(oldprescription).frequency!='variable' && appService.GetCurrentPosology(oldprescription).frequency!='protocol'"
+                                style="max-height:200px;overflow-y:auto;overflow-x:hidden">
+                                <span *ngIf="appService.GetCurrentPosology(oldprescription).infusiontypeid">
+                                    <span *ngFor="let dose of appService.GetCurrentPosology(oldprescription).__dose;">
+                                        <span *ngIf="appService.GetCurrentPosology(oldprescription).infusiontypeid!='bolus'">
+                                            <span class="empa-template-bold" style="width:100px;display: inline-flex;"
+                                                *ngIf="distinctDateold.length>1">{{isShowDateold(dose)}} </span>
+                                            {{dose.dosestartdatetime | date : "HH:mm"}} <span
+                                                class="empa-template-bold">{{dose.infusionrate | number}}
+                                                <span *ngIf="dose.doseunit">{{dose.doseunit}}</span>
+                                                <span *ngIf="!dose.doseunit">ml/h</span>
+                                            </span><br />
+                                        </span>
+                                        <span *ngIf="appService.GetCurrentPosology(oldprescription).infusiontypeid=='bolus'">
+                                            <span class="empa-template-bold" style="width:100px;display: inline-flex;"
+                                                *ngIf="distinctDateold.length>1">{{isShowDateold(dose)}} </span>
+                                            {{dose.dosestartdatetime | date : "HH:mm"}} <span
+                                                class="empa-template-bold">{{dose.strengthneumerator |
+                                                number}}{{dose.strengthneumeratorunit}} / {{dose.strengthdenominator |
+                                                number}}{{dose.strengthdenominatorunit}}</span><br />
+                                        </span>
+
+                                    </span>
+                                </span>
+                                <span *ngIf="!appService.GetCurrentPosology(oldprescription).infusiontypeid">
+                                    <span *ngFor="let dose of appService.GetCurrentPosology(oldprescription).__dose;">
+                                        <span class="empa-template-bold" style="width:100px;display: inline-flex;"
+                                            *ngIf="distinctDateold.length>1">{{isShowDateold(dose)}} </span>
+                                        {{dose.dosestartdatetime
+                                        | date : "HH:mm"}} <br />
+                                    </span>
+                                </span>
+
+                            </div>
+
+                            <div class="p-popover-body-width-s4"
+                                *ngIf="appService.GetCurrentPosology(editedprescription).frequency!='variable' && appService.GetCurrentPosology(editedprescription).frequency!='protocol'"
+                                style="max-height:200px;overflow-y:auto;overflow-x:hidden">
+                                <span *ngIf="appService.GetCurrentPosology(editedprescription).infusiontypeid">
+                                    <span *ngFor="let dose of appService.GetCurrentPosology(editedprescription).__dose;">
+                                        <span *ngIf="appService.GetCurrentPosology(editedprescription).infusiontypeid!='bolus'">
+                                            <span class="empa-template-bold" style="width:100px;display: inline-flex;"
+                                                *ngIf="distinctDateold.length>1">{{isShowDateold(dose)}} </span>
+                                            {{dose.dosestartdatetime | date : "HH:mm"}} <span
+                                                class="empa-template-bold">{{dose.infusionrate | number}}
+                                                <span *ngIf="dose.doseunit">{{dose.doseunit}}</span>
+                                                <span *ngIf="!dose.doseunit">ml/h</span>
+                                            </span><br />
+                                        </span>
+                                        <span *ngIf="appService.GetCurrentPosology(editedprescription).infusiontypeid=='bolus'">
+                                            <span class="empa-template-bold" style="width:100px;display: inline-flex;"
+                                                *ngIf="distinctDateold.length>1">{{isShowDateold(dose)}} </span>
+                                            {{dose.dosestartdatetime | date : "HH:mm"}} <span
+                                                class="empa-template-bold">{{dose.strengthneumerator |
+                                                number}}{{dose.strengthneumeratorunit}} / {{dose.strengthdenominator |
+                                                number}}{{dose.strengthdenominatorunit}}</span><br />
+                                        </span>
+
+                                    </span>
+                                </span>
+                                <span *ngIf="!appService.GetCurrentPosology(editedprescription).infusiontypeid">
+                                    <span *ngFor="let dose of appService.GetCurrentPosology(editedprescription).__dose;">
+                                        <span class="empa-template-bold" style="width:100px;display: inline-flex;"
+                                            *ngIf="distinctDateold.length>1">{{isShowDateold(dose)}} </span>
+                                        {{dose.dosestartdatetime
+                                        | date : "HH:mm"}} <br />
+                                    </span>
+                                </span>
+
+                            </div>
+                        </div>
+
+                        <div class="p-popover">
+                            <div class="p-popover-body-width-s1">
+                            </div>
+                            <div class="p-popover-body-width-s2">
+                                <span class="text-muted">ROUTE OF ADMINISTRATION</span>
+                            </div>
+                            <div class="p-popover-body-width-s3">
+                                <span *ngFor="let r of oldprescription.__routes; let i = index">
+                                    <span *ngIf="r.isdefault" class="induction-label">{{r.route}}</span>
+                                    <span *ngIf="!r.isdefault">{{r.route}}</span>
+                                    <span *ngIf="i!=oldprescription.__routes.length-1">
+                                        ,
+                                    </span>
+                                </span>
+                            </div>
+                            <div class="p-popover-body-width-s4">
+                                <span *ngFor="let r of editedprescription.__routes; let i = index">
+                                    <span *ngIf="r.isdefault" class="induction-label">{{r.route}}</span>
+                                    <span *ngIf="!r.isdefault">{{r.route}}</span>
+                                    <span *ngIf="i!=editedprescription.__routes.length-1">
+                                        ,
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="p-popover" *ngIf="prescriptionsourceold || prescriptionsourcenew">
+                            <div class="p-popover-body-width-s1">
+                            </div>
+                            <div class="p-popover-body-width-s2">
+                                <span class="text-muted">SOURCE </span>
+                            </div>
+                            <div class="p-popover-body-width-s3">
+                                <span>{{prescriptionsourceold}}</span>
+                            </div>
+                            <div class="p-popover-body-width-s4">
+                                <span>{{prescriptionsourcenew}}</span>
+                            </div>
+                        </div>
+
+                        <div class="p-popover" *ngIf="oldprescription.indication || editedprescription.indication">
+                            <div class="p-popover-body-width-s1">
+                            </div>
+                            <div class="p-popover-body-width-s2">
+                                <span class="text-muted">INDICATION </span>
+                            </div>
+                            <div class="p-popover-body-width-s3">
+                                <span>
+                                    {{appService.GetIndication(oldprescription)}}
+                                </span>
+                            </div>
+                            <div class="p-popover-body-width-s4">
+                                <span>
+                                    {{appService.GetIndication(editedprescription)}}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="p-popover" *ngIf="oldprescription.comments  || editedprescription.comments">
+                            <div class="p-popover-body-width-s1">
+                            </div>
+                            <div class="p-popover-body-width-s2">
+                                <span class="text-muted">COMMENTS </span>
+                            </div>
+                            <div class="p-popover-body-width-s3">
+                                <span>{{oldprescription.comments}}</span>
+                            </div>
+                            <div class="p-popover-body-width-s4">
+                                <span>{{editedprescription.comments}}</span>
+                            </div>
+                        </div>
+                        <div class="p-popover">
+                            <div class="p-popover-body-width-s1">
+                            </div>
+                            <div class="p-popover-body-width-s2">
+                                <span class="text-muted">FROM </span>
+                            </div>
+                            <div class="p-popover-body-width-s3">
+                                <span>{{appService.GetCurrentPosology(oldprescription).prescriptionstartdate | date : "dd-MMM-yyyy
+                                    HH:mm"}}</span>
+                            </div>
+                            <div class="p-popover-body-width-s4">
+                                <span>{{appService.GetCurrentPosology(editedprescription).prescriptionstartdate | date : "dd-MMM-yyyy
+                                    HH:mm"}}</span>
+                            </div>
+                        </div>
+                        <div class="p-popover">
+                            <div class="p-popover-body-width-s1">
+                            </div>
+                            <div class="p-popover-body-width-s2">
+                                <span class="text-muted">TO </span>
+                            </div>
+                            <div class="p-popover-body-width-s3">
+                                <span>{{appService.GetCurrentPosology(oldprescription).prescriptionenddate | date : "dd-MMM-yyyy
+                                    HH:mm"}}</span>
+                            </div>
+                            <div class="p-popover-body-width-s4">
+                                <span>{{appService.GetCurrentPosology(editedprescription).prescriptionenddate | date : "dd-MMM-yyyy
+                                    HH:mm"}}</span>
+                            </div>
+                        </div>
+
+                        <div class="p-popover">
+                            <div class="p-popover-body-width-s1">
+                            </div>
+                            <div class="p-popover-body-width-s2">
+                                <span class="text-muted">PRESCRIBED BY </span>
+                            </div>
+                            <div class="p-popover-body-width-s3">
+                                <span>{{oldprescription.createdby}}</span>
+                            </div>
+                            <div class="p-popover-body-width-s4">
+                                <span>{{editedprescription.createdby}}</span>
+                            </div>
+                        </div>
+                        <div class="p-popover">
+                            <div class="p-popover-body-width-s1">
+                            </div>
+                            <div class="p-popover-body-width-s2">
+                                <span class="text-muted">PRESCRIBED ON</span>
+                            </div>
+                            <div class="p-popover-body-width-s3">
+                                <span>{{oldprescription.createdon | date : "dd-MMM-yyyy HH:mm"}}</span>
+                            </div>
+                            <div class="p-popover-body-width-s4">
+                                <span>{{editedprescription.createdon | date : "dd-MMM-yyyy HH:mm"}}</span>
+                            </div>
+                        </div>
+                        <div class="p-popover" *ngIf="oldprescription.titration || editedprescription.titration">
+                            <div class="p-popover-body-width-s1">
+                            </div>
+                            <div class="p-popover-body-width-s2">
+                                <span class="text-muted">TARGET VALUES</span>
+                            </div>
+
+                            <div class="p-popover-body-width-s3">
+                                <span *ngIf="oldprescription.titrationtype=='INR'">{{oldprescription.titrationtype}}
+                                    {{oldprescription.targetinr}}</span>
+                                <span *ngIf="oldprescription.titrationtype!='INR'">{{oldprescription.titrationtype}}
+                                    {{oldprescription.targetsaturation}}</span>
+                            </div>
+                            <div class="p-popover-body-width-s4">
+                                <span *ngIf="oldprescription.titrationtype=='INR'">{{editedprescription.titrationtype}}
+                                    {{editedprescription.targetinr}}</span>
+                                <span *ngIf="oldprescription.titrationtype!='INR'">{{editedprescription.titrationtype}}
+                                    {{editedprescription.targetsaturation}}</span>
+                            </div>
+                        </div>
+
+
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <!-- -------------------status change--------------------- -->
+    <div *ngIf="changestatus" class="modal fade bd-example-modal-lg"
+        [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
+        data-backdrop="static" style="display: block; " role="dialog" aria-labelledby="myExtraLargeModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog  modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-content modal-contenttemp">
+                    <h3 *ngIf="!showspinner" class="popover-title popover-header">
+                        {{commentsHeader}}
+                        <div class="close close-adminstration" (click)="closechangestatus()"></div>
+                    </h3>
+
+                </div>
+                <div>
+                    <div class="modal-body" style="max-height: 630px; overflow-y: scroll;">
+                        <div class="row" *ngIf="!typeOfMedicine">
+                            <div class="col-3">
+                                Review Status
+                            </div>
+                            <div class="col-3">
+                                <div *ngIf="currentreviewstatus == 'b86d30f4-d8db-484e-9c6f-1e67fbd89c8e'">
+                                    <div class="Pharmacist_review_not_required"></div>
+                                    {{getDiscription(currentreviewstatus)}}
+
+                                </div>
+                                <div *ngIf="currentreviewstatus == 'd219dd6d-aafc-4aa3-bad0-5ffcc87d0134'">
+                                    <div class="Waiting_for_pharmacist_review"></div>
+                                    {{getDiscription(currentreviewstatus)}}
+                                </div>
+                                <div *ngIf="currentreviewstatus == '19d89468-bdf2-46af-8899-75455d3048ef'">
+                                    <div class="Pharmacist_review_complete"></div>
+                                    {{getDiscription(currentreviewstatus)}}
+                                </div>
+                                <div *ngIf="currentreviewstatus == '8fb36f43-4b5f-487b-aa79-ed95d34ea70e'">
+                                    <div class="Pharmacist_reviewed_back_to_prescriber"></div>
+                                    {{getDiscription(currentreviewstatus)}}
+                                </div>
+
+
+                            </div>
+                            <div class="col-6">
+
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6" *ngIf="!typeOfMedicine && appService.AuthoriseAction('epma_change_pharmacyreviewstatus')">
+                                <div class="row">
+                                    <div class="col-6">
+                                        Status
+                                    </div>
+                                    <div class="col-6">
+
+
+                                    </div>
+
+                                </div>
+                                <table class="table">
+                                    <tr>
+                                        <td>
+                                            <div class="Pharmacist_review_not_required"
+                                                (click)="selectreviewstatuschange('b86d30f4-d8db-484e-9c6f-1e67fbd89c8e')"
+                                                [ngClass]="{'selectedreview' : currentreviewstatus == 'b86d30f4-d8db-484e-9c6f-1e67fbd89c8e'}">
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="Waiting_for_pharmacist_review"
+                                                (click)="selectreviewstatuschange('d219dd6d-aafc-4aa3-bad0-5ffcc87d0134')"
+                                                [ngClass]="{'selectedreview' : currentreviewstatus == 'd219dd6d-aafc-4aa3-bad0-5ffcc87d0134'}">
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="Pharmacist_review_complete"
+                                                (click)="selectreviewstatuschange('19d89468-bdf2-46af-8899-75455d3048ef')"
+                                                [ngClass]="{'selectedreview' : currentreviewstatus == '19d89468-bdf2-46af-8899-75455d3048ef'}">
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="Pharmacist_reviewed_back_to_prescriber"
+                                                (click)="selectreviewstatuschange('8fb36f43-4b5f-487b-aa79-ed95d34ea70e')"
+                                                [ngClass]="{'selectedreview' : currentreviewstatus == '8fb36f43-4b5f-487b-aa79-ed95d34ea70e'}">
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                            </div>
+                            <div [ngClass]="{'col-6': !typeOfMedicine, 'col-12': typeOfMedicine}">
+                                Comments
+                                <textarea class="w-100 p-3 form-control" [autoGrow]=5 id="w3review" name="w3review"
+                                    rows="4" [(ngModel)]="pharmacyComments"></textarea>
+                                <span class="text-danger">{{errormesage}}</span>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 0.4rem 1rem;">
+
+                    <button data-dismiss="modal" type="button" class="btn btn-primary"
+                        (click)="currentreviewstatuschange()">Save</button>
+                    <button data-dismiss="modal" type="button" class="btn btn-secondary"
+                        (click)="closechangestatus()">Cancel</button>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

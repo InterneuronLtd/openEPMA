@@ -1,0 +1,397 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div class="pdfUseOnly" *ngIf="!customTemplate">
+  <div class="container" #dischargeSummaryElement>
+    <!-- <img src="../../../assets/images/epma/line-chart.jpg" width="200" height="200"> -->
+    <div class="row">
+      <div class="col-7 text-center h5">
+        <span class="fs-1"> Discharge Summary</span>
+      </div>
+    </div>
+    <div class="patient-margin">
+      <div class="row patient-details prescription-type">
+        <div class="col-3 text-center">
+         Name: <strong>{{appService.patientDetails.fullname}}</strong>
+        </div>
+        <div class="col-3 text-center">
+          NHS Number: <strong>{{' ' + appService.patientDetails.nhsnumber + ' '}}</strong>
+        </div>
+        <div class="col-3 text-center">
+
+        </div>
+      </div>
+      <div class="row patient-details prescription-type">
+        <div class="col-3 text-center">
+          DOB: <strong>{{' ' + appService.patientDetails.born + ' '}}</strong>
+        </div>
+        <div class="col-3 text-center">
+          Hospital Number: <strong>{{' ' + appService.patientDetails.hospitalnumber + ' '}}</strong>
+        </div>
+        <div class="col-3 text-center">
+        </div>
+      </div>
+      <div class="row patient-details prescription-type patient-details-margin">
+        <div class="col-3 text-center">
+          {{'Height: ' + appService.refHeightValue + ' ' + 'cms'}}
+        </div>
+        <div class="col-3 text-center">
+          {{'Weight: ' + appService.refWeightValue + ' ' + 'kg'}}
+        </div>
+      </div>
+    </div>
+
+    <ng-container *ngIf="unChangedPres && unChangedPres.length">
+      <div class="row">
+        <div class="col-12 card-header-pdf  different-prescriptions header-height"><span> Unchanged </span></div>
+      </div>
+      <div class="prescription-space" *ngFor="let unchanged of unChangedPres; let i = index">
+
+        <div class="row">
+          <div class="col-1">
+
+          </div>
+          <div class="col-5">
+            <span class="prescription-type"><strong>{{unchanged.__medications[0].name}}</strong></span>
+            <div *ngIf="appService.GetCurrentPosology(unchanged).frequency == 'protocol'">
+
+              <!-- <span>Description: </span> -->
+              <div class="doseLabel">Dose: </div>
+              <div class="dose" *ngFor="let dse of unchanged.showDoses; let i = index">
+                <span>Day {{i+1}} :</span> {{dse}}
+              </div>
+            </div>
+            <div *ngIf="appService.GetCurrentPosology(unchanged).frequency == 'variable'">
+              <!-- <span>Description: </span> -->
+              <div>
+                <span class="doseLabel">Dose: </span>
+                <span class="dose">{{unchanged.showDoses}}</span>
+              </div>
+            </div>
+            <div
+              *ngIf="(appService.GetCurrentPosology(unchanged).frequency !== 'protocol') && (appService.GetCurrentPosology(unchanged).frequency !== 'variable')">
+              <!-- <span>Description:</span> -->
+              <div>
+                <span class="doseLabel">Dose: </span>
+                <span class="dose">{{unchanged.showDoses}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-1">
+
+          </div>
+          <div class="col-5">
+            <div *ngIf="unchanged.comments">
+              <span>Comments: </span>
+              <span>{{unchanged.comments}}</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </ng-container>
+    <ng-container *ngIf="changedPres && changedPres.length">
+      <div class="row">
+        <div class="col-12 card-header-pdf  different-prescriptions header-height"><span> Changed </span></div>
+      </div>
+      <div class="prescription-space" *ngFor="let changed of changedPres; let i = index">
+
+        <div class="row">
+          <div class="col-1">
+
+          </div>
+          <div class="col-5">
+            <span class="prescription-type"><strong>{{changed.__medications[0].name}}</strong></span>
+            <div *ngIf="appService.GetCurrentPosology(changed).frequency == 'protocol'">
+
+              <!-- <span>Description: </span> -->
+              <div class="doseLabel">Dose: </div>
+              <div class="dose" *ngFor="let dse of changed.showDoses; let i = index">
+                <span>Day {{i+1}} :</span> {{dse}}
+              </div>
+            </div>
+            <div *ngIf="appService.GetCurrentPosology(changed).frequency == 'variable'">
+              <!-- <span>Description: </span> -->
+              <div>
+                <span class="doseLabel">Dose: </span>
+                <span class="dose">{{changed.showDoses}}</span>
+              </div>
+            </div>
+            <div *ngIf="(appService.GetCurrentPosology(changed).frequency !== 'protocol') && (appService.GetCurrentPosology(changed).frequency !== 'variable')">
+              <!-- <span>Description:</span> -->
+              <div>
+                <span class="doseLabel">Dose: </span>
+                <span class="dose">{{changed.showDoses}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-1">
+
+          </div>
+          <div class="col-5">
+            <div *ngIf="changed.comments">
+              <span>Comments: </span>
+              <span>{{changed.comments}}</span>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-1">
+
+          </div>
+          <div class="col-5">
+            <div *ngIf="changed.reasonforediting">
+              <span>Change Reason: </span>
+              <span>{{changed.reasonforediting}}</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </ng-container>
+    <ng-container *ngIf="stoppedPres && stoppedPres.length">
+      <div class="row">
+        <div class="col-12 card-header-pdf  different-prescriptions header-height"><span> Stopped </span></div>
+      </div>
+      <div class="prescription-space" *ngFor="let stopped of stoppedPres; let i = index">
+
+
+        <div class="row">
+          <div class="col-1">
+
+          </div>
+          <div class="col-7">
+            <span class="prescription-type"><strong>{{stopped.__medications[0].name}}</strong></span>
+            <div *ngIf="appService.GetCurrentPosology(stopped).frequency == 'protocol'">
+
+              <!-- <span>Description: </span> -->
+              <div class="doseLabel">Dose: </div>
+              <div class="dose" *ngFor="let dse of stopped.showDoses; let i = index">
+                <span>Day {{i+1}} :</span> {{dse}}
+              </div>
+            </div>
+            <div *ngIf="appService.GetCurrentPosology(stopped).frequency == 'variable'">
+              <!-- <span>Description: </span> -->
+              <div>
+                <span class="doseLabel">Dose: </span>
+                <span class="dose">{{stopped.showDoses}}</span>
+              </div>
+            </div>
+            <div *ngIf="(appService.GetCurrentPosology(stopped).frequency !== 'protocol') && (appService.GetCurrentPosology(stopped).frequency !== 'variable')">
+              <!-- <span>Description:</span> -->
+              <div>
+                <span class="doseLabel">Dose: </span>
+                <span class="dose">{{stopped.showDoses}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-1">
+
+          </div>
+          <div class="col-5">
+            <div *ngIf="stopped.comments">
+              <span>Comments: </span>
+              <span>{{stopped.comments}}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-1">
+
+          </div>
+          <div class="col-5">
+            <div>
+              <span>Reason : </span>
+              <span>{{GetDischargeSummaryMessage(stopped,'SUMNO','stopped')}}</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </ng-container>
+    <ng-container *ngIf="suspendedPres && suspendedPres.length">
+      <div class="row">
+        <div class="col-12 card-header-pdf  different-prescriptions header-height"><span> Suspended </span></div>
+      </div>
+      <div class="prescription-space" *ngFor="let suspended of suspendedPres; let i = index">
+
+        <div class="row">
+          <div class="col-1">
+
+          </div>
+          <div class="col-5">
+            <span class="prescription-type"><strong>{{suspended.__medications[0].name}}</strong></span>
+            <div *ngIf="appService.GetCurrentPosology(suspended).frequency == 'protocol'">
+
+              <!-- <span>Description: </span> -->
+              <div class="doseLabel">Dose: </div>
+              <div *ngFor="let dse of suspended.showDoses; let i = index">
+                <span class="dose">Day {{i+1}} :</span> {{dse}}
+              </div>
+            </div>
+            <div *ngIf="appService.GetCurrentPosology(suspended).frequency == 'variable'">
+              <!-- <span>Description: </span> -->
+              <div>
+                <span class="doseLabel">Dose: </span>
+                <span class="dose">{{suspended.showDoses}}</span>
+              </div>
+            </div>
+            <div
+              *ngIf="(appService.GetCurrentPosology(suspended).frequency !== 'protocol') && (appService.GetCurrentPosology(suspended).frequency !== 'variable')">
+              <!-- <span>Description:</span> -->
+              <div>
+                <span class="doseLabel">Dose: </span>
+                <span class="dose">{{suspended.showDoses}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-1">
+
+          </div>
+          <div class="col-5">
+            <div *ngIf="suspended.comments">
+              <span>Comments: </span>
+              <span>{{suspended.comments}}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-1">
+
+          </div>
+          <div class="col-5">
+            <div>
+              <span>Reason : </span>
+              <span>{{GetDischargeSummaryMessage(suspended,'SUMNO','suspended')}}</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </ng-container>
+    <ng-container *ngIf="newPres && newPres.length">
+      <div class="row">
+        <div class="col-12 card-header-pdf  different-prescriptions header-height"><span> New </span></div>
+      </div>
+      <div class="prescription-space" *ngFor="let ne of newPres; let i = index">
+
+        <div class="row">
+          <div class="col-1">
+            <span class='{{"layers-container therapy-type "}}'></span>
+          </div>
+          <div class="col-5">
+
+            <span class="prescription-type"><strong>{{ne.__medications[0].name}}</strong></span>
+            <div *ngIf="appService.GetCurrentPosology(ne).frequency == 'protocol'">
+              <!-- <span>Description: </span> -->
+              <div class="doseLabel">Dose: </div>
+              <div class="dose" *ngFor="let dse of ne.showDoses; let i = index">
+                <span>Day {{i+1}} :</span> {{dse}}
+              </div>
+            </div>
+            <div *ngIf="appService.GetCurrentPosology(ne).frequency == 'variable'">
+              <!-- <span>Description: </span> -->
+              <div>
+                <span class="doseLabel">Dose: </span>
+                <span class="dose">{{ne.showDoses}}</span>
+              </div>
+            </div>
+            <div *ngIf="(appService.GetCurrentPosology(ne).frequency !== 'protocol') && (appService.GetCurrentPosology(ne).frequency !== 'variable')">
+              <!-- <span>Description:</span> -->
+              <div>
+                <span class="doseLabel">Dose: </span>
+                <span class="dose">{{ne.showDoses}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-1">
+
+          </div>
+          <div class="col-5">
+            <div *ngIf="ne.comments">
+              <span>Comments: </span>
+              <span>{{ne.comments}}</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </ng-container>
+    <ng-container *ngIf="dischargeComments">
+      <div class="row">
+        <div class="col-12 card-header-pdf  different-prescriptions header-height"><span> Discharge Notes </span></div>
+      </div>
+      <div class="row">
+        <div class="col-1">
+
+        </div>
+        <div class="col-5">
+          <div class="dose prescription-space">
+            <span>{{dischargeComments.notes}}</span>
+
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-1">
+
+        </div>
+        <div class="col-5">
+          <div class="dose prescription-space float-left" *ngIf="notesDisplayData?.length > 0">
+            <span>{{notesDisplayData[0].modifiedon | date:"dd-MMM-yyyy"}}</span>&nbsp;&nbsp;
+            <span>{{notesDisplayData[0].modifiedby}}</span>
+          </div>
+          <div class="dose prescription-space float-left" *ngIf="notesDisplayData?.length == 0">
+            <span></span>&nbsp;&nbsp;
+            <span></span>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+    <div class="row patient-details prescription-type doctor-details-margin">
+      <div class="col-3 text-center">
+      </div>
+      <div class="col-5 text-center">
+      </div>
+      <div class="col-2 text-center">
+        Prescribed by:
+      </div>
+    </div>
+  </div>
+</div>
+<div class="patient-margin margin-bottom table-dimensions" *ngIf="customTemplate" #dischargeSummaryElement>
+  <ng-container *ngTemplateOutlet="customTemplate">
+
+  </ng-container>
+</div>

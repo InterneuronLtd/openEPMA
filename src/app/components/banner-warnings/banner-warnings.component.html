@@ -1,0 +1,74 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div id="bannerwarnings" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog  modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-body p-0 pt-0">
+                <div>
+                    <h3 class="popover-title popover-header medication-header">Missing Information
+                        <div class="close close-banner" (click)="CloseBannerWarnings()"></div>
+                    </h3>
+        
+                </div>
+                <div class="dropdown-content float-left  pl-1 pr-1" style="z-index: 5; width: 100%;">
+                    <ul class="list-group mb-1" *ngFor="let warning of mainWarnings">
+                        <li class="list-group-item" *ngIf="warning.__isdismissed!=true">
+                            <strong>
+                                <a href="javascript:void(0)">
+                                    <img src="../../../assets/images/epma/Long delay of confirmation.svg">
+                                </a>
+                                &nbsp; {{
+                                warning.warningheader }} </strong>
+                            <p [innerHTML]="warning.warningdetail"> </p>
+                            <div *ngIf="warning.__canbedismissed && warning.__dismissreasonrequired">
+                                <textarea placeholder="Reason for dismissing"
+                                    [ngClass]="{'form-control mb-1':true, 'border-danger':warning.__dismissmessageerror}"
+                                    [autoGrow]=5 rows="3" [(ngModel)]="warning.__dismissmessage"></textarea>
+
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <div *ngIf="warning.__canbedismissed">
+                                    <button type="button" class="btn btn-sm btn-primary"
+                                        (click)="DismissBannerWarning(warning)">Dismiss</button>
+                                </div>
+                                <div *ngIf="warning.__canberesolved">
+                                    <button type="button" class="btn btn-sm btn-primary ml-2"
+                                        (click)="ResolveBannerWarning(warning)">Resolve</button>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <div>
+                    <button hidden type="button" class="btn btn-secondary ml-2" data-dismiss="modal"
+                        #close_bannerwarnings>Close</button>
+                </div>
+                <span *ngIf="saveerror">There was an error saving override reason</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<button type="button" hidden data-toggle="modal" data-target="#bannerwarnings" data-backdrop="static"
+    data-keyboard="false" #open_bannerwarnings></button>

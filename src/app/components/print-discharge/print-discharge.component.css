@@ -1,0 +1,125 @@
+.check {
+  color: red;
+}
+
+.pdfUseOnly {
+  visibility: hidden;
+  font-size: 15px;
+}
+
+
+.doseLabel {
+  /* color:skyblue; */
+  font-size: 10px;
+}
+
+.dose {
+  font-size: 10px;
+}
+
+.different-prescriptions {
+  font-size: 12px;
+}
+
+.prescription-type {
+  font-size: 12px;
+}
+
+.dischargeNotes {
+  padding-left: 7px;
+}
+
+.patient-details-margin {
+  margin-bottom: 10px;
+}
+
+.doctor-details-margin{
+  margin-top: 20px;
+}
+
+
+/* ------- therapy type icon css ----------------*/
+.therapy-type {
+  background-size: 100%;
+  width: 45px;
+  height: 45px
+}
+.BasicFluids {
+  background-image: url(/assets/images/epma/therapy/Basic_Fluids.svg);
+}
+.BloodProduct {
+  background-image: url(/assets/images/epma/therapy/Blood_Product.svg);
+}
+.Infusion {
+  background-image: url(/assets/images/epma/therapy/Infusion.svg);
+}
+.ContinuousInfusion {
+  background-image: url(/assets/images/epma/therapy/Continuous_Infusion.svg);
+}
+.Infusion {
+  background-image: url(/assets/images/epma/therapy/Infusion.svg);
+}
+.Inhalation {
+  background-image: url(/assets/images/epma/therapy/Inhalation.svg);
+}
+.Injection {
+  background-image: url(/assets/images/epma/therapy/Injection.svg);
+}
+.MentalHealth {
+  background-image: url(/assets/images/epma/therapy/Mental_Health.svg);
+}
+.TabletorCapsule {
+  background-image: url(/assets/images/epma/therapy/Tablet_Or_Capsule.svg);
+}
+.therapy {
+  background-image: url(/assets/images/epma/therapy/Medication_Type_Not_Defined.svg);
+}
+.continued-therapy {
+  background-image: url(/assets/images/epma/therapy/Continued_Therapy.svg);
+}
+
+.layers-container {
+  position: relative;
+  float: right;
+  background-position: center;
+  background-repeat: no-repeat;
+  margin: 0;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+.card-header-pdf {
+  padding: 0rem, 1rem;
+  margin-bottom: 0;
+  background-color: #f0f3f5;
+  border-bottom: 1px solid #c8ced3;
+}
+
+.patient-details {
+  color: darkblue;
+}
+
+.header-height {
+  height: 20px;
+}
+
+.prescription-space {
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+.patient-margin {
+  margin-left: 80px;
+}
+
+.bottom-margin {
+  margin-bottom: 50px;
+}
+
+.table-dimensions{
+  width: 700px;
+  font-size: 10px;
+}
+
+

@@ -1,0 +1,65 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div class="modal-header" style="padding: 0.5rem 1rem; background-color: #E6E6E6">
+  <h6 class="modal-title" id="lblRecordHeight">{{headerLabelText}}</h6>
+  <button type="button" class="close" (click)="bsModalRef.hide()" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+<div class="modal-body">
+  <div class="alert alert-light border border-secondary">
+    <div class="row">
+      <div class="col-5">
+        <input type="number" min="1" class="form-control" (input)="inputCheck($event)" [(ngModel)]="height" [ngClass]="(errorMessage!='')?'is-invalid':''" style="width:100px;"/>
+      </div>
+      <div class="col-1">
+        <label class="text-dark">{{unitOfMeasure}}</label>
+      </div>
+      <div class="col-6">
+      </div>
+    </div>
+    <div class="row" *ngIf="errorMessage!=''">
+      <!--<div class="alert alert-danger" *ngIf="errorMessage!=''" role="alert" [innerHtml]="errorMessage"></div>-->
+      <label class="text-danger">{{errorMessage}}</label>
+    </div>
+    <div class="row" *ngIf="invalidHeight">
+      <label class="text-danger">Please enter valid height format e.g 123.00</label>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <div class="row" *ngIf="!isSaving">
+      <div class="col-sm-6">
+        <button type="button" class="btn btn-info btn-block" (click)="saveHeightObs()">Confirm</button>
+      </div>
+      <div class="col-sm-6">
+        <button type="button" class="btn btn-secondary btn-block" (click)="bsModalRef.hide()">Cancel</button>
+      </div>
+    </div>
+    <div class="row" *ngIf="isSaving">
+      <div class="col text-right">
+        <button type="button" class="btn btn-info" disabled>
+          <span class="spinner-border spinner-border-sm"></span>
+          Saving..
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,41 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div id="warningsmod" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog  modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-body p-0 pt-0">
+                <div [appWarningsLoader]="componentModuleData" (moduleUnLoad)="OnWarningsModuleUnLoad($event)"
+                    (moduleLoadComplete)="OnWarningsLoadComplete($event)"></div>
+            </div>
+            <div class="modal-footer">
+                <button  *ngIf="appService.warningService && appService.warningServiceMODContext && appService.warningServiceMODContext.loader" class="btn btn-primary" type="button" disabled>
+                    <span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>
+                    Refresh
+                  </button>
+                <button type="button"  *ngIf="appService.warningService && appService.warningServiceMODContext  && !appService.warningServiceMODContext.loader" (click)="RefreshWarningsFromApi()" class="btn btn-primary">Refresh</button>
+                <button type="button"  class="btn btn-secondary" data-dismiss="modal" #close_warningsmod>Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<button type="button" hidden data-toggle="modal" data-target="#warningsmod" data-backdrop="static" data-keyboard="false"
+    #open_warningsmod></button>

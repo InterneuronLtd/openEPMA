@@ -1,0 +1,33 @@
+.table {
+    display: table;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+  .tr {
+    display: table-row;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+  .td {
+    display: table-cell;
+    padding: 0;
+    margin: 0;
+    min-width: 150px;
+    border: 1px solid lightgray;
+    font-size: 12px;
+  }
+  .empa-header-cell {
+    background: 	#eff1f5;
+    font-size: 14px;
+    padding: 1px;
+  }
+  ::ng-deep .badge-position {
+    position: unset!important;
+  }
+/* .date-header {
+  position: fixed;
+  z-index: 10;
+}
+ */

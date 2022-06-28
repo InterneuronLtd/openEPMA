@@ -1,0 +1,265 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div *ngIf="!showAcknowledgeReminder" class="modal fade bd-example-modal-lg"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
+    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg  modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <h3 class="popover-title popover-header">
+                Reminders
+                <div class="close close-medication" (click)="closeReminderPopup()"></div>
+            </h3>
+
+            <div class="modal-body" style="max-height: 630px; overflow-y: scroll;">
+                <div class="row mt-1">
+                    <div class="col-12">
+
+                        <div class="row" *ngFor="let r of reminderList">
+                            <div class="col-12" >
+                                <div class="pb-1"><strong>{{r.status}}</strong></div>
+                                <table *ngIf="r.reminder.length>0" class="table table-responsive border-0" width="100%" style="overflow: hidden;">
+                                    <tr *ngFor="let d of r.reminder">
+                                        <td style="width: 40%;"><strong>{{d.__calculatedactivationdatetime | date : 'dd-MMM-yyyy HH:mm'}}
+                                            {{d.__noactivationdatetime}}
+                                        </strong> 
+                                            <br />
+                                           <span class="text-break"> {{d.message}}</span>
+                                        </td>
+                                        <td style="width: 10%;">
+                                            <span *ngIf="!d.issystem">{{d.lastmodifiedby}}</span>
+                                            <span *ngIf="d.issystem"> System Generated</span>
+                                        </td>
+                                        <td style="width:5%;">
+                                            <div *ngIf="d.ackstatus=='ivtooralset'"
+                                                class="template-switch-to-oral-set reminder-icon"></div>
+                                            <div *ngIf="d.ackstatus=='ivtooralactive'"
+                                                class="template-switch-to-oral-acive reminder-icon"></div> 
+                                            <div *ngIf="d.ackstatus=='ivtooraloverdue'"
+                                                class="template-switch-to-oral-overdue reminder-icon"></div>
+
+                                            <div *ngIf="d.ackstatus=='active'"
+                                                class="template-reminder-icon-active reminder-icon"></div>
+                                            <div *ngIf="d.ackstatus=='overdue'"
+                                                class="template-reminder-icon-overdue reminder-icon"></div>
+                                            <div *ngIf="d.ackstatus=='set'"
+                                                class="template-reminder-icon-set reminder-icon"></div>
+                                        </td>
+
+                                        <td style="width: 45%;">
+                                            <span *ngIf="d.isacknowledged">
+                                                <div class="row">
+                                                    <div class="col-7">
+                                                        <strong> {{d.acknowledgedon | date : 'dd-MMM-yyyy HH:mm'}}</strong>
+                                                       
+                                                        <br />
+                                                        <span class="text-break">{{d.ackmsg}}</span>
+                                                    </div>
+                                                    <div class="col-5">
+                                                      {{d.acknowledgedby}}
+                                                    </div>
+                                                </div>
+
+                                            </span>
+                                            <input
+                                                *ngIf="r.status=='Pending' && d.activationdatetime && d.lastmodifiedby && appService.loggedInUserName && d.lastmodifiedby.trim().toLowerCase()== appService.loggedInUserName.trim().toLowerCase() && appService.isCurrentEncouner"
+                                                type="button" class="btn btn-primary btn-sm"
+                                                (click)="openEditReminderPopup(d)" value="Edit">
+                                            <input *ngIf="!d.isacknowledged && r.status=='Active' && appService.isCurrentEncouner" type="button"
+                                                class="btn btn-primary btn-sm" (click)="openAcknowledgeReminderPopup(d)"
+                                                value="Acknowledge">
+                                        </td>
+
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-12" *ngIf="r.reminder.length==0">
+                                No {{r.status}} reminders
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 0.4rem 0rem;">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-6 text-left">
+                            <button style="color:white" type="button"  *ngIf="appService.isCurrentEncouner" (click)="openNewReminderPopup()"
+                                class="btn btn-sm btn-info mr-3"> +</button>
+                        </div>
+                        <div class="col-6 text-right">
+
+                            <button  data-dismiss="modal" type="button"
+                                class="btn btn-sm btn-secondary" (click)="closeReminderPopup()">Close</button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div *ngIf="showNewReminder" class="modal fade bd-example-modal-lg"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
+    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg  modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <h3 class="popover-title popover-header">
+                {{reminderHeader}}
+                <div *ngIf="!showSpinner" class="close close-medication" (click)="closeNewReminderPopup()"></div>
+            </h3>
+            <form #reminderForm="ngForm" (ngSubmit)="reminderForm.form.valid && saveNewReminder()">
+                <div class="modal-body">
+                    <div class="row mt-1">
+                        <div class="col-4">
+                            Reminder text
+                        </div>
+                        <div class="col-8">
+                            <textarea #textmessage autoGrow name="message" #message="ngModel"
+                                [ngClass]="{ 'is-invalid': reminderForm.submitted && message.invalid }" required
+                                [(ngModel)]="reminder.message" maxlength="256" class="form-control" rows="1"></textarea>
+                                {{ textmessage.focus() }}
+                        </div>
+                    </div>
+                    <div class="row mt-1">
+                        <div class="col-4">
+                            Reminder date/time
+                        </div>
+                        <div class="col-8">
+                            <span style="display: flex;">
+                                <input autocomplete="off" onkeydown="event.preventDefault()" type="text" required
+                                    [minDate]="minDate" [maxDate]="maxDate" name="stardate" #stardate="ngModel"
+                                    [ngClass]="{ 'is-invalid': reminderForm.submitted && stardate.invalid }"
+                                    [(ngModel)]="startdate" placeholder="Select Date" class="form-control"
+                                    style="width:120px" bsDatepicker
+                                    [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'bg-light' }" />
+                                <input type="text" [disabled]="!startdate" name="startime" [(ngModel)]="startime"
+                                    name="startime" style="width:80px;" class="form-control" placeholder="HH:mm"
+                                    [appTimepicker]="timepicker1">
+                                <app-time-picker #timepicker1 (onTimeSelected)="onTimeSelected($event)">
+                                </app-time-picker>
+                            </span>
+                            <span class="text-danger" *ngIf="inValidTime">Please select a time that is greater than
+                                current time</span>
+                        </div>
+                    </div>
+                    <div class="row mt-1">
+                        <div class="col-4">
+                            Make acknowledgement comment mandatory
+                        </div>
+                        <div class="col-8 float-left">
+                            <input name="isackmandatory" type="checkbox" [(ngModel)]="reminder.isackmandatory">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 0.4rem 0rem;">
+                    <div class="container">
+                        <div class="row">
+                             
+                            <div class="col-12 text-right">
+                                <span *ngIf="validationMesssage" class="text-danger mr-2">{{validationMesssage}}</span>
+                                <button style="color:white" type="submit" class="btn btn-sm btn-info mr-3"> <span
+                                        class="spinner-border spinner-border-sm" *ngIf="showSpinner" role="status"
+                                        aria-hidden="true"></span>Confirm</button>
+                                <button *ngIf="!showSpinner" style="color:white" data-dismiss="modal" type="button"
+                                    class="btn btn-sm btn-secondary" (click)="closeNewReminderPopup()">Cancel</button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div *ngIf="showAcknowledgeReminder" class="modal fade bd-example-modal-lg"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
+    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg  modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <h3 class="popover-title popover-header">
+                Acknowledgement
+                <div *ngIf="!showSpinner" class="close close-medication" (click)="closeAcknowledgePopup()"></div>
+            </h3>
+
+            <div class="modal-body">
+                <div class="row mt-1">
+                    <div class="col-12">
+                        <table width="100%" style="border-top:none;">
+                            <tr>
+                                <td style="width: 12%;">{{reminder.__calculatedactivationdatetime | date : 'dd-MMM-yyyy HH:mm'}}</td>
+                                <td class="text-break">{{reminder.message}}</td>
+                                <td>
+                                    <div *ngIf="reminder.ackstatus=='ivtooral'"
+                                        class="template-switch-to-oral reminder-icon"></div>
+                                    <div *ngIf="reminder.ackstatus=='active'"
+                                        class="template-reminder-icon-active reminder-icon"></div>
+                                    <div *ngIf="reminder.ackstatus=='overdue'"
+                                        class="template-reminder-icon-overdue reminder-icon"></div>
+                                    <div *ngIf="reminder.ackstatus=='set'"
+                                        class="template-reminder-icon-set reminder-icon"></div>
+                                </td>
+                                <td><span *ngIf="!reminder.issystem">{{reminder.lastmodifiedby}}</span>
+                                    <span *ngIf="reminder.issystem"> System Generated</span>
+                                </td>
+
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="row mt-1">
+                    <div class="col-12">
+                        <textarea placeholder="Add notes" maxlength="256" class="form-control" [(ngModel)]="acknowledgeNote" rows="3"
+                            width="100%"></textarea>
+                        <span *ngIf="reminder.isackmandatory">
+                            <span class="text-danger" *ngIf="!acknowledgeNote && isAcknowledgeNoteRequired">This
+                                reminder requires notes to be recorded when acknowledging. Please add notes.</span>
+                        </span>
+
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer" style="padding: 0.4rem 0rem;">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-6 text-left">
+
+                        </div>
+                        <div class="col-6 text-right">
+                            <button style="color:white" type="button" (click)="saveAcknowledgeReminder()"
+                                class="btn btn-sm btn-info mr-3"> <span class="spinner-border spinner-border-sm"
+                                    *ngIf="showSpinner" role="status" aria-hidden="true"></span>Confirm</button>
+                            <button *ngIf="!showSpinner" style="color:white" data-dismiss="modal" type="button"
+                                class="btn btn-sm btn-secondary" (click)="closeAcknowledgePopup()">Cancel</button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

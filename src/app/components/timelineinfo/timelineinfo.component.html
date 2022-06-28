@@ -1,0 +1,119 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div *ngIf="editpopuptypetype !='Undo Cancel'" class="modal fade bd-example-modal-lg" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal
+    tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+    aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog  modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="padding: 0.5rem 1rem; background-color: #E6E6E6">
+                <b>{{headerString}}</b>
+                <button type="button" class="close" data-dismiss="modal" (click)="closepopup()" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+           
+            <div class="modal-body">
+                <div class="card">
+                    <div class="modal-body ">
+                        <!--Transfer-->
+                        <div  *ngIf="editpopuptypetype=='Transfer'" >
+                                <div class="row">
+                                    <div class="col">
+                                        <small>Transfer to</small>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <p></p>
+                                </div>
+                                <div class="row">
+                                    <div class="col-2"></div>
+                                    <div class="col-4 text-center">
+                                        <input type="text" style="width:8em;"  class="form-control mb-3" placeholder="Date"
+                                        bsDatepicker
+                                        [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true }"
+                                        [(ngModel)]="startDate" />
+                                    </div>
+                                    <div class="col-3 text-center">
+                                        <input type="text" class="form-control" style="width:8em;" placeholder="Time" 
+                                        [appTimepicker]="starttimepicker" [(ngModel)]="startTime">
+                                        <app-time-picker #starttimepicker (onTimeSelected)="onTimeSelected($event)" [setTimeTo]='startTime'></app-time-picker>
+                                    </div>
+                                </div>                   
+
+                            <!--<input type="text" style="width:8em;" [ngxTimepicker]="fullTime" class="form-control mb-3" [format]="24" 
+                            placeholder="Start Time" [(ngModel)]="startTime"> 
+                            <ngx-material-timepicker [disableAnimation]="true" [theme]="darkTheme" #fullTime>
+                            </ngx-material-timepicker>-->
+
+
+                        </div>
+                        <!--Doctor Comment-->
+                        <div *ngIf="editpopuptypetype=='Prescriber\'s comments'" class="form-group">
+                            <app-prescription-template [prescription]="prescription" [administration]="administration" componenttype="additional">
+                            </app-prescription-template>                                        
+                            <hr>
+                            <small>Prescriber's comments</small>
+                            <textarea [disabled]="!appService.isCurrentEncouner"  maxlength="1024" class="form-control" rows="4" [(ngModel)]="doctorComments"></textarea>
+                        </div>
+                        <!--Cancel Event-->
+                        <div *ngIf="editpopuptypetype=='Cancel Event'" class="form-group">
+                            <small>Comment</small>
+                            <textarea [disabled]="!appService.isCurrentEncouner" maxlength="1024" class="form-control" rows="4" [(ngModel)]="cancelEventComments"></textarea>
+                        </div>                        
+                        <label><small style="color: red;">{{this.validationMessage}}</small></label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 0rem 0rem;">
+                <div class="container">
+                    <div class="row">
+                        <div class="col text-right" *ngIf="!isSaving && appService.isCurrentEncouner">
+                            <button type="button" class="btn btn-info btn-sm" (click)="addDoseEvent()">Confirm</button>
+                            &nbsp;&nbsp;&nbsp;
+                            <button type="button" class="btn btn-secondary btn-sm" (click)="closepopup()">Cancel</button>
+                        </div>
+                        <div class="col text-right" *ngIf="isSaving">
+                            <button type="button" class="btn btn-info" disabled>
+                                <span class="spinner-border spinner-border-sm"></span>
+                                Saving..
+                            </button>
+                        </div>            
+                    </div>
+                    <!--<div class="row" *ngIf="!isSaving">
+                        <div class="col-8 "></div>
+                        <div class="col-2 colfooterBtns" (click)="addDoseEvent()">
+                            <b><span>Confirm</span></b>
+                        </div>
+                        <div data-dismiss="modal" (click)="closepopup()" class="col-2 colfooterBtns">
+                            <span>Cancel</span>
+                        </div>
+                    </div>
+                    <div class="col text-right" *ngIf="isSaving">
+                        <button type="button" class="btn" disabled>
+                            <span class="spinner-border spinner-border-sm"></span>
+                            Saving..
+                        </button>
+                    </div>-->                     
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

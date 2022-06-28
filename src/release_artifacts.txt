@@ -1,0 +1,20 @@
+
+-------------- change on 17 May 2022-------
+Entity Update
+------------------------------
+Orderset
+PrescriptionMedicaitonSupply
+epma_dsmedsupplyrequiredstatus
+epma_supplyrequestmedications
+epma_opprescriptiontherapies
+epma_outpatientprescriptions
+Posology   -- (By Rahul Change)
+Dose
+
+ 
+Baseview---
+
+medicationadministrationhistory
+doseeventshistory
+infusioneventshistory
+administeredmedhistory

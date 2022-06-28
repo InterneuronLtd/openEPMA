@@ -1,0 +1,156 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div class="container-sm" *ngIf="visible">
+    <div class="row">
+        <div class="col" *ngIf="validationMessage">
+            <span class="text-danger">{{validationMessage}}</span>
+        </div>
+    </div>
+    <form>
+        <div *ngIf="!orderset_id" class="row">
+            <div class="col"><span class="field-heading">TYPE</span></div>
+        </div>
+        <div *ngIf="!orderset_id" class="row form-group">
+            <div class="col">
+                <select class="form-control form-control-sm" (change)="onChangeOfOrderSetType($event)"
+                    name="ordersettype" [(ngModel)]="therapyOrderSet.prescriptionordersettype_id">
+                    <option *ngFor="let ordersettype of orderSetTypes"
+                        [ngValue]="ordersettype.prescriptionordersettype_id">
+                        {{ordersettype.displayname}}
+                    </option>
+                </select>
+            </div>
+        </div>
+        <div *ngIf="!orderset_id" class="row">
+            <div class="col"><span class="field-heading">ADD TO EXISTING ORDER SET</span>
+            </div>
+        </div>
+        <div *ngIf="!orderset_id" class="row form-group form-check-inline">
+            <div class="col-1">
+                <input type="radio" class="form-check-input" name="ordersettype" value="Existing"
+                    [checked]="therapyOrderSet.addToExistingOrderSet" (click)="onClickOfOrderSetType($event)">
+            </div>
+            <div class="col">
+                <select class="form-control form-control-sm" name="existingordersets"
+                    [disabled]="therapyOrderSet.addToNewOrderSet" [(ngModel)]="therapyOrderSet.existingOrderSetName"
+                    (change)="onExistingOrderSetSelected($event)">
+                    <option value="" selected>Please Select</option>
+                    <option *ngFor="let existingOrderSet of existingOrderSets"
+                        [ngValue]="existingOrderSet.epma_orderset_id">
+                        {{existingOrderSet.ordersetname}}
+                    </option>
+                </select>
+            </div>
+        </div>
+
+        <div *ngIf="!orderset_id" class="row">
+            <div class="col"><span class="field-heading">NEW ORDER SET</span></div>
+        </div>
+        <div *ngIf="!orderset_id" class="row form-group form-check-inline">
+            <div class="col-1">
+                <input type="radio" class="form-check-input" name="ordersettype" value="New"
+                    [checked]="therapyOrderSet.addToNewOrderSet" (click)="onClickOfOrderSetType($event)">
+            </div>
+            <div class="col">
+                <input type="text" name="newordersetname" class="form-control form-control-sm"
+                    [readOnly]="therapyOrderSet.addToExistingOrderSet" [(ngModel)]="therapyOrderSet.newOrderSetName">
+            </div>
+        </div>
+        <!-- update orderset -->
+        <div *ngIf="orderset_id" class="row">
+            <div class="col"><span class="field-heading">ORDER SET</span></div>
+        </div>
+        <div *ngIf="orderset_id" class="row form-group form-check-inline">
+            <div class="col">
+                <input type="text" name="updateorderser" class="form-control" [(ngModel)]="updateorderset.ordersetname">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col"><span class="field-heading">DEFINED CRITERIA</span></div>
+        </div>
+        <div class="row form-group">
+            <div class="col">
+                <select class="form-control form-control-sm" name="definedcriteria"
+                    (change)="onDefinedCriteriaChange($event)" [(ngModel)]="therapyOrderSet.definedCriteria">
+                    <option value="" selected>Please Select</option>
+                    <option value="Age in years">Age in years</option>
+                    <option value="Age in months">Age in months</option>
+                    <option value="Weight">Weight</option>
+                    <option value="Body Surface">Body Surface</option>
+                </select>
+            </div>
+        </div>
+        <div class="row form-group">
+            <div class="col form-row">
+                <input type="number" class="form-control form-control-sm" [(ngModel)]="therapyOrderSet.inclusiveValue"
+                    name="inclusiveValue" style="width: 4rem;">
+                &nbsp;&nbsp;
+                <label class="field-heading">{{inclusiveLabelText}}</label>
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                <input type="number" class="form-control form-control-sm" [(ngModel)]="therapyOrderSet.exclusiveValue"
+                    name="exclusiveValue" style="width: 4rem;">
+                &nbsp;&nbsp;
+                <label class="field-heading">{{exclusiveLabelText}}</label>
+            </div>
+        </div>
+        <div class="row form-group" [hidden] = "!appService.AuthoriseAction('epma_create_org_orderset')">
+            <div class="col form-row">
+                <div class="dropdown">
+                    <button class="btn btn-outline-dark dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                     Select Access Group
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                      <a class="dropdown-item" (click)="ongroupChange(ps.groupname)" [hidden]="ps.selected" *ngFor="let ps of groups" href="#">{{ps.groupname}}</a>
+                    
+                    </div>
+                  </div>
+            
+            </div>
+        </div>
+        <ul class="list-group">
+            <span *ngFor="let s of groups">
+                <li *ngIf="s.selected" class="list-group-item">
+                    <span>
+                        {{s.groupname}}
+                        <b (click)="groupChanged(s.groupname)" class="float-right h6">✖</b>
+                    </span>
+                </li>
+            </span>
+        </ul>
+        <br/>
+        <div class="row form-group">
+            <div class="col text-right" *ngIf="!isSaving">
+                <button *ngIf="orderset_id" type="button" class="btn btn-info btn-sm"
+                    (click)="onupdate()">Update</button>
+                <button *ngIf="!orderset_id" type="button" class="btn btn-info btn-sm"
+                    (click)="onConfirm()">Confirm</button>
+                &nbsp;&nbsp;&nbsp;
+                <button type="button" class="btn btn-secondary btn-sm" (click)="onCancel()">Cancel</button>
+            </div>
+            <div class="col text-right" *ngIf="isSaving">
+                <button type="button" class="btn btn-info" disabled>
+                    <span class="spinner-border spinner-border-sm"></span>
+                    Saving..
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

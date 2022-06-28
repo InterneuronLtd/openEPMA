@@ -1,0 +1,73 @@
+.l1 {
+    padding-left: 1px;
+}
+
+.l2 {
+    padding-left: 10px;
+}
+
+.l3 {
+    padding-left: 20px;
+}
+
+input:focus, select:focus, textarea:focus, button:focus {
+    outline-color: lightblue;
+}
+
+.searchboxwidth {
+    margin-top: 10px;
+    width: 100%;
+    max-width: 500px;
+    border: 0;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, .2), 0 1px 1px 0 rgba(0, 0, 0, .14), 0 2px 1px -1px rgba(58, 29, 29, 0.12)
+}
+
+.container {
+    margin-left: 0px;
+}
+
+.card {
+    border: 0;
+    border-top: solid 1px;
+    border-top-color: lightblue;
+    margin-bottom: 0px;
+    background-color: white;
+
+}
+
+.productspopdown {
+    /* border-width: .5px;
+    border-color: gainsboro;
+    border-style: solid; */
+    z-index: 999;
+    position: absolute;
+    /* background-color: #ffffff; */
+    margin-left: 0px;
+    margin-right: 15px;
+    /* min-width: 100%; */
+    max-width: 500px;
+    min-width: 500px;
+    overflow-y: auto;
+    max-height: 500px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, .2), 0 1px 1px 0 rgba(0, 0, 0, .14), 0 2px 1px -1px rgba(58, 29, 29, 0.12);
+    border-radius: 4px;
+    background-color: white;
+}
+
+.productname {
+    flex: 1 1 auto;
+    padding: 0.5rem;
+    border-bottom: solid;
+    border-bottom-width: thin;
+    border-bottom-color: #EAF1FD;
+}
+
+.hamburgerimage {
+    background-image: url(/assets/images/epma/therapy/Menu.svg);
+    background-size: contain
+}
+
+.headerlabeldiv {
+    margin-top: 0.7em;
+    margin-bottom: -10px;
+}

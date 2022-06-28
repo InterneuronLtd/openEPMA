@@ -1,0 +1,26 @@
+.row-header {
+  padding: 0.1rem 0.2rem;
+  margin-bottom: 0;
+  background-color: #f7f7f7;
+  border-bottom: 0.2px solid #c8ced3;
+}
+
+.main .container-fluid {
+  padding: 0 0px;
+}
+
+.container-padding {
+  padding-top: 0px !important;
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+  padding-bottom: 0px !important;
+}
+
+.container {
+  max-width: 100%;
+}
+
+.text-secondary {
+  color: #080808 !important;
+  font-weight: bold;
+}

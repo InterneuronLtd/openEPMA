@@ -1,0 +1,901 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div class="modal fade bd-example-modal-lg" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal
+    tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+    aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <h3 class="popover-title popover-header">
+                {{headerLabelText}}
+                <div *ngIf="!isSaving" class="close close-adminstration" (click)="closePopup()"></div>
+            </h3>
+            <div class="modal-body">
+                <div class="container-md">
+                    <div class="row pb-2 pt-2">
+                        <span class="spinner-border spinner-border-sm" *ngIf="isLoading" role="status"
+                            aria-hidden="true"> </span>
+                    </div>
+
+                    <form #sprequest="ngForm" (ngSubmit)="sprequest.form.valid && onSave()">
+                        <div *ngIf="productType=='custom'">
+                            <div class="row pb-2 pt-2 border rounded">
+                                <div class='{{"layers-container therapy-type "  + therapyType }}'></div>
+                                <div class="col">
+                                    <span class="field-heading">{{medicationFullName}}</span>
+                                </div>
+                            </div>
+                            <br />
+                            <div  class="text-danger">This medicine was created using the universal form. To make a supply request, either re-prescribe using the standard listed medicine or call pharmacy directly.</div> 
+                        </div>
+                        <div *ngIf="!isLoading && productType!='custom'">
+                            <div *ngIf="event.componenttype=='SUM' || event.componenttype=='SUMNO'">
+                                <div class="row pb-2 pt-2">
+                                    <div class="col-8">Does this patient require more medicines on discharge?</div>
+                                    <div class="col">
+                                        <div class="float-right">
+                                            <div class="form-check form-check-inline">
+                                                <input tabindex="14" id="medondischargeyes" [(ngModel)]="dSMedSupplyNotRequired.status"
+                                                    type="radio" name="medondischargeyes" value="Yes" required
+                                                    class="form-check-input">
+                                                <label class="form-check-label" for="medondischargeyes">
+                                                    Yes
+                                                </label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input tabindex="15" id="medondischargeno" type="radio"
+                                                    [(ngModel)]="dSMedSupplyNotRequired.status" name="medondischargeno" value="No"
+                                                    class="form-check-input">
+                                                <label class="form-check-label" for="medondischargeno">
+                                                    No
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr />
+                                <div *ngIf="dSMedSupplyNotRequired.status=='No'">
+                                    <div class="row">
+                                        <div class="col">
+                                            <h6>Please state why:</h6>
+                                        </div>
+                                    </div>
+                                    <div class="row" *ngFor="let d of appService.appConfig.AppSettings.SupplyNotReqReasons;let i=index">
+                                        <div class="col">
+                                            <div class="form-check form-check-inline">
+                                                <input tabindex="14" id="dischargereason{{i}}" [(ngModel)]="dSMedSupplyNotRequired.reason"
+                                                    type="radio" name="dischargereason{{i}}"
+                                                    value="{{d}}" required
+                                                    class="form-check-input">
+                                                <label class="form-check-label" for="dischargereason{{i}}">
+                                                    {{d}}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col" *ngIf="dSMedSupplyNotRequired.reason=='Not required'">
+                                            <textarea class="form-control" [(ngModel)]="dSMedSupplyNotRequired.otherreason" name="otherreason"></textarea>
+                                            <div class="text-danger" *ngIf="!dSMedSupplyNotRequired.otherreason">{{dsOtherReasonMessage}}</div>
+                                        </div>
+                                    </div>
+                                    <br/> 
+                                    <div class="row" *ngIf="!isSaving">
+                                        <div class="col text-right">
+                                            <button type="submit" class="btn btn-primary"
+                                                *ngIf="dSMedSupplyNotRequired.reason && (appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                style="color:white">&nbsp;Save&nbsp;</button>&nbsp;&nbsp;
+                                            <button type="button" class="btn btn-secondary"
+                                                (click)="onCancel()">Close</button>
+                                        </div>   
+                                    </div>
+                                </div>
+                            </div>
+                            <div
+                                *ngIf="(event.componenttype!='SUM' && event.componenttype!='SUMNO') || dSMedSupplyNotRequired.status=='Yes'">
+                                <div class="row pb-2 pt-2 border rounded">
+                                    <div class='{{"layers-container therapy-type "  + therapyType }}'></div>
+                                    <div class="col">
+                                        <span class="field-heading">{{medicationFullName}}</span>
+                                    </div>
+                                </div>
+                                <div class="row pb-2 pt-2">
+                                    <div class="col-12">
+
+                                        <input type="hidden" name="supplyrequestid" [(ngModel)]="supplyRequestId">
+                                    </div>
+                                </div>
+                                <div *ngIf="supplyRequestStatus">
+                                    <div class="row pb-2 pt-2">
+                                        <div class="col-2">
+                                            <span class="field-heading">Medication</span>
+                                        </div>
+                                        <div class="col">
+                                            <div class="row" *ngFor="let m of supplyRequestMedications;let i=index">
+                                                <div class="col">
+                                                    <a *ngIf="originalProductType!='AMP' && !(originalSupplyStatus== supplyReqStatus.Approved) && (appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                        style="white-space: normal;cursor: pointer;"
+                                                        (click)="isDropdownshow=!isDropdownshow; medIndexSelected=i "
+                                                        class="dropdown-toggle float-right">
+                                                        {{m.productname}}
+                                                    </a>
+                                               </div>
+                                               <div class="col-1" *ngIf="originalProductType!='AMP' && originalProductType!='VMP' && !(originalSupplyStatus== supplyReqStatus.Approved) && (appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))">
+                                                     <div *ngIf="i!=0" style="margin: 0;cursor:pointer;" class="removeicon col" (click)="removeMoreMedication(m)" ></div>
+                                                    <div *ngIf="i==0" style="margin: 0;cursor:pointer;" class="plusicon col" (click)="addMoreMedication()" ></div>
+                                               </div>
+                                              </div>     
+                                            <span class="float-right"
+                                                *ngIf="originalProductType=='AMP' ||  originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))">{{productName}}
+                                            </span>
+                                            <div class="row productspopdown" *ngIf="isLoadingMedication">
+                                                <div class="col text-muted card" #loading>
+                                                    Loading medication...
+                                                </div>
+                                            </div>
+                                            <div class="row productspopdown"
+                                                *ngIf="showloadingmessage && (isDropdownshow || isInitializing)">
+                                                <div class="col text-muted card" #loading>
+                                                    Loading {{searchtype}}...
+                                                </div>
+                                            </div>
+                                            <div class="row productspopdown"
+                                                *ngIf="shownoresultsmessage && isDropdownshow">
+                                                <div class="col">
+                                                    <div class="row">
+                                                        <div class="col">
+                                                            <div class="mt-2 close close-adminstration"
+                                                                (click)="isDropdownshow=false"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col text-muted" #loading>
+                                                            No Results
+                                                            <div>
+                                                                <a *ngIf="!isFormulary" href="#"
+                                                                    (click)="searchProducts(true)">Show
+                                                                    Non Formulary Medications</a>
+                                                                <a *ngIf="isFormulary" href="#"
+                                                                    (click)="searchProducts(false)">Show
+                                                                    Formulary Medications</a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+
+                                            </div>
+                                            <div class="row productspopdown"
+                                                *ngIf="results && results.data.length>0 && isDropdownshow">
+                                                <div class="col card" #products>
+                                                    <div class="row">
+                                                        <div class="col">
+                                                            <div class="mt-2 close close-adminstration"
+                                                                (click)="isDropdownshow=false"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div *ngFor="let l1 of results.data" class="l1" #l1>
+                                                        <div class="row"
+                                                            *ngIf="l1.recStatusCode == null || l1.recStatusCode == '003'">
+                                                            <div class="col-md-1">
+                                                                <div *ngIf="l1.children.length!=0"
+                                                                    style="padding: 0.5rem;">
+                                                                    <img src="assets/images/epma/down-arrow.png"
+                                                                        style="width: 20px; height: 20px;"
+                                                                        *ngIf="expanded.indexOf(l1.code)!=-1"
+                                                                        (click)="expandtoggle(l1.code)">
+                                                                    <img src="assets/images/epma/right-arrow.png"
+                                                                        style="width: 20px; height: 20px;"
+                                                                        *ngIf="expanded.indexOf(l1.code)==-1"
+                                                                        (click)="expandtoggle(l1.code)">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-11">
+                                                                <div
+                                                                    [ngClass]="{'productname':true, 'text-muted':!l1.prescribable}">
+                                                                    <span
+                                                                        (click)="selectmedication(l1,medIndexSelected)">{{l1.name}}</span>
+                                                                    <!-- <span style="font-size: .5em;" class="text-muted mt-3 float-right small">
+                                                        {{l1.productType}}</span> -->
+                                                                    <!-- - <i class="text-muted">{{l1.productType}}</i> -->
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div *ngFor="let l2 of l1.children" class="l2" #l2>
+                                                            <div class="row"
+                                                                *ngIf="(l2.recStatusCode == null || l2.recStatusCode == '003') && expanded.indexOf(l1.code)!=-1">
+                                                                <div class="col-md-1">
+                                                                    <div *ngIf="l2.children.length!=0"
+                                                                        style="padding: 0.5rem;">
+                                                                        <img src="assets/images/epma/down-arrow.png"
+                                                                            style="width: 20px; height: 20px;"
+                                                                            *ngIf="expanded.indexOf(l2.code)!=-1"
+                                                                            (click)="expandtoggle(l2.code)">
+                                                                        <img src="assets/images/epma/right-arrow.png"
+                                                                            style="width: 20px; height: 20px;"
+                                                                            *ngIf="expanded.indexOf(l2.code)==-1"
+                                                                            (click)="expandtoggle(l2.code)">
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-11">
+                                                                    <div [ngClass]="{'productname':true, 'text-muted':!l2.prescribable}"
+                                                                        (click)="selectmedication(l2,medIndexSelected)">
+                                                                        {{l2.name}}
+                                                                        <!-- <span style="font-size: .5em;" class="text-muted mt-3 float-right small">
+                                                            {{l2.productType}}</span> -->
+                                                                        <!-- - <i class="text-muted">{{l2.productType}}</i> -->
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div *ngFor="let l3 of l2.children" class="l3" #l3>
+                                                                <div class="row"
+                                                                    *ngIf="(l3.recStatusCode == null || l3.recStatusCode == '003') && (expanded.indexOf(l1.code)!=-1 && expanded.indexOf(l2.code)!=-1 )">
+                                                                    <div class="col-md-1">
+                                                                    </div>
+                                                                    <div class="col-md-11">
+                                                                        <div [ngClass]="{'productname':true, 'text-muted':!l3.prescribable}"
+                                                                            (click)="selectmedication(l3,medIndexSelected)">
+                                                                            {{l3.name}}
+                                                                            <!-- <span style="font-size: .5em;"
+                                                                class="text-muted mt-3 float-right small">
+                                                                {{l3.productType}}</span> -->
+                                                                            <!-- - <i class="text-muted">{{l3.productType}}</i> -->
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <a *ngIf="!isFormulary" href="#"
+                                                            (click)="searchProducts(true)">Show
+                                                            Non Formulary Medications</a>
+                                                        <a *ngIf="isFormulary" href="#"
+                                                            (click)="searchProducts(false)">Show
+                                                            Formulary Medications</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div *ngIf="productType!='VTM'">
+                                        <div class="row pb-2 pt-2">
+                                            <div class="col-4">
+                                                <span class="field-heading">Supply Request</span>
+                                            </div>
+                                            <div class="col">
+                                                <div class="float-right" style="display: flex;">
+
+                                                    <select tabindex="1" class="form-control" name="supplyrequest"
+                                                        [(ngModel)]="supplyRequestStatus">
+                                                        <option *ngFor="let request of supplyRequestStatusList"
+                                                            [ngValue]="request"
+                                                            [disabled]="statusRBACValidation(request) || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))">
+                                                            {{request}}
+                                                        </option>
+                                                    </select>
+
+                                                    <a href="javascript:void(0)"
+                                                        (click)="openConfirmModal(confirmModaltemplate)"
+                                                        *ngIf="(originalSupplyStatus== supplyReqStatus.Fulfilled || originalSupplyStatus== supplyReqStatus.Rejected) && !isAnyPendingRequest">
+                                                        <img src="../../../assets/images/epma/menu/Copie.svg"
+                                                            alt="copy request">
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row pb-2 pt-2"
+                                            *ngIf="supplyRequestStatus == supplyReqStatus.Fulfilled">
+                                            <div class="col-4">
+                                                <span class="field-heading">Date fulfilled</span>
+                                                <span class="text-danger field-label">&nbsp;*</span>
+                                            </div>
+                                            <div class="col">
+                                                <input tabindex="2" type="text" class="form-control float-right"
+                                                    placeholder="Date fulfilled" name="fulfilledon" bsDatepicker
+                                                    autocomplete="off"
+                                                    [bsConfig]="{ dateInputFormat: 'DD/MM/YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'bg-light' }"
+                                                    #fulfilledon="ngModel" [(ngModel)]="supplyrequest.fulfilledon"
+                                                    [ngClass]="{ 'is-invalid': sprequest.submitted && fulfilledon.invalid }"
+                                                    required />
+                                            </div>
+                                        </div>
+                                        <div class="row pb-2 pt-2">
+                                            <div class="col-3">
+                                                <span class="field-heading">Quantity</span>
+                                                <span class="text-danger field-label">&nbsp;*</span>
+                                            </div>
+                                            <div class="col">
+
+                                                <div class="row"
+                                                    *ngIf="isInfusion || originalProductType=='VTM' || appService.GetCurrentPosology(prescription).frequency=='protocol' || appService.GetCurrentPosology(prescription).dosetype=='descriptive'">
+                                                    <div class="col" style="display: flex;">
+                                                        <input tabindex="3" (keydown.enter)="$event.preventDefault()"
+                                                            [disabled]="originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                            type="text" name="requestedQuantity" class="form-control"
+                                                            [(ngModel)]="requestedQuantity"
+                                                            style="min-width: 60px; width:  65%;">
+                                                        <!-- <span class="field-label"
+                                                        style="padding-top: 5px;width: 130px;">&nbsp;{{doseUnit}}</span> -->
+                                                    </div>
+                                                </div>
+                                                <div class="row"
+                                                    *ngIf="!isInfusion && originalProductType!='VTM' && appService.GetCurrentPosology(prescription).frequency!='protocol' && appService.GetCurrentPosology(prescription).dosetype!='descriptive'">
+                                                    <div class="col-6" style="display: flex;padding: 0;">
+                                                        <input tabindex="4" style="min-width: 60px; "
+                                                            (keydown.enter)="$event.preventDefault()"
+                                                            [disabled]="originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                            type="number" positiveNumbersOnly name="requestedQuantity"
+                                                            class="form-control" min="0" max="999"
+                                                            [(ngModel)]="requestedQuantity"
+                                                            (change)="quantityChange($event)">
+                                                        <span class="field-label"
+                                                            style="padding-top: 5px;">&nbsp;{{doseUnit}}<span
+                                                                *ngIf="doseType=='units'">(s)</span></span>
+                                                        <span class="mt-1 pl-1"> /</span>
+                                                    </div>
+                                                    <div class="col" style="display: flex;">
+                                                        <input tabindex="5"
+                                                            [disabled]="originalSupplyStatus== supplyReqStatus.Approved ||!(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                            type="number" positiveNumbersOnly name="requestedNoOfDays"
+                                                            (keydown.enter)="$event.preventDefault()"
+                                                            class="form-control" max="99" min="0"
+                                                            (change)="daysChange($event)"
+                                                            [(ngModel)]="requestedNoOfDays" style="min-width: 60px; ">
+                                                        <span style="padding-top: 5px;">
+                                                            <span class="field-label">&nbsp;days&nbsp;</span>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                        <div class="row" *ngIf="quantityMessage">
+                                            <div class="col-3">
+
+                                            </div>
+                                            <div class="col">
+                                                <label class="text-danger float-right">{{quantityMessage}}</label>
+                                            </div>
+
+                                        </div>
+                                        <div class="row pb-2 pt-2">
+                                            <div class="col-6">
+                                                <span class="field-heading">Date required</span>
+                                                <span class="text-danger field-label">&nbsp;*</span>
+                                            </div>
+                                            <div class="col">
+
+                                                <input tabindex="6"
+                                                    [disabled]="originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                    type="text" [minDate]="minDate" class="form-control float-right"
+                                                    placeholder="Date required" name="daterequired" bsDatepicker
+                                                    autocomplete="off"
+                                                    [bsConfig]="{ dateInputFormat: 'DD/MM/YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'bg-light' }"
+                                                    [(ngModel)]="supplyrequest.daterequired" #daterequired="ngModel"
+                                                    [ngClass]="{ 'is-invalid': sprequest.submitted && daterequired.invalid }"
+                                                    required />
+
+                                            </div>
+                                        </div>
+                                        <div class="row pb-2 pt-2">
+                                            <div class="col-6">
+                                                <span class="field-heading">Label + instructions required (TTA)</span>
+                                            </div>
+                                            <div class="col">
+                                                <input tabindex="7"
+                                                    [disabled]="originalSupplyStatus== supplyReqStatus.Approved ||!(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                    class="float-right" type="checkbox" name="labelinstructiosrequired"
+                                                    [(ngModel)]="supplyrequest.labelinstructiosrequired">
+                                            </div>
+                                        </div>
+                                        <div class="row pb-2 pt-2">
+                                            <div class="col-6">
+                                                <span class="field-heading">Non-formulary request</span>
+                                            </div>
+                                            <div class="col">
+                                                <input tabindex="11"
+                                                    [disabled]="originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                    class="float-right" type="checkbox"
+                                                    [(ngModel)]="nonFormularyRequest" name="nonFormularyRequest">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div *ngIf="nonFormularyRequest && productType!='VTM'">
+                                        <div class="row pb-2 pt-2" *ngIf="productType!='VTM'">
+                                            <div class="col-3">
+                                                <span class="field-heading">Route</span>
+                                                <span class="text-danger field-label">&nbsp;*</span>
+                                            </div>
+                                            <div class="col">
+                                                <select tabindex="8"
+                                                    [disabled]="originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                    class="form-control float-right" name="route"
+                                                    [(ngModel)]="supplyrequest.route" #route="ngModel"
+                                                    [ngClass]="{ 'is-invalid': sprequest.submitted && route.invalid }"
+                                                    required>
+                                                    <option [ngValue]="undefined">Please select</option>
+                                                    <option *ngFor="let r of routeList" [ngValue]="r">{{r.name}}
+                                                    </option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="row pb-2 pt-2">
+                                            <div class="col-3">
+                                                <span class="field-heading">Indication</span>
+                                                <span class="text-danger field-label">&nbsp;*</span>
+                                            </div>
+                                            <div class="col" style="display: flex;">
+                                                <select tabindex="9"
+                                                    [disabled]="originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                    [ngClass]="{ 'is-invalid': sprequest.submitted && indication.invalid }"
+                                                    #indication="ngModel" required class="form-control float-right"
+                                                    name="indication" [(ngModel)]="supplyrequest.indication">
+                                                    <option [ngValue]="undefined">Please select</option>
+                                                    <option *ngFor="let ind of indications" [ngValue]="ind">
+                                                        {{ind.indication}}
+                                                        <span *ngIf="ind.islicensed">(Licensed)</span>
+                                                        <span
+                                                            *ngIf="ind.indication!='other' && !ind.islicensed">(UnLicensed)</span>
+                                                    </option>
+                                                </select>
+                                                <!-- <span class="pt-2 ml-2"
+                                        *ngIf="supplyrequest.indication && supplyrequest.indication.islicensed">Licensed</span>
+                                    <span class="pt-2 ml-2"
+                                        *ngIf="supplyrequest.indication && !supplyrequest.indication.islicensed">UnLicensed</span> -->
+                                            </div>
+                                        </div>
+                                        <div class="row pb-2 pt-2"
+                                            *ngIf="supplyrequest.indication && supplyrequest.indication.code=='other'">
+                                            <div class="col">
+                                                <textarea tabindex="10"
+                                                    [disabled]="originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                    rows="1" [autoGrow]=1 maxlength="1000" name="otherindication"
+                                                    class="field-label form-control" #otherindication="ngModel" required
+                                                    [ngClass]="{ 'is-invalid': sprequest.submitted && otherindication.invalid }"
+                                                    [(ngModel)]="supplyrequest.otherindication"></textarea>
+                                            </div>
+                                        </div>
+                                        <!-- <div class="row pb-2 pt-2">
+                                    <div class="col-6">
+                                        <span class="field-heading">Licensing Authority</span>
+                                    </div>
+                                    <div class="col">
+                                        <span class="float-right">{{supplyrequest.licenseauthority}}</span>
+                                    </div>
+                                </div> -->
+                                        <div class="row pb-2 pt-2">
+                                            <div class="col-6">
+                                                <span class="field-heading">New/Continued medicine</span>
+                                            </div>
+                                            <div class="col">
+                                                <span class="float-right" *ngIf="isNewMedicine">New</span>
+                                                <span class="float-right" *ngIf="!isNewMedicine">Continued</span>
+                                            </div>
+                                        </div>
+                                        <div class="row pb-2 pt-2">
+                                            <div class="col-6">
+                                                <span class="field-heading">Duration of Treatment</span>
+                                                <span class="text-danger field-label">&nbsp;*</span>
+                                            </div>
+                                            <div class="col">
+                                                <span class="float-right">
+                                                    <input type="text" class="form-control"
+                                                        [disabled]="originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                        name="durationoftreatment" required
+                                                        #durationoftreatment="ngModel"
+                                                        [ngClass]="{ 'is-invalid': sprequest.submitted && durationoftreatment.invalid }"
+                                                        [(ngModel)]="supplyrequest.durationoftreatment"
+                                                        (keypress)="alphaNumberOnly($event)">
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="row pb-2 pt-2">
+                                            <div class="col-6">
+                                                <span class="field-heading">Prescribed By</span>
+                                            </div>
+                                            <div class="col">
+                                                <span class="float-right">{{prescription.createdby}}</span>
+                                            </div>
+                                        </div>
+                                        <div class="row pb-2 pt-2">
+                                            <div class="col-6">
+                                                <span class="field-heading">Is this medicine licensed for any indication
+                                                    in the UK?</span>
+                                                <span class="text-danger field-label">&nbsp;*</span>
+                                            </div>
+                                            <div class="col">
+                                                <div class="float-right">
+                                                    <div class="form-check form-check-inline">
+                                                        <input tabindex="14"
+                                                            [disabled]="originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                            id="indicationinukyes"
+                                                            [(ngModel)]="supplyrequest.indicationinuk" type="radio"
+                                                            name="indicationinukyes" value="Yes" required
+                                                            class="form-check-input">
+                                                        <label class="form-check-label" for="indicationinukyes">
+                                                            Yes
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-check form-check-inline">
+                                                        <input tabindex="15"
+                                                            [disabled]="originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                            id="indicationinukno" type="radio"
+                                                            [(ngModel)]="supplyrequest.indicationinuk"
+                                                            name="indicationinukno" value="No" class="form-check-input">
+                                                        <label class="form-check-label" for="indicationinukno">
+                                                            No
+                                                        </label>
+                                                    </div>
+                                                    <br />
+                                                    <span class="text-danger"
+                                                        *ngIf="sprequest.submitted && !supplyrequest.indicationinuk">Please
+                                                        choose
+                                                        one</span>
+                                                </div>
+
+                                            </div>
+                                        </div>
+
+                                        <div class="row pb-2 pt-2" *ngIf="supplyrequest.indicationinuk=='Yes'">
+                                            <div class="col-6">
+                                                <span class="field-heading">Is it in line with its marketing
+                                                    authorisation?</span>
+                                                <span class="text-danger field-label">&nbsp;*</span>
+                                            </div>
+                                            <div class="col">
+                                                <div class="float-right">
+                                                    <div class="form-check form-check-inline">
+                                                        <input tabindex="12"
+                                                            [disabled]="originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                            id="marketingauthorisationyes" type="radio"
+                                                            [(ngModel)]="supplyrequest.marketingauthorisation"
+                                                            name="marketingauthorisationyes" value="Yes"
+                                                            class="form-check-input" required>
+                                                        <label class="form-check-label" for="marketingauthorisationyes">
+                                                            Yes
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-check form-check-inline">
+                                                        <input tabindex="13"
+                                                            [disabled]="originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                            type="radio" id="marketingauthorisationno"
+                                                            [(ngModel)]="supplyrequest.marketingauthorisation"
+                                                            name="marketingauthorisationno" required value="No"
+                                                            class="form-check-input">
+                                                        <label class="form-check-label" for="marketingauthorisationno">
+                                                            No
+                                                        </label>
+                                                    </div>
+                                                    <br />
+                                                    <span class="text-danger"
+                                                        *ngIf="sprequest.submitted && !supplyrequest.marketingauthorisation">Please
+                                                        choose one</span>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                        <div class="row pb-2 pt-2" *ngIf="supplyrequest.indicationinuk=='No'">
+                                            <div class="col-6">
+                                                <span class="field-heading">Is the medicine licensed in any other
+                                                    country?</span>
+                                                <span class="text-danger field-label">&nbsp;*</span>
+                                            </div>
+                                            <div class="col">
+                                                <div class="float-right">
+                                                    <div class="form-check form-check-inline">
+                                                        <input tabindex="14"
+                                                            [disabled]="originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                            id="othercountryyes"
+                                                            [(ngModel)]="supplyrequest.othercountry" type="radio"
+                                                            name="othercountryyes" value="Yes" class="form-check-input"
+                                                            required>
+                                                        <label class="form-check-label" for="othercountryyes">
+                                                            Yes
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-check form-check-inline">
+                                                        <input tabindex="15"
+                                                            [disabled]="originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                            id="othercountryno" type="radio"
+                                                            [(ngModel)]="supplyrequest.othercountry"
+                                                            name="othercountryno" value="No" class="form-check-input">
+                                                        <label class="form-check-label" for="othercountryno">
+                                                            No
+                                                        </label>
+                                                    </div>
+                                                    <br />
+                                                    <span class="text-danger"
+                                                        *ngIf="sprequest.submitted && !supplyrequest.othercountry">Please
+                                                        choose
+                                                        one</span>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                        <div class="row pb-2 pt-2"
+                                            *ngIf="nonFormularyRequest && supplyrequest.othercountry=='Yes'">
+                                            <div class="col">
+                                                <textarea tabindex="16"
+                                                    [disabled]="originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                    rows="1" [autoGrow]=1 [(ngModel)]="supplyrequest.othercountrytext"
+                                                    class="form-control" name="othercountrytext"> </textarea>
+                                            </div>
+                                        </div>
+                                        <div class="row pb-2 pt-2" *ngIf="!isNewMedicine">
+                                            <div class="col-6">
+                                                <span class="field-heading">Reason for not using patient own
+                                                    supply</span>
+                                                <span class="text-danger field-label">&nbsp;*</span>
+                                            </div>
+                                            <div class="col">
+                                                <span class="float-right">
+                                                    <select
+                                                        [disabled]="originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                        class="form-control" name="patientownsupply"
+                                                        [(ngModel)]="supplyrequest.patientownsupply" required
+                                                        #patientownsupply="ngModel"
+                                                        [ngClass]="{ 'is-invalid': sprequest.submitted && patientownsupply.invalid }">
+                                                        <option [ngValue]="undefined">Please select</option>
+                                                        <option *ngFor="let p of patientownsupplyarr" [ngValue]="p">
+                                                            {{p}}
+                                                        </option>
+                                                    </select>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="row pb-2 pt-2"
+                                            *ngIf="supplyrequest.patientownsupply=='Other' && !isNewMedicine">
+                                            <div class="col-12">
+
+                                                <input type="text" required #patientownsupplyother="ngModel"
+                                                    [ngClass]="{ 'is-invalid': sprequest.submitted && patientownsupplyother.invalid }"
+                                                    [disabled]="originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                    class="form-control" name="patientownsupplyother"
+                                                    [(ngModel)]="supplyrequest.patientownsupplyother">
+
+                                            </div>
+                                        </div>
+                                        <div class="row pb-2 pt-2" *ngIf="isNewMedicine">
+                                            <div class="col-6">
+                                                <span class="field-heading">Specify formulary alternative(s)
+                                                    tried</span>
+                                                <span class="text-danger field-label">&nbsp;*</span>
+                                            </div>
+                                            <div class="col">
+                                                <span class="float-right">
+                                                    <input type="text" required #specifyformulary="ngModel"
+                                                        [ngClass]="{ 'is-invalid': sprequest.submitted && specifyformulary.invalid }"
+                                                        [disabled]="originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                        class="form-control" name="specifyformulary"
+                                                        [(ngModel)]="supplyrequest.specifyformulary">
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="row pb-2 pt-2">
+                                            <div class="col-6">
+                                                <span class="field-heading">Reason for prescribing non-formulary
+                                                    medicine</span>
+                                                <span class="text-danger field-label">&nbsp;*</span>
+                                            </div>
+                                            <div class="col">
+                                                <span class="float-right">
+                                                    <input type="text" class="form-control" required
+                                                        #reasonforprescribingnonformulary="ngModel"
+                                                        [ngClass]="{ 'is-invalid': sprequest.submitted && reasonforprescribingnonformulary.invalid }"
+                                                        [disabled]="originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                        name="reasonforprescribingnonformulary"
+                                                        [(ngModel)]="supplyrequest.reasonforprescribingnonformulary">
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="row pb-2 pt-2">
+                                            <div class="col-6">
+                                                <span class="field-heading">Reason for NOT prescribing formulary
+                                                    alternative(s)</span>
+                                                <span class="text-danger field-label">&nbsp;*</span>
+                                            </div>
+                                            <div class="col">
+                                                <span class="float-right">
+                                                    <input type="text" class="form-control" required
+                                                        #reasonfornotprescribingformulary="ngModel"
+                                                        [ngClass]="{ 'is-invalid': sprequest.submitted && reasonfornotprescribingformulary.invalid }"
+                                                        [disabled]="originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                        name="reasonfornotprescribingformulary"
+                                                        [(ngModel)]="supplyrequest.reasonfornotprescribingformulary">
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="row pb-2 pt-2">
+                                            <div class="col-6">
+                                                <span class="field-heading">Cost of medicine</span>
+                                                <span class="text-danger field-label">&nbsp;*</span>
+                                            </div>
+                                            <div class="col">
+                                                <span class="float-right">
+                                                    <input type="text" class="form-control" required
+                                                        #costofmedicine="ngModel"
+                                                        [ngClass]="{ 'is-invalid': sprequest.submitted && costofmedicine.invalid }"
+                                                        [disabled]="originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                        name="costofmedicine" [(ngModel)]="supplyrequest.costofmedicine"
+                                                        (keypress)="alphaNumberOnly($event)">
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row pb-2 pt-2" *ngIf="productType!='VTM'">
+                                        <div class="col-4">
+                                            <span class="field-heading">Order message</span>
+                                        </div>
+                                    </div>
+                                    <div class="row pb-2 pt-2" *ngIf="productType!='VTM'">
+                                        <div class="col">
+                                            <textarea tabindex="18"
+                                                [disabled]="originalSupplyStatus== supplyReqStatus.Approved || !(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled))"
+                                                rows="1" [autoGrow]=1 maxlength="1000" name="ordermessage"
+                                                class="field-label form-control"
+                                                [(ngModel)]="supplyrequest.ordermessage"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="row pb-2 pt-2"
+                                        *ngIf="supplyRequestChanges.length > 0 && productType!='VTM'">
+                                        <div class="col">
+                                            <span class="field-heading">Supply request changes</span>
+                                        </div>
+                                    </div>
+                                    <div class="row" *ngIf="supplyRequestChanges.length > 0 && productType!='VTM'">
+                                        <div class="col">
+                                            <div class="scroll-area">
+                                                <table class="table table-striped table-bordered">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Action</th>
+                                                            <th width="25%">Date</th>
+                                                            <th>Recorded by</th>
+                                                            <th>Status</th>
+                                                            <th>Order message</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr *ngFor="let change of supplyRequestChanges">
+                                                            <td *ngIf="!change.lastmodifiedon">Created</td>
+                                                            <td *ngIf="change.lastmodifiedon">Updated</td>
+                                                            <td width="25%" *ngIf="!change.lastmodifiedon">
+                                                                {{change.requestedon | date:
+                                                                'dd-MMM-yyyy h:mm a'}}
+                                                            </td>
+                                                            <td *ngIf="change.lastmodifiedon">{{change.lastmodifiedon |
+                                                                date:
+                                                                'dd-MMM-yyyy h:mm a'}}</td>
+                                                            <td *ngIf="!change.lastmodifiedon">{{change.requestedby}}
+                                                            </td>
+                                                            <td *ngIf="change.lastmodifiedon">{{change.lastmodifiedby}}
+                                                            </td>
+                                                            <td>{{change.requeststatus}}</td>
+                                                            <td>{{change.ordermessage}}</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row pb-2 pt-2">
+                                        <div class="col" *ngIf="validationMessage">
+                                            <span class="text-danger">{{validationMessage}}</span>
+                                        </div>
+                                        <div class="col" *ngIf="informationMessage">
+                                            <span class="text-info">{{informationMessage}}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mb-1" *ngIf="supplyRequestHistory.length > 0">
+                                    <div class="col-4">
+                                        <span class="field-heading">Supply history</span>
+                                    </div>
+                                </div>
+                                <div class="row mb-2" *ngIf="supplyRequestHistory.length > 0">
+                                    <div class="col">
+                                        <div class="scroll-area">
+                                            <div class="container">
+                                                <div class="row border p-1 row-striped"
+                                                    *ngFor="let history of supplyRequestHistory">
+                                                    <div class="col">
+                                                        <div *ngIf="history.lastmodifiedon">
+                                                            <a href="javascript:void(0)"
+                                                                (click)="getSelectedSupplyRequestDetails(history.epma_supplyrequest_id)"
+                                                                style="text-decoration: none;">
+                                                                {{history.requeststatus | uppercase}} on
+                                                                {{history.lastmodifiedon | date:
+                                                                'dd-MMM-yyyy h:mm a'}} by {{history.lastmodifiedby}}
+                                                            </a>
+                                                        </div>
+                                                        <div *ngIf="!history.lastmodifiedon">
+                                                            <a href="javascript:void(0)"
+                                                                (click)="getSelectedSupplyRequestDetails(history.epma_supplyrequest_id)"
+                                                                style="text-decoration: none;">
+                                                                {{history.requeststatus | uppercase}} on
+                                                                {{history.requestedon |
+                                                                date:
+                                                                'dd-MMM-yyyy h:mm a'}} by {{history.requestedby}}
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style="border: none!important;">
+                                    <div class="container">
+                                        <div class="row"
+                                            *ngIf="!isSaving && supplyRequestStatus && !isLoadingMedication">
+                                            <div class="col text-right">
+                                                <button type="submit" class="btn btn-primary"
+                                                    *ngIf="(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled)) && productType!='VTM'"
+                                                    style="color:white">&nbsp;Save&nbsp;</button>&nbsp;&nbsp;
+                                                <button type="button" class="btn btn-secondary"
+                                                    (click)="onCancel()">Close</button>
+                                            </div>
+
+                                        </div>
+                                        <div class="row" *ngIf="!isSaving && !supplyRequestStatus">
+                                            <div class="col-5"></div>
+                                            <div class="col-7 text-right">
+                                                <button type="button"
+                                                    *ngIf="(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled)) && !isAnyPendingRequest"
+                                                    class="btn btn-primary" style="color:white" (click)="newRequest()">
+                                                    New Request</button>&nbsp;&nbsp;
+                                                <button type="button" class="btn btn-secondary"
+                                                    (click)="onCancel()">Cancel</button>
+                                            </div>
+                                        </div>
+                                        <div class="row" *ngIf="isSaving">
+                                            <div class="col text-right">
+                                                <button type="button" class="btn btn-primary" disabled>
+                                                    <span class="spinner-border spinner-border-sm"></span>
+                                                    Saving..
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div>
+    <ng-template #confirmModaltemplate>
+        <div class="modal-body">
+            <h5>
+                Do you want to copy the details of this supply request to a new supply request?
+            </h5>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" (click)="confirm()">Yes</button>
+            <button type="button" class="btn btn-danger" (click)="decline()">No</button>
+        </div>
+    </ng-template>
+</div>

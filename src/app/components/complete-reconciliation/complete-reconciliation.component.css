@@ -1,0 +1,15 @@
+.Approved{
+    width: 40px;
+    height: 24px;
+    background-repeat: no-repeat;
+   background-image: url("/assets/images/epma/Approved.svg");
+   margin-left: 31px;
+}
+
+.PendingApproval{
+    width: 40px;
+    height: 24px;
+    background-repeat: no-repeat;
+   background-image: url("/assets/images/epma/PendingApproval.svg");
+   margin-left: 31px;
+}

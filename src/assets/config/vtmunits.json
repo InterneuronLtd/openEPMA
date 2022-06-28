@@ -1,0 +1,42 @@
+[
+    {
+        "category": "mass",
+        "unit": [
+            "ng",
+            "nanogram",
+            "mcg",
+            "microgram",
+            "mg",
+            "milligram",
+            "g",
+            "gram"
+        ]
+    },
+    {
+        "category": "volume",
+        "unit": [
+            "μl",
+            "microlitre",
+            "ml",
+            "millilitre",
+            "l",
+            "litre"
+        ]
+    },
+    {
+        "category": "substance",
+        "order": 0,
+        "unit": [
+            "micromol",
+            "mmol"
+        ]
+    },
+    {
+        "category": "radioactivity",
+        "order": 0,
+        "unit": [
+            "kbq",
+            "mbq"
+        ]
+    }
+]

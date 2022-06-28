@@ -1,0 +1,68 @@
+.empa-template-bold{
+    font-size: 1.1em;
+    line-height: 14px;
+    color: #646464;
+    font-weight: bold;
+}
+
+.empa-template-dose{
+    font-size: 1.2em;
+    line-height: 14px;
+    color: #646464;
+    font-weight: bold;
+}
+.empa-template-dose-label,.empa-template-induction-label {
+    color: #7891D8;
+    font-weight: bold;
+}
+.empa-template-dose-text,.empa-template-induction-text {
+    font-size: 1.1em;
+    line-height: 14px;
+    color: #646464;
+    white-space: normal;
+}
+ /* --------- medication property icon ----------*/
+ .medication-property {
+    display: flex;
+ }
+.medication-property-icon {
+    width: 20px;
+    height: 20px;
+    background-repeat: no-repeat;
+    background-size: 100%;
+}
+.blacktrianglemedcine {
+    background-image: url(/assets/images/epma/medicationproperty/Black_Triangle_Medcine.svg);
+
+}
+.clinicaltrialmedicine {
+    background-image: url(/assets/images/epma/medicationproperty/Clinical_Trial_Medicine.svg);
+
+}
+.controlleddrug {
+    background-image: url(/assets/images/epma/medicationproperty/Controlled_Drug.svg);
+
+}
+.critialdrug {
+    background-image: url(/assets/images/epma/medicationproperty/Critical_Drug.svg);
+
+}
+.expensivemedication {
+    background-image: url(/assets/images/epma/medicationproperty/Expensive_Therapy.svg);
+
+}
+.highalertmedication {
+    background-image: url(/assets/images/epma/medicationproperty/High_Alert_Medication.svg);
+
+}
+.nonformularymedication {
+    background-image: url(/assets/images/epma/medicationproperty/Non-Formulary_Medicine.svg);
+
+}
+.unlicencedmedicine {
+    background-image: url(/assets/images/epma/medicationproperty/Unlicenced_Medicine.svg);
+
+}
+.break-word {
+  word-wrap:break-word;
+}

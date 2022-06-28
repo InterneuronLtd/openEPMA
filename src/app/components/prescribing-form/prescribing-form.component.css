@@ -1,0 +1,266 @@
+.ck-button {
+    margin: 4px;
+    background-color: #f7f7f7;
+    border-radius: 4px;
+    border: 1px solid #D0D0D0;
+    overflow: auto;
+    float: left;
+    border-right: 0;
+}
+
+.ck-button:hover {
+    margin: 4px;
+    background-color: #f7f7f7;
+    border-radius: 4px;
+    /* border: 1px solid red; */
+    /* overflow: auto; */
+    float: left;
+    /* color: red; */
+    border-right: 0;
+}
+
+.ck-button label {
+    float: left;
+    min-width: 4.0em;
+    margin-bottom: 0;
+    border-right: 1px solid #D0D0D0;
+    /* font-size: 80%; */
+    /* font-weight: 400; */
+}
+
+.ck-button label span {
+    text-align: center;
+    padding: 1px 5px 1px;
+    display: block;
+    /* font-size: 1.1em; */
+}
+
+.ck-button label input {
+    position: fixed;
+    top: -1000px;
+}
+
+.ck-button input:checked+span {
+    background-image: none;
+    outline: 0;
+    /* color: #333; */
+    background-color: #d1ffdf;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.2);
+    /* font-weight: 600; */
+    /* color: #fff; */
+}
+
+.primaryroute {
+    background-color: #d1ffdf;
+    /* color: #1aa260; */
+    font-weight: bold;
+}
+
+.nonprimaryroute {
+    background-color: #e6e6e6;
+}
+
+.unlicensedroute {
+    color: darkred;
+    text-decoration: underline;
+}
+
+.timeslot {
+    -webkit-text-fill-color: #FFFFFF;
+    -webkit-opacity: 1;
+    opacity: 1;
+    background: #08A6E3;
+    color: #FFFFFF;
+    text-align: center;
+    padding: 0px;
+    border-radius: 0;
+    border: none;
+    outline: 0;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
+    max-height: 31px;
+    font-size: 85%;
+}
+
+.dosingpatternpane {
+    width: auto;
+    min-width: auto;
+    height: auto;
+    min-height: auto;
+    flex: 0 0 auto;
+    -webkit-box-flex: 0;
+    order: 0;
+    overflow: visible;
+    margin: 0 0 5px 0;
+    position: relative;
+    /* background: #08A6E3; */
+}
+
+.headerlabeldiv {
+    margin-top: 0.7em;
+    margin-bottom: -10px;
+    font-weight: bold;
+}
+
+.button, input, optgroup, select, textarea {
+    line-height: normal;
+}
+
+.ck-button-red-border {
+    border-right: 1px solid;
+    border-color: #dc3545 !important;
+}
+
+::-webkit-scrollbar {
+    -webkit-appearance: none;
+    width: 5px;
+    height: 5px;
+    -webkit-overflow-scrolling: auto;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 3px;
+    background-color: rgba(0, 0, 0, .5);
+    -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .5);
+}
+
+.disablediv input {
+    pointer-events: none;
+}
+
+.chosendaysimage {
+    background-image: url(/assets/images/epma/menu/Chosen_Days.svg);
+    background-size: contain
+}
+
+.additionalconditionsimage {
+    background-image: url(/assets/images/epma/menu/Additional_Conditions.svg);
+    background-size: contain
+}
+
+.criticaldrug_image {
+    background-image: url(/assets/images/epma/medicationproperty/Critical_Drug.svg);
+    background-size: contain
+}
+
+.controlleddrug_image {
+    background-image: url(/assets/images/epma/medicationproperty/Controlled_Drug.svg);
+    background-size: contain
+}
+
+.highalertdrug_image {
+    background-image: url(/assets/images/epma/medicationproperty/High_Alert_Medication.svg);
+    background-size: contain
+}
+
+.unlicenceddrug_image {
+    background-image: url(/assets/images/epma/medicationproperty/Unlicenced_Medicine.svg);
+    background-size: contain
+}
+
+.blacktriangledrug_image {
+    background-image: url(/assets/images/epma/medicationproperty/Black_Triangle_Medcine.svg);
+    background-size: contain
+}
+
+.nonformularydrug_image {
+    background-image: url(/assets/images/epma/medicationproperty/Non-Formulary_Medicine.svg);
+    background-size: contain
+}
+
+.expensiverug_image {
+    background-image: url(/assets/images/epma/medicationproperty/Expensive_Therapy.svg);
+    background-size: contain
+}
+
+.clinicaltrialdrug_image {
+    background-image: url(/assets/images/epma/medicationproperty/Clinical_Trial_Medicine.svg);
+    background-size: contain
+}
+
+.bloodproduct_image {
+    background-image: url(/assets/images/epma/therapy/Blood_Product.svg);
+    background-size: contain
+}
+
+.druginfo_image {
+    background-image: url(/assets/images/epma/Drug_information.svg);
+    background-size: contain
+}
+
+.justifytoend {
+    justify-content: flex-end;
+}
+
+.Calculatorddl {
+    width: 2em;
+    height: 2em;
+    background-image: url(/assets/images/epma/calculatorsyringe.svg);
+    appearance: none;
+    border: none;
+    background-size: contain;
+}
+
+.reviewstatus_grey_image {
+    background-image: url(/assets/images/epma/review/Pharmacist_Review_Not_Required.svg);
+    background-size: contain;
+    width: 2em;
+}
+
+.reviewstatus_amber_image {
+    background-image: url(/assets/images/epma/review/Waiting_For_Pharmacist_Review.svg);
+    background-size: contain;
+    width: 2em;
+}
+
+.reviewstatus_red_image {
+    background-image: url(/assets/images/epma/review/Pharmacist_Reviewed_Back_To_Prescriber.svg);
+    background-size: contain;
+    width: 2em;
+}
+
+.reviewstatus_green_image {
+    background-image: url(/assets/images/epma/review/Pharmacist_Review_Complete.svg);
+    background-size: contain;
+    width: 2em;
+}
+
+.form-control[readonly] {
+    background-color: white;
+}
+
+.modal-dialog, .modal-content {
+    /* 80% of window height */
+    height: 92%;
+}
+
+.modal-body {
+    /* 100% = dialog height, 120px = header + footer */
+    max-height: calc(100% - 60px);
+    overflow-y: auto;
+}
+
+input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.customdropdownul {
+    width: 430px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.Nursing_Instruction {
+    background-image: url(/assets/images/epma/Notes.svg);
+
+}
+
+.pharmacist-property-icon {
+    width: 2rem;
+    height: 2rem;
+    background-repeat: no-repeat;
+    background-size: 100%;
+
+}

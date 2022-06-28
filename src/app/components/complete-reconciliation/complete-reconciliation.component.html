@@ -1,0 +1,103 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div *ngIf="showconform" class="modal fade bd-example-modal-lg"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
+    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg  modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="">
+                <h6 class='col-12 modal-title text-center'>
+                    Pharmacy Review
+
+                    <button type="button" (click)="closeComplete()" class="mr-2 close" data-dismiss="modal"
+                        aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </h6>
+            </div>
+            <div class="modal-body">
+
+
+
+
+                <div class="pt-2 row">
+                    <div class="col-8">
+                        Notes
+                        <textarea maxlength="1024" class="form-control" [(ngModel)]="comments" rows="4"></textarea>
+
+
+                    </div>
+                    <div class="col-4">
+                        <br />
+                        <br />
+                        <div [ngClass]="iscomplete ? 'Approved' : 'PendingApproval'">
+                        </div>
+                        <br />
+                        <div *ngIf="userRole !== ''">
+                            <button type="button" *ngIf="appService.isCurrentEncouner" (click)="submitComplete()"
+                                class="btn btn-primary btn-sm">Save</button>
+                            <button type="button" (click)="closeComplete()" class="btn btn-sm"
+                                data-dismiss="modal">Cancel</button>
+                        </div>
+                    </div>
+
+
+                </div>
+                <hr>
+                <div style="height: 36rem;   width: 100%; overflow-y: auto;">
+                    <div class="row" *ngIf="iscomplete">
+                        <div class="col-5">
+                            {{medreconciliationhistoryComplete.comments}}
+                        </div>
+                        <div class="col-2">
+                            {{medreconciliationhistoryComplete.modifiedon | date: 'dd/MM/yyyy HH:mm'}}
+                        </div>
+                        <div class="col-2" style="word-break: break-all">
+                            {{medreconciliationhistoryComplete.modifiedby}}
+                        </div>
+                        <div class="col-3">
+                            {{medreconciliationhistoryComplete.status}}
+                        </div>
+
+                        <hr>
+                    </div>
+                    <div class="row" *ngFor="let pres of medreconciliationhistory;">
+                        <div class="col-5">
+                            {{pres.comments}}
+                        </div>
+                        <div class="col-2">
+                            {{pres.modifiedon | date: 'dd/MM/yyyy HH:mm'}}
+                        </div>
+                        <div class="col-2">
+                            {{pres.modifiedby}}
+                        </div>
+                        <div class="col-3">
+                            {{pres.status}}
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

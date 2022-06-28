@@ -1,0 +1,424 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div *ngIf="browserVersionError">
+  <div class="alert alert-warning" role="alert">
+    This module is not supported by this browser ({{browserName}} {{browserVersion}}). Either upgrade your browser, try
+    to access this module on a different device or contact IT support.
+  </div>
+</div>
+<div *ngIf="!browserVersionError">
+  <div *ngIf="isLoading" id="pause" class="d-flex align-items-center justify-content-center">
+    <div id="spinner"></div>
+  </div>
+  <app-encounter hidden *ngIf="!this.appService.encounter" (encountersLoaded)="EncountersLoaded($event)">
+  </app-encounter>
+  <span *ngIf="!this.appService.encounter" class="spinner-border spinner-border-sm" role="status" aria-hidden="true">
+  </span>
+  <div *ngIf="this.appService.encounter">
+    <div class="row">
+      <div class="col-6">
+        <!-- <div class="form-group mb-2 Therapy_overview"></div>
+      <div class="form-group mb-2 Medication_reconciliation"></div>
+      <div class="form-group mb-2 Non-formulary_medication"></div>
+      <div class="form-group mb-2 " style="width: 250px;"></div> -->
+        <form class=" form-inline">
+          <div title="Therapy overview" class="form-group mb-2 empa-thepay-overview"
+            (click)="LoadModule('app-therapy-overview')"></div>
+          <div title="Administration record" class="form-group mb-2 Medication_administration_record"
+            (click)="TriggerWarningUpdateCheck();LoadModule('app-drug-chart')"></div>
+
+          <!--<div *ngIf="loadDrugChart===totalmetadatarequests" class="form-group mb-2 Prescribe_medication"
+          (click)="LoadModule('app-inpatient-prescribing')"></div>-->
+
+          <div title="Prescribe"
+            *ngIf="appService.isAppDataReady === true && appService.warningService && appService.warningServiceIPContext.existingWarningsStatus==true && appService.AuthoriseAction('epma_access_inpatientprescribing') && (appService.isCurrentEncouner || appService.isTCI) && !appService.isTCICancelled"
+            class="form-group mb-2 Prescribe_medication" (click)="LoadInpatientPrescribingModule()">
+          </div>
+          <div title="Medicines on Admission & Discharge" *ngIf="appService.isAppDataReady === true"
+            class="form-group mb-2 Medication_reconciliation" (click)="LoadModule('app-reconciliation-lists')"></div>
+
+          <div title="RX"
+          *ngIf="appService.isAppDataReady === true && appService.warningService && appService.AuthoriseAction('epma_view_op_prescribing')" 
+          class="form-group mb-2 p-1 Rx_Prescribe_medication"
+         
+            (click)="LoadModule('app-oplist')"></div>
+
+          <div title="Weight" class="form-group mb-2 Reference_weight"
+            *ngIf="appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled)"
+            (click)="openRecordWeightModal('W')"></div>
+          <div title="Height" class="form-group mb-2 Reference_height"
+            *ngIf="appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled)"
+            (click)="openRecordHeightModal('H')"></div>
+
+          <div title="Daily Pharmacist Review"
+            *ngIf="appService.medReconcelationCompleteStatus == 'Pharmacy_Reviewed_Medrec_Done'"
+            class="form-group mb-2 Pharmacy_Reviewed_Medrec_Done" (click)="completeReconcilliation()"></div>
+
+
+          <div title="Daily Pharmacist Review"
+            *ngIf="appService.medReconcelationCompleteStatus == 'Pharmacy_Technician_Reviewed_Medrec_Done'"
+            class="form-group mb-2 Pharmacy_Technician_Reviewed_Medrec_Done" (click)="completeReconcilliation()"></div>
+
+          <div title="Daily Pharmacist Review"
+            *ngIf="appService.medReconcelationCompleteStatus == 'Pharmacist_Reviewed_Medrec_Done'"
+            class="form-group mb-2 Pharmacist_Reviewed_Medrec_Done" (click)="completeReconcilliation()"></div>
+
+          <div title="Daily Pharmacist Review"
+            *ngIf="appService.medReconcelationCompleteStatus == 'Pharmacy_To_Review_Medrec_Done'"
+            class="form-group mb-2 Pharmacy_To_Review_Medrec_Done" (click)="completeReconcilliation()"></div>
+
+          <div title="Daily Pharmacist Review"
+            *ngIf="appService.medReconcelationCompleteStatus == 'Pharmacy_Technician_Reviewed'"
+            class="form-group mb-2 Pharmacy_Technician_Reviewed" (click)="completeReconcilliation()"></div>
+
+          <div title="Daily Pharmacist Review" *ngIf="appService.medReconcelationCompleteStatus == 'Pharmacy_To_Review'"
+            class="form-group mb-2 Pharmacy_To_Review" (click)="completeReconcilliation()"></div>
+
+
+          <!-- dropdown for printing -->
+          <div id="automation-printouterdiv" title="Print" class="dropdown" *ngIf="showPrintIcon">
+            <button class="Print_medication_record button-dropdown" [disabled]="printing" type="button"
+              id="automation-printmenutogglebutton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            </button>
+            <div id="automation-printsubmenudiv" class="dropdown-menu options-width"
+              aria-labelledby="automation-printmenutogglebutton" (click)="printing = true">
+              <a id="automation-printrecordanchor" class="dropdown-item Print_medication_record dropdown-options"
+                href="#" (click)="openActivePrintingTemplate()">Medication administration record</a>
+              <a id="automation-printrecordreportanchor" class="dropdown-item Print_medication_record dropdown-options"
+                href="#" (click)="openDatePicker()">Medication administration record - report</a>
+              <a id="automation-printrecordemptyanchor" class="dropdown-item Print_medication_record dropdown-options"
+                href="#" (click)="getPrescriptionNumber()">Medication administration record - empty</a>
+              <a id="automation-printrecordcurrentanchor" class="dropdown-item Print_medication_record dropdown-options"
+                href="#" (click)="openCurrentPrintingTemplate()">Medication administration record - current
+                day</a>
+            </div>
+          </div>
+          <span *ngIf="printing" class="spinner-border spinner-border-sm" role="status" aria-hidden="true">
+          </span>
+          <div
+            *ngIf="appService.warningService && appService.warningService.encounterId && !appService.warningServiceIPContext.loader && !appService.warningServiceIPContext.existingWarningsStatus"
+            (click)="ShowWarnings()" class="form-group mb-2 Long_delay_of_confirmation">
+
+          </div>
+          <div title="Warnings"
+            *ngIf="appService.warningService && appService.warningService.encounterId && appService.warningServiceIPContext.loader"
+            class="form-group mb-2">
+            <div class="spinner-border spinner-border-sm" role="status">
+              <span class="sr-only">Loading...</span>
+            </div>
+          </div>
+          <div title="Warnings"
+            *ngIf="appService.warningService && appService.warningService.encounterId && !appService.warningServiceIPContext.loader && appService.warningServiceIPContext.existingWarningsStatus"
+            (click)="ShowWarnings()" class="form-group mb-2 Show_all_warnings">
+
+          </div>
+          <!-- <div class="form-group mb-2 Reference_weight"></div>
+      <div class="form-group mb-2 Print_Medication_administration_record"></div>
+      <div class="form-group mb-2">
+        <input type="password" class="form-control" style="width: 150px;" id="inputPassword2" placeholder="Barcode">
+      </div>
+      <div class="form-group mb-2 Delay_of_confirmation"></div> -->
+
+
+        </form>
+      </div>
+      <div id="Efilterbuttons"
+        *ngIf="appService.isAppDataReady === true && (currentmodule==='app-drug-chart' || currentmodule==='app-therapy-overview')"
+        class="col-6">
+        <div class="btn-group float-right">
+          <div class="form-group mb-2 Menu pl-3" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          </div>
+          <!-- <button type="button" class="btn btn-secondary " data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Right-aligned menu
+        </button> -->
+          <div class="dropdown-menu dropdown-menu-right">
+            <div *ngIf="currentmodule==='app-drug-chart'">
+              <button *ngIf="!showChoosedate" class="dropdown-item" type="button" [ngClass]="{'active': showChoosedate}"
+                (click)="chooseDateclick(true)">Choose date...</button>
+              <button *ngIf="showChoosedate" class="dropdown-item" type="button"
+                [ngClass]="{'active': Showtherapies==='Choose date'}" (click)="chooseDateclick(false)">Current
+                date</button>
+              <b>Show therapies</b>
+
+              <button class="dropdown-item" type="button" [ngClass]="{'active': Showtherapies==='Active'}"
+                (click)="filterDateAndRought('Active',FilterRoutesby)">Active</button>
+              <button class="dropdown-item" type="button" [ngClass]="{'active': Showtherapies==='stoped'}"
+                (click)="filterDateAndRought('stoped',FilterRoutesby)">Stopped</button>
+              <button class="dropdown-item" type="button" [ngClass]="{'active': Showtherapies==='ALL'}"
+                (click)="filterDateAndRought('ALL',FilterRoutesby)">All</button>
+
+            </div>
+
+            <b>Sort</b>
+
+            <button class="dropdown-item" type="button" [ngClass]="{'active': Sorttherapie==='DESCRIPTION-ASC'}"
+              (click)="sortPrescription('DESCRIPTION-ASC')">DESCRIPTION-ASC</button>
+            <button class="dropdown-item" type="button" [ngClass]="{'active': Sorttherapie==='DESCRIPTION-DESC'}"
+              (click)="sortPrescription('DESCRIPTION-DESC')">DESCRIPTION-DESC</button>
+            <button class="dropdown-item" type="button" [ngClass]="{'active': Sorttherapie==='CREATED TIME-ASC'}"
+              (click)="sortPrescription('CREATED TIME-ASC')">CREATED TIME-ASC</button>
+            <button class="dropdown-item" type="button" [ngClass]="{'active': Sorttherapie==='CREATED TIME-DESC'}"
+              (click)="sortPrescription('CREATED TIME-DESC')">CREATED TIME-DESC</button>
+          </div>
+        </div>
+        <!-- <div class="btn-group float-right">
+        <div class="form-group mb-2 Group_Icon pl-3" (click)="changeGroupType('custom group')"
+          [ngClass]="{'active': groupFilterType==='custom group'}"></div>
+
+      </div> -->
+        <div class="btn-group float-right" role="group" aria-label="Basic outlined example">
+          <button type="button" (click)="changeGroupType('Basic')" class="btn btn-outline-dark btn-sm"
+            [ngClass]="{'active': groupFilterType==='Basic'}">Basic</button>
+          <button type="button" (click)="changeGroupType('Base')" class="btn btn-outline-dark btn-sm"
+            [ngClass]="{'active': groupFilterType==='Base'}">Class</button>
+          <button type="button" (click)="changeGroupType('Route')" class="btn btn-outline-dark btn-sm"
+            [ngClass]="{'active': groupFilterType==='Route'}">Route</button>
+        </div>
+        <!-- <div class="btn-group float-right">
+        <div class="form-group mb-2 Sort_Icon pl-3" (click)="changeGroupType('Drug Chart')"
+          [ngClass]="{'active': groupFilterType==='Drug Chart'}"></div>
+
+      </div> -->
+        <!-- <div class="btn-group float-right">
+        <div class="form-group mb-2 Routes_Icon pl-3"></div>
+        <button type="button" class="btn  btn-sm dropdown-toggle " data-toggle="dropdown" aria-haspopup="true"
+          aria-expanded="false">
+          {{FilterRoutesby}}
+        </button>
+        <div class="dropdown-menu dropdown-menu-right">
+          <b>Routes</b>
+          <button class="dropdown-item" [ngClass]="{'active': FilterRoutesby==='All routes'}" type="button"
+            (click)="filterDateAndRought(Showtherapies,'All routes')">All routes</button>
+
+
+          <button class="dropdown-item" *ngFor="let varRoute of AllRoutes;let indexOfelement=index;"
+            (click)="filterDateAndRought(Showtherapies,varRoute)" [ngClass]="{'active': FilterRoutesby===varRoute}"
+            type="button">{{varRoute}}</button>
+
+
+        </div>
+      </div> -->
+
+        <div *ngIf="currentmodule==='app-therapy-overview'" class="btn-group btn-group-sm float-right mr-1"
+          style="width: 33%;" role="group">
+          <button type="button" class="btn btn-sm btn-outline-primary" (click)="prevDaysTherapy()">
+            < </button>
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="nextDaysTherapy()"> > </button>
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="setNoOfDaysTherapy(3)">3</button>
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="setNoOfDaysTherapy(5)">5</button>
+        </div>
+        <div *ngIf="showChoosedate && currentmodule==='app-drug-chart'">
+          <table class="float-right">
+            <tr>
+              <td>
+                <button class="btn btn-sm" (click)="changechoosendate(-1)" type="button"><b>&#60;</b></button>
+
+              </td>
+              <td>
+                <input type="text" placeholder="Today" class="epma-date-control" [bsValue]="Choosenfilterdate"
+                  style="width:120px" bsDatepicker [(ngModel)]="Choosenfilterdate"
+                  (ngModelChange)="ChoosenfilterdateChange($event)" (onHidden)="onDatePickerClose($event)"
+                  (onShown)="onDatePickerOpen($event)"
+                  [bsConfig]="{ dateInputFormat: 'DD/MM/YYYY', containerClass: 'theme-default', adaptivePosition: true }" />
+              </td>
+              <td>
+                <button class="btn btn-sm" (click)="changechoosendate(1)" type="button"><b>&#62;</b></button>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="row border text-secondar">
+        <div class="col">
+          <small *ngIf="appService.refWeightValue">
+            <!-- Reference weight: <strong>{{appService.refWeightValue}}</strong> kg
+          ({{appService.refWeightRecordedOn}})
+          <span *ngIf="appService.bodySurfaceArea">
+            -
+            Body surface: <strong>{{appService.bodySurfaceArea}}</strong> m<sup>2</sup>
+          </span> -->
+            Reference weight<span *ngIf="appService.refWeightType && appService.refWeightType == 'estimated' ">
+              (Estimated)</span>
+            <span *ngIf="!appService.refWeightType || appService.refWeightType == 'actual' ">
+              (Actual)</span>:
+            <strong>{{appService.refWeightValue}} kg</strong>
+            -
+            Ideal body weight:
+            <strong *ngIf="appService.idealWeightValue!=-1">{{appService.idealWeightValue}} kg</strong>
+            <strong *ngIf="appService.idealWeightValue==-1">N/A</strong>
+            -
+            Body surface: <strong>{{appService.bodySurfaceArea}} m<sup>2</sup></strong>
+          </small>
+        </div>
+        <app-encounter [nonInitiatorView]=true class="pr-2"></app-encounter>
+      </div>
+    </div>
+    <div
+      *ngIf="appService.warningService && appService.warningService.encounterId && !appService.warningServiceIPContext.loader && !appService.warningServiceIPContext.existingWarningsStatus"
+      class="p-0 mb-0 alert alert-danger" role="alert" (click)="ShowWarnings()">
+      One or more high alerts require an override.
+    </div>
+    <div *ngIf="!appService.bannerWarningStatus" class="p-0 mb-0 alert alert-danger" (click)="CheckBannerWarnings()"
+      role="alert">
+      Certain actions are disabled because of missing information. Please click here to resolve.
+    </div>
+    <!-- <div class="row" #loading>
+    <div class="col-8" *ngIf='loadDrugChart<totalmetadatarequests'>
+      <label *ngFor="let i of [].constructor(loadDrugChart)"
+        style="background-color:lightskyblue; min-width: 20px; font-size: -100px;">&nbsp;
+      </label>
+    </div>
+  </div> -->
+    <div *ngIf="!appService.isAppDataReady">
+      <span *ngIf="this.appService.encounter" class="spinner-border spinner-border-sm" role="status" aria-hidden="true">
+      </span>
+    </div>
+
+    <div *ngIf="appService.isAppDataReady === true && currentmodule==='app-drug-chart'">
+      <app-drug-chart [groupFilterType]="groupFilterType" *ngIf="showdrugChart" (emitPrintIcon)="displayPrintIcon()">
+      </app-drug-chart>
+    </div>
+    <div *ngIf="currentmodule==='app-reconciliation-lists'">
+      <app-reconciliation-lists></app-reconciliation-lists>
+    </div>
+    <div *ngIf="currentmodule === 'app-oplist'">
+      <app-oplist></app-oplist>
+    </div>
+    <div *ngIf="appService.isAppDataReady === true && currentmodule==='app-therapy-overview'">
+      <app-therapy-overview></app-therapy-overview>
+    </div>
+
+    <div *ngIf="currentmodule==='app-inpatient-prescribing'">
+      <app-inpatient-prescribing (finish)="PrescribingFinished()" (cancel)="PrescribingCancelled()">
+      </app-inpatient-prescribing>
+    </div>
+
+    <div *ngIf="currentmodule==='app-inpatient-prescribing-edit'">
+      <app-inpatient-prescribing [cloningExternally]="cloningExternally" [clonePrescription]="clonePrescription"
+        [editingPrescription]="editingPrescription" (finish)="PrescribingFinished()" (cancel)="PrescribingCancelled()">
+      </app-inpatient-prescribing>
+    </div>
+
+    <app-prescribing-form *ngIf="showPrescribingForm" [editingPrescription]="editingPrescription"
+      [clonePrescription]="clonePrescription" (PrescriptionCreated)="EditPrescriptionSaved($event)"
+      (Cancel)="EditPrescriptionCancelled()" formContext="ip">
+    </app-prescribing-form>
+
+    <!-- <div class="modal fade" id="pform" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+      <div class="modal-content">
+        <app-prescribing-form *ngIf="showPrescribingForm" [editingPrescription]="editingPrescription"
+          [clonePrescription]="clonePrescription" (PrescriptionCreated)="EditPrescriptionSaved($event)"
+          (Cancel)="EditPrescriptionCancelled()">
+        </app-prescribing-form>
+        <button type="button" hidden data-dismiss="modal" #close_pform>Close</button>
+      </div>
+    </div>
+  </div> -->
+
+
+    <div id="refreshpagemessage" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog  modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+          <b class="popover-title popover-header">
+            Patient's record has changed
+          </b>
+          <div class="modal-body border-top alert-danger">
+            <h6>
+              Another user has updated this patient's record while you have been logged-in. Please click refresh to see
+              the most current information.
+            </h6>
+          </div>
+          <div class="modal-footer p-1">
+            <div class="text-right">
+              <button type="button" class="btn btn-primary" (click)="ShowRefreshPageMessage()">
+                Refresh</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <button [disabled]="appService.isAppDataReady == false" type="button" hidden data-toggle="modal"
+      data-target="#refreshpagemessage" data-backdrop="static" data-keyboard="false" #open_refreshmessage></button>
+  </div>
+  <div *ngIf="noEncountersAvailable">
+    Patient is not admitted
+  </div>
+  <div *ngIf="appService.isAppDataReady == true">
+    <app-warnings-header></app-warnings-header>
+    <app-banner-warnings (loadcomplete)="BannerWarningsLoaded()"></app-banner-warnings>
+
+  </div>
+  <div *ngIf="appService.warningServiceIPContextInitComplete">
+    <app-warnings-mod></app-warnings-mod>
+  </div>
+
+  <app-additional-administration *ngIf="showPopOver=='app-additional-administration'"
+    [event]="popover_prescriptioncontext"></app-additional-administration>
+  <app-add-bolus *ngIf="showPopOver=='app-add-bolus'" [event]="popover_prescriptioncontext"></app-add-bolus>
+  <app-adjust-infusion *ngIf="showPopOver=='app-adjust-infusion'" [event]="popover_prescriptioncontext">
+  </app-adjust-infusion>
+  <app-change-infusion *ngIf="showPopOver=='app-change-infusion'" [event]="popover_prescriptioncontext">
+  </app-change-infusion>
+  <app-pause-infusion *ngIf="showPopOver=='app-pause-infusion'" [event]="popover_prescriptioncontext">
+  </app-pause-infusion>
+  <app-restart-infusion *ngIf="showPopOver=='app-restart-infusion'" [event]="popover_prescriptioncontext">
+  </app-restart-infusion>
+  <app-comments *ngIf="showPopOver=='app-comments'" [event]="popover_prescriptioncontext"></app-comments>
+  <app-nursing-instruction *ngIf="showPopOver=='app-nursing-instruction'" [event]="popover_prescriptioncontext">
+  </app-nursing-instruction>
+  <app-view-reminder *ngIf="showPopOver=='app-view-reminder'" [event]="popover_prescriptioncontext">
+  </app-view-reminder>
+  <app-record-patientdrug *ngIf="showPopOver=='app-record-patientdrug'" [event]="popover_prescriptioncontext">
+  </app-record-patientdrug>
+  <app-pharmacy-review *ngIf="showPopOver=='app-pharmacy-review'" [prescription]="popover_prescriptioncontext">
+  </app-pharmacy-review>
+  <app-supply-request *ngIf="showPopOver=='app-supply-request'" [event]="popover_prescriptioncontext">
+  </app-supply-request>
+  <app-end-infusion *ngIf="showPopOver=='app-end-infusion'" [event]="popover_prescriptioncontext">
+  </app-end-infusion>
+  <app-titration-chart *ngIf="showTitrationChart=='app-titration-chart'" [event]="popover_prescriptioncontext">
+  </app-titration-chart>
+
+  <app-complete-reconciliation></app-complete-reconciliation>
+
+  <app-drug-information></app-drug-information>
+
+  <!-- <app-records-template class="pdfUseOnly" [activeRecordedDays]="numberOfEmptyTemplates"
+  [emptyTemplates]="numberOfEmptyTemplates" [sdate]="startDate" [edate]="endDate"
+  *ngIf="medicationAdministrationEmptyTemplate" [marType]="medicationAdministrationEmptyTemplate"
+  (destroyTemplate)="destroyRecordsTemplate()"></app-records-template> -->
+
+  <app-demo-admission-record class="pdfUseOnly" [activeRecordedDays]="numberOfEmptyTemplates"
+    [emptyTemplates]="numberOfEmptyTemplates" [sdate]="startDate" [edate]="endDate"
+    *ngIf="medicationAdministrationEmptyTemplate" [marType]="medicationAdministrationEmptyTemplate"
+    (destroyTemplate)="destroyRecordsTemplate()"></app-demo-admission-record>
+
+  <!-- <app-records-template  *ngIf="medicationAdministrationEmptyTemplate" [marType]="medicationAdministrationEmptyTemplate" (destroyTemplate)="destroyRecordsTemplate()"></app-records-template> -->
+
+  <app-date-picker *ngIf="datePicker" (getDates)="updateDates($event)"></app-date-picker>
+
+</div>

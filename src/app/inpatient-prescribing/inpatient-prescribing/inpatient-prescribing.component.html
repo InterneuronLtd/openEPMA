@@ -1,0 +1,156 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div class="card" *ngIf="appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled)">
+    <div *ngIf="canSelectNewMedication" class="pl-3 card-body">
+        <!-- <label>Search Medication</label> -->
+        <app-search-medication (medicationselected)="onmedicationselected($event)"></app-search-medication>
+    </div>
+    <div *ngIf="canSelectNewMedication">
+        <button (click)="ordersetlist.getOrderSets()" hidden #reloadorderset></button>
+        <app-orderset-list #ordersetlist (onAddToTherapy)="AddToTherapyFromOrderset($event)"
+            (onEditPrescription)='EditOrderSetPrescription($event)' context="ip">
+        </app-orderset-list>
+    </div>
+    <p></p>
+    <div>
+        <button type="button" class="btn btn-primary" (click)="staticModal.show()" hidden #openordersetbtn>Add to Order
+            set</button>
+        <div class="modal fade" bsModal #staticModal="bs-modal" [config]="{backdrop: 'static'}" tabindex="-1"
+            role="dialog" aria-labelledby="dialog-static-name">
+            <div class="modal-dialog modal-md modal-top">
+                <div class="modal-content">
+                    <div class="modal-header" style="padding: 0.5rem 1rem; background-color: #E6E6E6">
+                        <h6 id="dialog-static-name" class="modal-title pull-left">Therapy lists</h6>
+                        <button type="button" class="close pull-right" aria-label="Close" (click)="staticModal.hide()"
+                            #closeordersetbtn>
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <!-- <div class="modal-body" *ngIf="!saveToOrderSetFromBasket">
+                        <app-addto-orderset *ngIf="showaddtoorderset" [patientid]="os_personid" [ownerid]="os_ownerid"
+                            [prescriptions]="OrderSetPrescriptions" (Cancelled)="OnOrderSetCancelled()"
+                            (Complete)="OnOrderSetComplete()" (Failed)="OnOrderSetFailed($event)">
+                        </app-addto-orderset>
+                    </div> -->
+                    <div class="modal-body">
+                        <app-addto-orderset *ngIf="showaddtoorderset" [patientid]="os_personid" [ownerid]="os_ownerid"
+                            [prescriptions]="OrderSetPrescriptions" (Cancelled)="OnOrderSetCancelled()"
+                            (Complete)="OnOrderSetComplete()" (Failed)="OnOrderSetFailed($event)">
+                        </app-addto-orderset>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container" style="max-width: 100%;">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-11 font-weight-bold">
+                    Draft Prescription
+                </div>
+                <div class="col text-right" *ngIf="PrescriptionBasket.length > 0">
+                    <a href="javascript:void(0)" (click)="saveOrderSet()">
+                        <img alt="Save to order set" src="../../../assets/images/epma/therapy/Save.svg"
+                            title="Save to order set">
+                    </a>
+                    &nbsp;
+                    <a href="javascript:void(0)" (click)="clearBasket()">
+                        <!--img alt="Therapy menu" src="../../../assets/images/epma/therapy/Menu.svg">-->
+                        <img alt="Remove all" src="../../../assets/images/epma/therapy/Stop_Or_Remove.svg"
+                            title="Remove all">
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div style="min-height: 11em;">
+            <div *ngFor="let p of PrescriptionBasket">
+                <div class="border mb-1">
+                    <app-prescription-template (basketAction)="BasketAction($event)" [prescription]="p"
+                        componenttype="medication">
+                    </app-prescription-template>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container" style="max-width: 100%;">
+        <!-- <div class="card-header">
+            Warnings
+        </div> -->
+        <div style="min-height: 11em;">
+            <div [appWarningsLoader]="componentModuleData" (moduleUnLoad)="OnWarningsModuleUnLoad($event)"
+                (moduleLoadComplete)="OnWarningsLoadComplete($event)"></div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <label *ngIf="warningsError" class="alert-danger">{{warningsError}}</label>
+        <button type="button" style="color:white" class="btn btn-info" (click)="SaveAllPrescriptions()" [disabled]="isFormSaving || PrescriptionBasket.length==0 
+          || !this.appService.bannerWarningStatus"
+            *ngIf="(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled)) && appService.AuthoriseAction('epma_access_inpatientprescribing')">
+            <span class="spinner-border spinner-border-sm" *ngIf="isFormSaving" role="status" aria-hidden="true">
+            </span> Prescribe</button>
+
+
+        <!-- <button type="button" (click)="SaveAllPrescriptions()" class="btn btn-info"
+            style="color:white">Prescribe</button> -->
+
+        <button type="button" [disabled]="isFormSaving" (click)="Cancel()" class="btn btn-secondary"
+            data-dismiss="modal">Cancel</button>
+
+        <!-- <div *ngIf="isFormSaving">
+            Please wait...
+        </div> -->
+
+
+    </div>
+    <!-- <div class="modal-footer">
+        <button type="button" (click)="SaveAllPrescriptions()" class="btn btn-primary">Prescribe</button>
+        <button type="button" (click)="Cancel()" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <div *ngIf="isFormSaving">
+            Please wait...
+        </div>
+    </div> -->
+
+</div>
+
+
+<app-prescribing-form *ngIf="showPrescribingForm" [editingPrescription]="editingPrescription"
+    [clonePrescription]="clonePrescription" [medication]="prescibingMedication"
+    [editingFromIpBasket]="editingFromBasket" [therapyList]="PrescriptionBasket"
+    (PrescriptionCreated)="AddPrescriptionToBasket($event)" (Cancel)="PrescriptionCancelled()" formContext="ip">
+</app-prescribing-form>
+<!-- <div class="modal fade" id="pform" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <app-prescribing-form *ngIf="showPrescribingForm" [editingPrescription]="editingPrescription"
+                [clonePrescription]="clonePrescription" [medication]="prescibingMedication"
+                [therapyList]="PrescriptionBasket" (PrescriptionCreated)="AddPrescriptionToBasket($event)"
+                (Cancel)="PrescriptionCancelled()">
+            </app-prescribing-form>
+            <button type="button" hidden data-dismiss="modal" #close_pform>Close</button>
+        </div>
+    </div>
+</div> -->
+
+
+
+
+<button type="button" hidden data-toggle="modal" data-target="#pform" data-backdrop="static" data-keyboard="false"
+    #open_pform></button>

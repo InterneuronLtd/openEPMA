@@ -1,0 +1,127 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div class="modal fade" bsModal #staticModal="bs-modal" [config]="{backdrop: 'static'}" tabindex="-1" role="dialog"
+    aria-labelledby="dialog-static-name" style="backdrop-filter: brightness(50%);">
+    <div class="modal-dialog !important modal-sm">
+        <div class="modal-content">
+            <div class="modal-header" style="padding: 0.5rem 1rem; background-color: #E6E6E6">
+                <h6 id="dialog-static-name" class="modal-title pull-left">Time picker</h6>
+                <button type="button" class="close pull-right" aria-label="Close" (click)="staticModal.hide()" tabindex="-1">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body clock-modal-body !important;">
+                <div class="container clock-container !important;">
+                    <!--
+                    <div class="container p-1 bg-timedisplay text-white text-center rounded" style="height: 4rem;">
+                        <label class="time-display" [class]="hourTenBackground">{{selectedHourTen}}</label>
+                        <label class="time-display" [class]="hourUnitBackground">{{selectedHourUnit}}</label>
+                        <label class="time-display">&nbsp;:&nbsp;</label>
+                        <label class="time-display" [class]="minTenBackground">{{selectedMinuteTen}}</label>
+                        <label class="time-display" [class]="minUnitBackground">{{selectedMinuteUnit}}</label>
+                    </div>
+                    -->
+                    <div class="container bg-timedisplay rounded" style="height: 4rem;">
+                        <form class="form-inline">
+                            &nbsp;
+                            <label name="hourten" [ngClass]="(clickCount == 1)? 'form-control timeLabelhilight':'form-control time-display'"  
+                              >{{selectedHourTen}}</label>&nbsp;
+                              <label name="hourten" [ngClass]="(clickCount == 2)? 'form-control timeLabelhilight':'form-control time-display'"  
+                              >{{selectedHourUnit}}</label>&nbsp;
+                           
+                            <label class="time-display">&nbsp;:&nbsp;</label>
+                            <label name="hourten" [ngClass]="(clickCount == 3)? 'form-control timeLabelhilight':'form-control time-display'"  
+                            >{{selectedMinuteTen}}</label>&nbsp;
+                            <label name="hourten" [ngClass]="(clickCount == 4)? 'form-control timeLabelhilight':'form-control time-display'"  
+                            >{{selectedMinuteUnit}}</label>&nbsp;
+                            
+                        </form>
+                    </div>
+                    <div class="container p-1 font-weight-bold text-secondary text-center">
+                        <div class="row p-2">
+                            <div class="col-sm-4">
+                                <a href="javascript:void(0)" (click)="selectTime('1')" class="classpadding text-dark time-number" tabindex="5">1</a>
+                            </div>
+                            <div class="col-sm-4">
+                                <a href="javascript:void(0)" (click)="selectTime('2')" class=" classpadding text-dark time-number" tabindex="6">2</a>
+                            </div>
+                            <div class="col-sm-4">
+                                <a href="javascript:void(0)" (click)="selectTime('3')" *ngIf="displayThree" class=" classpadding text-dark time-number" tabindex="7">3</a>
+                                <span *ngIf="!displayThree" class="dimNumber">3</span>
+                            </div>
+                        </div>
+                        <div class="row p-2">
+                            <div class="col-sm-4">
+                                <a href="javascript:void(0)" (click)="selectTime('4')" *ngIf="displayFour" class=" classpadding text-dark time-number" tabindex="8">4</a>
+                                <span *ngIf="!displayFour" class="dimNumber">4</span>
+                            </div>
+                            <div class="col-sm-4">
+                                <a href="javascript:void(0)" (click)="selectTime('5')" *ngIf="displayFive" class="classpadding text-dark time-number" tabindex="9">5</a>
+                                <span *ngIf="!displayFive" class="dimNumber">5</span>
+                            </div>
+                            <div class="col-sm-4">
+                                <a href="javascript:void(0)" (click)="selectTime('6')" *ngIf="displaySix" class="classpadding text-dark time-number" tabindex="10">6</a>
+                                <span *ngIf="!displaySix" class="dimNumber">6</span>
+                            </div>
+                        </div>
+                        <div class="row p-2">
+                            <div class="col-sm-4">
+                                <a href="javascript:void(0)" (click)="selectTime('7')" *ngIf="displaySeven" class="classpadding text-dark time-number" tabindex="11">7</a>
+                                <span *ngIf="!displaySeven" class="dimNumber">7</span>
+                            </div>
+                            <div class="col-sm-4">
+                                <a href="javascript:void(0)" (click)="selectTime('8')" *ngIf="displayEight" class="classpadding text-dark time-number" tabindex="12">8</a>
+                                <span *ngIf="!displayEight" class="dimNumber">8</span>
+                            </div>
+                            <div class="col-sm-4">
+                                <a href="javascript:void(0)" (click)="selectTime('9')" *ngIf="displayNine" class="classpadding text-dark time-number" tabindex="13">9</a>
+                                <span *ngIf="!displayNine" class="dimNumber">9</span>
+                            </div>
+                        </div>
+                        <div class="row p-2">
+                            <div class="col-sm-4">
+                                <a href="javascript:void(0)" (click)="movePrevious()" class="classpadding text-dark time-number" *ngIf="displayPrevious" tabindex="15">&lt;</a>
+                                <span *ngIf="!displayPrevious" class="dimNumber">&lt;</span>
+                            </div>
+                            <div class="col-sm-4">
+                                <a href="javascript:void(0)" (click)="selectTime('0')" class="classpadding text-dark time-number" tabindex="14">0</a>
+                            </div>
+                            <div class="col-sm-4">
+                                <a href="javascript:void(0)" (click)="moveNext()" class="classpadding text-dark time-number" *ngIf="displayNext" tabindex="16">&gt;</a>
+                                <span *ngIf="!displayNext" class="dimNumber">&gt;</span>
+                            </div>
+                        </div>
+                        <div class="row p-2">
+                            <div class="col-sm-4">
+                                <a href="javascript:void(0)" (click)="getCurrentTime()" class="text-dark time-number" tabindex="17">Now</a>
+                            </div>
+                            <div class="col-sm-4">
+                            </div>
+                            <div class="col-sm-4">
+                                <a href="javascript:void(0)" (click)="getSelectedTime()" class="text-dark time-number" tabindex="18">Enter</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

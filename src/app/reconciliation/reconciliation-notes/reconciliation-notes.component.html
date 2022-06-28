@@ -1,0 +1,110 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div *ngIf="showpopup" class="modal fade bd-example-modal-lg"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
+    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog  modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">{{NoteHeader}}</h3>
+
+                <button type="button" class="close" (click)="showpopup=false" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div>
+                <div class="modal-body" style="max-height: 630px; overflow-y: scroll;">
+                    <div *ngIf="Prescripsource">
+                        <b> <span>Prescription source : </span> </b>
+                        <span>{{Prescripsource}}</span>
+                        <br />
+                        <br />
+                    </div>
+                    <b> <span>Note : </span> </b>
+                    <span class="font-italic">{{NoteHeaderMessage}}</span>
+                  
+                    <ckeditor [(ngModel)]="latestNotes" 	[editor]="Editor"  id="classic-editor"
+                        name="classic-editor" >
+                    </ckeditor>
+                    <!-- <textarea [disabled]="!appService.isCurrentEncouner" class="form-control" rows="15"
+                        [(ngModel)]="latestNotes"></textarea> -->
+                    <span *ngIf="showerror" style="color: red;">Please Enter Notes</span>
+                    <div class="row">
+                        <div class="col-6" style="max-height: 100px;overflow-y: scroll;">
+
+                            <div class="row" *ngFor="let model of arrreconcilation; let i = index;">
+                                <div class=" col-4">{{model.modifiedon| date:"dd-MMM-yyyy"}}</div>
+                                <div class=" col-4">{{model.modifiedby}}</div>
+                                <div class=" col-4"><button type="button" data-toggle="modal"
+                                        (click)="sethistorynotes(model.notes)" data-target="#exampleModalnotes"
+                                        class="btn btn-link">version {{arrreconcilation.length - i}}</button></div>
+
+                            </div>
+
+                        </div>
+                        <div *ngIf="NodesType == 'MOA'" class="col-6">
+
+
+                            Additional information in the medical notes <input type="checkbox"
+                                [disabled]="!appService.isCurrentEncouner" [checked]="AdditionalInfo"
+                                (change)="AdditionalInfo = !AdditionalInfo" />
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer" style="padding: 0.4rem 0rem;">
+
+                <button data-dismiss="modal" type="button" (click)="saveNotes()" *ngIf="appService.isCurrentEncouner"
+                    class="btn btn-primary">Save</button>
+                <button data-dismiss="modal" type="button" (click)="showpopup=false"
+                    class="mr-2 btn btn-secondary">Cancel</button>
+
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<div class="modal fade" id="exampleModalnotes" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Notes</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- <textarea class="form-control" rows="20" [(ngModel)]="historynotes" readonly></textarea> -->
+                <ckeditor [(ngModel)]="historynotes"	[editor]="Editor"  id="classic-editor3"
+                name="classic-editor2" >
+            </ckeditor>
+            </div>
+
+        </div>
+    </div>
+</div>

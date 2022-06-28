@@ -1,0 +1,289 @@
+[class*="col"] {
+  border: 1px solid black;
+  /* border-left:1px solid black; */
+  border-collapse: collapse;
+  height: 30px;
+}
+
+.updated-row-height [class*="col"] {
+  height: 15px;
+}
+
+.update [class*="col"] {
+  height: 15px;
+}
+
+.add-border {
+  border: 1px solid black;
+}
+
+.row-height {
+  height: 30px;
+}
+
+.updated-row-height {
+  height: 15px;
+}
+
+.remove-double-border-right {
+  border-right: 0;
+}
+
+.col-height-1 {
+  height: 210px;
+}
+
+.col-height-1-updated [class*="col"] {
+  height: 105px;
+}
+
+.remove-double-border-left {
+  border-left: 0;
+}
+
+.remove-double-border-bottom {
+  border-bottom: 0;
+}
+.remove-double-border-top {
+  border-top: 0;
+}
+
+.remove-border {
+  border:0;
+}
+
+.add-right-border {
+  border-right: 1px solid black;
+}
+
+.add-bottom-border {
+  border-bottom: 1px solid black;
+}
+
+.text-align {
+  text-align: center;
+}
+
+.barcode-align {
+  text-align: left;
+  vertical-align: text-top;
+}
+
+.table-height  {
+  min-height: 525px;
+}
+
+.table-height-2  {
+  min-height: 525px;
+}
+
+.table-height-3 {
+  min-height: 465px;
+}
+
+.table-height-4 {
+  min-height:325px;
+}
+
+.table-height-5 {
+  min-height:475px;
+}
+
+/* .header-height {
+  height: 200px;
+} */
+
+.header-margin {
+  margin-bottom: 30px;
+  margin-top: 30px;
+}
+
+.update-margin {
+  margin-left: 0px;
+  width: 104%;
+}
+
+.header-col-height {
+  height: 125px;
+}
+
+/* .barcode-margin {
+  margin-top: 68px;
+} */
+
+.font-color {
+  color: lightgray;
+}
+
+.change-font-size {
+  font-size: 8px;
+}
+/* 
+.header-margin-2 {
+  margin-top: 300px;
+} */
+
+.header-margin-3 {
+  margin-top: 20px;
+}
+
+.active-second-part {
+  /* height: auto; */
+  min-height: 240px;
+}
+
+.height-1 {
+  /* height: 70%; */
+}
+
+/* .height-2 {
+  height: 30%;
+} */
+
+.visibility {
+  visibility: hidden;
+}
+
+.padding-medication {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.overflow {
+  overflow-y: hidden;
+}
+
+.overflow-data {
+  overflow: hidden;
+}
+
+.extend-width {
+  width: 97.7%;
+}
+
+.pdfUseOnly {
+  visibility: hidden;
+  font-size: 15px;
+}
+
+.col-width {
+  width: 200px;
+}
+
+.margin-left-total {
+  margin-left: 15px;
+}
+
+.checked-padding {
+  padding-left: 3px;
+}
+
+.given-padding {
+  padding-left: 3px;
+}
+
+.col-advanced {
+  height: 69px;
+}
+
+.padding-administration {
+  padding-left: 3px;
+}
+
+.min-width-date {
+  min-width: 12%;
+  padding-left: 4px;
+}
+
+.max-width-dose-time {
+  max-width: 12%;
+  padding-left: 4px;
+}
+
+
+.max-width-date-col {
+  max-width: 12%;
+}
+
+.row-width-extended {
+  width: 219%;
+}
+
+.date-time-padding {
+  padding-left: 4px;
+}
+
+
+.dose-padding {
+  padding-left: 2px;
+  padding-right: 0px;
+}
+
+.each-page-header {
+  height: 30px;
+
+}
+
+.header-visibility {
+  visibility: hidden;
+}
+
+
+.header-visibility-2 {
+  display: none;
+  margin-top: 10px;
+}
+
+.each-page-footer {
+  height: 10px;
+  margin-left: -70px;
+}
+
+.each-page-footer-2 {
+  margin-left: 300px;
+}
+
+.x-height {
+  height: 150px;
+}
+
+.col-extend {
+  height: 35px;
+}
+
+.patient-description {
+  margin-left: 10px;
+}
+
+.checkmark {
+
+    width: 5px;
+    height: 5px;
+    background-repeat: no-repeat;
+   background-image: url("/assets/images/epma/checkmark.png");
+
+}
+
+.empa-template-dose-text  {
+  font-size: 1.1em;
+  line-height: 14px;
+  color: #646464;
+  white-space: normal;
+}
+
+
+.given-checked {
+  margin-left: -5px;
+}
+
+.modified-height {
+  height: 15px;
+}
+
+.empa-template-induction-label {
+  color: #7891D8;
+  font-weight: bold;
+}
+
+
+

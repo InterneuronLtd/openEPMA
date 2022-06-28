@@ -1,0 +1,626 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<table class="table table-sm table-bordered">
+    <thead>
+        <tr>
+            <td class="colwidth card-header container-fluid" scope="col">
+                <div class="row pl-3">
+                    <div class="col-xs-6 ">
+                        <span class="font-weight-bold">Medications on admission</span>
+
+                    </div>
+                    <div class="col-xs-6 ">
+
+                        <span *ngIf="Medsonadmission.createdon"
+                            class="font-weight-bold ml-1">({{Medsonadmission.createdon | date :
+                            "dd-MMM-yyyy"}})</span>
+                    </div>
+                </div>
+                <small *ngIf="isMOAComplete && arrrPescriptionMOA.length == 0">This patient is not on any regular
+                    medications</small>
+                <div class="row">
+                    <form class="pl-3 form-inline">
+                        <div class="pt-2 form-group mb-2">
+                            <div *ngIf="isMOAStarted && appService.AuthoriseAction('epma_complete_moa')"
+                                [ngClass]="isMOAComplete == true ? 'Approved' : 'PendingApproval'"
+                                (click)="setCompletiontype('MOA')">
+                            </div>
+                        </div>
+
+                        <button
+                            *ngIf="!isMOAStarted && (appService.AuthoriseAction('epma_start_moa') || appService.AuthoriseAction('epma_edit_moa')) && (appService.isCurrentEncouner || appService.isTCI) && !appService.isTCICancelled  && appService.warningServiceIPContext.existingWarningsStatus"
+                            class="btn btn-link" (click)="startMOA()">Start</button>
+                        <button
+                            *ngIf="isMOAStarted && (appService.AuthoriseAction('epma_start_moa') || appService.AuthoriseAction('epma_edit_moa')) && (appService.isCurrentEncouner || appService.isTCI) && !appService.isTCICancelled  && appService.warningServiceIPContext.existingWarningsStatus"
+                            (click)="EditMOA()" class="btn btn-link ">Edit</button>
+                        <button *ngIf="isMOAStarted && appService.AuthoriseAction('epma_access_moanotes')"
+                            class="btn btn-link " (click)="ShowRecNotes('MOA')">Notes</button>
+                    </form>
+                </div>
+                <div class="pl-3 text-info" *ngIf="AdditionalInfoNotesSelected">Please refer to the medical notes and
+                    care plan for additional information.</div>
+            </td>
+            <td class="colwidth card-header container-fluid" scope="col">
+                <div class="row pl-3">
+                    <div class="col-xs-6">
+                        <span class="font-weight-bold">Discharge prescription</span>
+                    </div>
+
+                    <div class="col-xs-6">
+                        <span *ngIf="Medsondischarge.createdon" class="font-weight-bold ml-1">
+                            ({{Medsondischarge.createdon | date :
+                            "dd-MMM-yyyy"}})</span>
+
+                    </div>
+                </div>
+                <div class="row">
+                    <form class="pl-3 form-inline">
+                        <div class="pt-2 form-group mb-2">
+                            <div *ngIf="isMODStarted && appService.AuthoriseAction('epma_complete_mod') &&  appService.bannerWarningStatus && appService.warningServiceIPContext.existingWarningsStatus &&  
+                            (appService.warningService && appService.warningService.encounterId && appService.warningServiceMODContext && !appService.warningServiceMODContext.loader  && appService.warningServiceMODContext.existingWarningsStatus)"
+                                [ngClass]="isMODComplete == true ? 'Approved' : 'PendingApproval'"
+                                (click)="setCompletiontype('MOD')">
+                            </div>
+                        </div>
+
+                        <button
+                            *ngIf="!isMODStarted && (appService.AuthoriseAction('epma_start_mod') || appService.AuthoriseAction('epma_edit_mod')) && appService.isCurrentEncouner && appService.bannerWarningStatus && appService.warningServiceIPContext.existingWarningsStatus"
+                            class="btn btn-link  " (click)="startMOD()">Start</button>
+                        <button
+                            *ngIf="isMODStarted && (appService.AuthoriseAction('epma_start_mod') || appService.AuthoriseAction('epma_edit_mod')) && appService.isCurrentEncouner && appService.bannerWarningStatus && appService.warningServiceIPContext.existingWarningsStatus"
+                            (click)="EditMOD()" class="btn btn-link  ">Edit</button>
+
+                    </form>
+                    <a *ngIf="appService.warningService && appService.warningService.encounterId && appService.warningServiceMODContext && !appService.warningServiceMODContext.loader && !appService.warningServiceMODContext.existingWarningsStatus"
+                        href="javascript:void(0)" (click)="ShowWarnings()">
+                        <img src="../../../assets/images/epma/Long delay of confirmation.svg">
+                    </a>
+                    <span
+                        *ngIf="appService.warningService && appService.warningService.encounterId && appService.warningServiceMODContext && appService.warningServiceMODContext.loader"
+                        class="form-group mb-2">
+                        <span class="spinner-border spinner-border-sm" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </span>
+                    </span>
+                    <a *ngIf="appService.warningService && appService.warningService.encounterId && appService.warningServiceMODContext && !appService.warningServiceMODContext.loader  && appService.warningServiceMODContext.existingWarningsStatus"
+                        href="javascript:void(0)" (click)="ShowWarnings()">
+                        <img src="../../../assets/images/epma/Show all warnings.svg">
+                    </a>
+                </div>
+            </td>
+            <td class="colwidth card-header container-fluid" scope="col">
+                <div class="row">
+                    <div class="col-md-11 ">
+                        <span class="font-weight-bold"> Discharge summary </span>
+                        <!-- <span *ngIf="Dischargesummarry.createdon" class="font-weight-bold">( {{Dischargesummarry.createdon | date :
+                            "dd-MMM-yyyy"}})</span> -->
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="pl-3 form-inline">
+                        <div class="pt-2 form-group mb-2">
+                            <div *ngIf="isMedsondischargeOnce && this.appService.EnableDischargeSummaryComplete"
+                                [ngClass]="isSummeryComplete == true ? 'Approved' : 'PendingApproval'"
+                                (click)="setCompletiontype('SUM')">
+                            </div>
+                        </div>
+
+
+                        <button class="btn btn-link-rec" *ngIf="appService.AuthoriseAction('epma_access_modnotes')"
+                            (click)="ShowRecNotes('SUM')">Notes</button>
+                        <button class="btn btn-link-rec"
+                            *ngIf="isMODComplete == true && 
+                        (   appService.warningService && appService.warningService.encounterId && appService.warningServiceMODContext && !appService.warningServiceMODContext.loader  && appService.warningServiceMODContext.existingWarningsStatus)"
+                            (click)="printDischargeRecPdf()">Print</button>
+
+                    </div>
+                </div>
+
+            </td>
+
+        </tr>
+    </thead>
+    
+    <tbody>
+        <tr *ngIf="arrrPescriptionMOAUnchange.length !=  0">
+            <td class="zeropadding">
+                <div class="card-header zeropadding">
+
+                </div>
+                <div *ngFor="let pres of arrrPescriptionMOAUnchange;">
+                    <app-prescription-template [prescription]=pres componenttype="MOA">
+                    </app-prescription-template>
+                    <hr />
+                </div>
+            </td>
+            <td class="zeropadding">
+                <div class="card-header zeropadding">
+
+                </div>
+
+                <div *ngFor="let pres of arrrPescriptionMODUnchange;">
+                    <app-prescription-template [prescription]=pres componenttype="MOD">
+                    </app-prescription-template>
+                    <hr />
+                </div>
+            </td>
+            <td class="zeropadding">
+                <div class="card-header zeropadding pl-1">
+                    <b> Unchanged</b>
+                </div>
+                <div *ngFor="let pres of arrrPescriptionMODUnchange;">
+                    <app-prescription-template [prescription]=pres componenttype="SUM">
+                    </app-prescription-template>
+                    <hr />
+                </div>
+            </td>
+        </tr>
+
+        <tr *ngIf="arrrPescriptionMOAChange.length !=  0">
+            <td class="zeropadding">
+                <div class="card-header zeropadding">
+
+                </div>
+                <div *ngFor="let pres of arrrPescriptionMOAChange;">
+                    <app-prescription-template [prescription]=pres componenttype="MOA">
+                    </app-prescription-template>
+                    <hr />
+                </div>
+            </td>
+            <td class="zeropadding">
+                <div class="card-header zeropadding">
+                </div>
+                <div *ngFor="let pres of arrrPescriptionMODChange;">
+                    <app-prescription-template [prescription]=pres componenttype="MOD">
+                    </app-prescription-template>
+                    <hr />
+                </div>
+            </td>
+            <td class="zeropadding">
+                <div class="card-header zeropadding pl-1">
+                    <b> Changed</b>
+                </div>
+                <div *ngFor="let pres of arrrPescriptionMODChange;">
+                    <app-prescription-template [prescription]=pres componenttype="SUM">
+                    </app-prescription-template>
+                    <hr />
+                </div>
+            </td>
+        </tr>
+
+        <tr *ngIf="arrrPescriptionMODNew.length !=  0">
+            <td class="zeropadding">
+                <div class="card-header zeropadding">
+
+                </div>
+            </td>
+
+            <td class="zeropadding">
+                <div class="card-header zeropadding">
+
+                </div>
+                <div *ngFor="let pres of arrrPescriptionMODNew;">
+                    <app-prescription-template [prescription]=pres componenttype="MODNO">
+                    </app-prescription-template>
+                    <hr />
+                </div>
+            </td>
+            <td class="zeropadding">
+                <div class="card-header zeropadding pl-1">
+                    <b> New</b>
+                </div>
+                <div *ngFor="let pres of arrrPescriptionMODNew;">
+                    <app-prescription-template [prescription]=pres componenttype="SUMNO">
+                    </app-prescription-template>
+                    <hr />
+                </div>
+            </td>
+        </tr>
+        <tr *ngIf="arrrPescriptionMOAStoped.length !=  0">
+            <td class="zeropadding">
+                <div class="card-header zeropadding">
+
+                </div>
+                <div *ngFor="let pres of arrrPescriptionMOAStoped;">
+                    <app-prescription-template [prescription]=pres componenttype="MOA">
+                    </app-prescription-template>
+                    <hr />
+                </div>
+            </td>
+            <td class="zeropadding">
+                <div class="card-header zeropadding">
+
+                </div>
+            </td>
+            <td class="zeropadding">
+                <div class="card-header zeropadding pl-1">
+                    <b> Stopped </b>
+                </div>
+                <div *ngFor="let pres of arrrPescriptionMOAStoped;">
+                    <app-prescription-template [prescription]=pres sumstatus="stopped" componenttype="SUMNO">
+                    </app-prescription-template>
+                    <hr />
+                </div>
+            </td>
+        </tr>
+        <tr *ngIf="arrrPescriptionMOASuspended.length !=  0">
+            <td class="zeropadding">
+                <div class="card-header zeropadding">
+
+                </div>
+                <div *ngFor="let pres of arrrPescriptionMOASuspended;">
+                    <app-prescription-template [prescription]=pres componenttype="MOA">
+                    </app-prescription-template>
+                    <hr />
+                </div>
+            </td>
+            <td class="zeropadding">
+                <div class="card-header zeropadding">
+
+                </div>
+            </td>
+            <td class="zeropadding">
+                <div class="card-header zeropadding pl-1">
+                    <b> Suspended </b>
+                </div>
+                <div *ngFor="let pres of arrrPescriptionMOASuspended;">
+                    <app-prescription-template [prescription]=pres sumstatus="suspended" componenttype="SUMNO">
+                    </app-prescription-template>
+                    <hr />
+                </div>
+            </td>
+
+
+        </tr>
+    </tbody>
+</table>
+<!--
+<div class="row">
+    <div class="col-4 ">
+        <div class="card nopadding">
+
+            <div class="card-header container-fluid">
+                <div class="row">
+                    <div class="col-md-5 nopadding">
+                        <span class="font-weight-bold">Medication on admission ({{Medsonadmission.createdon | date :
+                            "dd-MMM-yyyy"}})</span>
+                    </div>
+                    <div class="col-md-2  nopadding">
+
+                        <div *ngIf="isMOAStarted" [ngClass]="isMOAComplete == true ? 'Approved' : 'PendingApproval'"
+                            (click)="setCompletiontype('MOA')">
+                        </div>
+                    </div>
+                    <div class="col-md-3  nopadding">
+                        <button *ngIf="!isMOAStarted" class="btn btn-link btn-sm " (click)="startMOA()">Start</button>
+                        <button *ngIf="isMOAStarted" (click)="EditMOA()" class="btn btn-link btn-sm ">Edit</button>
+                    </div>
+                    <div class="col-md-2  nopadding">
+                        <button *ngIf="isMOAStarted" class="btn btn-link btn-sm "
+                            (click)="ShowNotes('MOA')">Notes</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="">
+                <div *ngIf="arrrPescriptionMOAUnchange.length !=  0" class="card">
+
+                    <div class="card-header zeropadding">
+                        Existing
+                    </div>
+
+                    <div *ngFor="let pres of arrrPescriptionMOAUnchange;">
+                        <app-prescription-template [prescription]=pres componenttype="MOA">
+                        </app-prescription-template>
+                        <hr />
+                    </div>
+                </div>
+                <div *ngIf="arrrPescriptionMOAChange.length !=  0 || arrrPescriptionMOAStoped.length !=  0 || arrrPescriptionMOASuspended.length !=  0"
+                    class="card">
+                    <div class="card-header zeropadding">
+                        <div *ngIf="arrrPescriptionMOAUnchange.length ==  0">
+                            Existing
+                        </div>
+                    </div>
+                    <div *ngFor="let pres of arrrPescriptionMOAChange;">
+                        <app-prescription-template [prescription]=pres componenttype="MOA">
+                        </app-prescription-template>
+                        <hr />
+                    </div>
+                    <div *ngFor="let pres of arrrPescriptionMOAStoped;">
+                        <app-prescription-template [prescription]=pres componenttype="MOA">
+                        </app-prescription-template>
+                        <hr />
+                    </div>
+                    <div *ngFor="let pres of arrrPescriptionMOASuspended;">
+                        <app-prescription-template [prescription]=pres componenttype="MOA">
+                        </app-prescription-template>
+                        <hr />
+                    </div>
+
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+    <div class="col-4">
+
+
+        <div class="card nopadding">
+
+            <div class="card-header container-fluid">
+                <div class="row">
+
+                    <div class="col-md-5 nopadding">
+                        <span class="font-weight-bold">Discharge prescription ( {{Medsondischarge.createdon | date :
+                            "dd-MMM-yyyy"}})</span>
+                    </div>
+                    <div class="col-md-3  nopadding">
+
+                        <div *ngIf="isMODStarted" [ngClass]="isMODComplete == true ? 'Approved' : 'PendingApproval'"
+                            (click)="setCompletiontype('MOD')">
+                        </div>
+                    </div>
+                    <div class="col-md-4  nopadding">
+                        <button *ngIf="!isMODStarted" class="btn btn-link btn-sm " (click)="startMOD()">Start</button>
+                        <button *ngIf="isMODStarted" (click)="EditMOD()" class="btn btn-link btn-sm ">Edit</button>
+                    </div>
+
+                </div>
+            </div>
+
+
+            <div class="">
+                <div *ngIf="arrrPescriptionMODUnchange.length !=  0" class="card">
+
+
+                    <div class="card-header zeropadding">
+
+                    </div>
+
+                    <div *ngFor="let pres of arrrPescriptionMODUnchange;">
+                        <app-prescription-template [prescription]=pres componenttype="MOD">
+                        </app-prescription-template>
+                        <hr />
+                    </div>
+                </div>
+                <div *ngIf="arrrPescriptionMODChange.length !=  0 || arrrPescriptionMODNew.length !=  0" class="card">
+                    <div class="card-header zeropadding">
+
+                    </div>
+                    <div *ngFor="let pres of arrrPescriptionMODChange;">
+                        <app-prescription-template [prescription]=pres componenttype="MOD">
+                        </app-prescription-template>
+                        <hr />
+                    </div>
+                    <div *ngFor="let pres of arrrPescriptionMODNew;">
+                        <app-prescription-template [prescription]=pres componenttype="MOD">
+                        </app-prescription-template>
+                        <hr />
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+    <div class="col-4">
+        <div class="card nopadding">
+
+            <div class="card-header container-fluid">
+                <div class="row">
+                    <div class="col-md-5 nopadding">
+                        <span class="font-weight-bold"> Discharge summary ( {{Dischargesummarry.createdon | date :
+                            "dd-MMM-yyyy"}})</span>
+                    </div>
+                    <div class="col-md-3  nopadding">
+
+                        <div *ngIf="isMODComplete"
+                            [ngClass]="isSummeryComplete == true ? 'Approved' : 'PendingApproval'"
+                            (click)="setCompletiontype('SUM')">
+                        </div>
+                    </div>
+
+                    <div class="col-md-4  nopadding">
+                        <button class="btn btn-link btn-sm " (click)="ShowNotes('SUM')">Notes</button>
+                    </div>
+                </div>
+            </div>
+            <div *ngIf="isMODComplete" class="">
+
+                <div *ngIf="arrrPescriptionMODUnchange.length !=  0" class="card">
+
+                    <div class="card-header zeropadding">
+                        UnChange
+                    </div>
+                    <div *ngFor="let pres of arrrPescriptionMODUnchange;">
+                        <app-prescription-template [prescription]=pres componenttype="MOD">
+                        </app-prescription-template>
+                        <hr />
+                    </div>
+                </div>
+                <div *ngIf="arrrPescriptionMODChange.length !=  0" class="card">
+                    <div class="card-header zeropadding">
+                        Changed
+                    </div>
+                    <div *ngFor="let pres of arrrPescriptionMODChange;">
+                        <app-prescription-template [prescription]=pres componenttype="MOD">
+                        </app-prescription-template>
+                        <hr />
+                    </div>
+                </div>
+
+                <div *ngIf="arrrPescriptionMOAStoped.length !=  0" class="card">
+                    <div class="card-header zeropadding">
+                        Stopped
+                    </div>
+                    <div *ngFor="let pres of arrrPescriptionMOAStoped;">
+                        <app-prescription-template [prescription]=pres componenttype="MOD">
+                        </app-prescription-template>
+                        <hr />
+                    </div>
+                </div>
+                <div *ngIf="arrrPescriptionMOASuspended.length !=  0" class="card">
+                    <div class="card-header zeropadding">
+                        Suspended
+                    </div>
+                    <div *ngFor="let pres of arrrPescriptionMOASuspended;">
+                        <app-prescription-template [prescription]=pres componenttype="MOD">
+                        </app-prescription-template>
+                        <hr />
+                    </div>
+                </div>
+                <div *ngIf="arrrPescriptionMODNew.length !=  0" class="card">
+                    <div class="card-header zeropadding">
+                        New
+                    </div>
+                    <div *ngFor="let pres of arrrPescriptionMODNew;">
+                        <app-prescription-template [prescription]=pres componenttype="MOD">
+                        </app-prescription-template>
+                        <hr />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> -->
+
+<div *ngIf="showconform" class="modal fade bd-example-modal-lg"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
+    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog  modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="">
+
+                <button type="button" (click)="closeComplete()" class="mr-2 close" data-dismiss="modal"
+                    aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+
+                <div *ngIf="completionType == 'MOA'">
+
+                    <div class="row" *ngFor="let pres of lastcompleteMOA;">
+                        <div class="col">
+                            Previously completed
+                        </div>
+                        <div class="col">
+                            {{pres.modifiedon | date: 'dd/MM/yyyy HH:mm'}}
+                        </div>
+                        <div class="col">
+                            {{pres.modifiedby}}
+                        </div>
+
+                    </div>
+
+                </div>
+                <div *ngIf="completionType == 'MOD'">
+
+                    <div class="row" *ngFor="let pres of lastcompleteMOD;">
+                        <div class="col">
+                            Previously completed
+                        </div>
+                        <div class="col">
+                            {{pres.modifiedon | date: 'dd/MM/yyyy HH:mm'}}
+                        </div>
+                        <div class="col">
+                            {{pres.modifiedby}}
+                        </div>
+
+                    </div>
+                </div>
+                <div *ngIf="completionType == 'SUM'">
+
+                    <div class="row" *ngFor="let pres of lastcompleteSUM;">
+                        <div class="col">
+                            Previously completed
+                        </div>
+                        <div class="col">
+                            {{pres.modifiedon | date: 'dd/MM/yyyy HH:mm'}}
+                        </div>
+                        <div class="col">
+                            {{pres.modifiedby}}
+                        </div>
+
+                    </div>
+                </div>
+
+
+                <div class="pt-2 row">
+                    <div class="col-6">
+                        <div *ngIf="completionType == 'MOA'">
+
+                            <p>Medications on admission complete?</p>
+                        </div>
+                        <div *ngIf="completionType == 'MOD'">
+
+                            <p>Discharge prescription complete?</p>
+                        </div>
+                        <div *ngIf="completionType == 'SUM'">
+
+                            <p>Discharge summary complete?</p>
+                        </div>
+
+                    </div>
+                    <div class="col-2">
+                        <div *ngIf="completionType == 'MOA'">
+
+                            <div *ngIf="isMOAStarted"
+                                [ngClass]="isMOAComplete == true ? 'Approved' : 'PendingApproval'">
+                            </div>
+                        </div>
+                        <div *ngIf="completionType == 'MOD'">
+
+                            <div *ngIf="isMOAStarted"
+                                [ngClass]="isMODComplete == true ? 'Approved' : 'PendingApproval'">
+                            </div>
+                        </div>
+                        <div *ngIf="completionType == 'SUM'">
+
+                            <div *ngIf="isMOAStarted"
+                                [ngClass]="isSummeryComplete == true ? 'Approved' : 'PendingApproval'">
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="col-4">
+                        <button *ngIf="(appService.isCurrentEncouner || appService.isTCI) && !appService.isTCICancelled"
+                            type="button " (click)="submitComplete()" class="btn btn-primary btn-sm">Yes</button>
+                        <button type="button" (click)="closeComplete()" class="btn btn-sm"
+                            data-dismiss="modal">Close</button>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<app-reconciliation-notes (notesClose)="CheckIfadditionalNoteSelected()"></app-reconciliation-notes>
+<app-print-discharge *ngIf="printDischarge" (destroyComponent)="destroyPrintDischargeComponent($event)"
+    [unChangedPres]="arrrPescriptionMODUnchange" [changedPres]="arrrPescriptionMODChange"
+    [stoppedPres]="arrrPescriptionMOAStoped" [suspendedPres]="arrrPescriptionMOASuspended"
+    [newPres]="arrrPescriptionMODNew" [dischargeComments]="dischargeComments" [notesDisplayData]="arrreconcilation">
+</app-print-discharge>

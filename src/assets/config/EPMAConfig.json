@@ -1,0 +1,389 @@
+{
+  "uris": {
+    "baseuri": "SYNAPSE_DYNAMIC_URI",
+    "carerecordbaseuri": "CARERECORD_URI/DrugChart",
+    "terminologybaseuri": "TERMINOLOGY_URI/api",
+    "warningscomponent": "TERMINUS_BUCKET_URI/warnings.js",
+    "platformserviceuri": "SYNAPSE_PLATFORM_SERVICES_API/api"
+   },
+  "bufferTime": {
+    "buffertimeAmber": 60,
+    "buffertime_criticalDrug": 30,
+    "bufferAdministered": 60
+  },
+  "defaultOverdueTimePeriod": 4,
+  "enablelogging": true,
+  "appsettings": {},
+  "prodbuild": true,
+  "isMultiplelinkedinfusion": true,
+  "pleaseResupplyStockValidation": true,
+  "EnableDischargeSummaryComplete":true,
+  "isReasonForChangeReuired": false,
+  "AppSettings": {
+    "PrescribingForm": {
+      "MandatorySections": {
+        "IPForm": {
+          "Dose": true,
+          "Route": true,
+          "Interval": true,
+          "StartDate": true,
+          "EndDateTime": true,
+          "InfusionType": false,
+          "InfusionRate": true,
+          "InfusionDuration": true,
+          "ReiewComments": true,
+          "Indications": true,
+          "DispensingFrom": false,
+          "AMTherapyStartDate": false
+        },
+        "MOAForm": {
+          "Dose": false,
+          "Route": false,
+          "Interval": false,
+          "StartDate": false,
+          "EndDateTime": false,
+          "InfusionType": false,
+          "InfusionRate": false,
+          "InfusionDuration": false,
+          "ReiewComments": false,
+          "Indications": false,
+          "DispensingFrom": false,
+          "AMTherapyStartDate": false
+        },
+        "MODForm": {
+          "Dose": true,
+          "Route": true,
+          "Interval": true,
+          "StartDate": true,
+          "StartTime": false,
+          "EndDateTime": true,
+          "InfusionType": false,
+          "InfusionRate": true,
+          "InfusionDuration": true,
+          "ReiewComments": false,
+          "Indications": false,
+          "DispensingFrom": false,
+          "AMTherapyStartDate": false
+        },
+        "OPForm": {
+          "Dose": true,
+          "Route": true,
+          "Interval": true,
+          "StartDate": true,
+          "StartTime": false,
+          "EndDateTime": true,
+          "InfusionType": false,
+          "InfusionRate": true,
+          "InfusionDuration": true,
+          "ReiewComments": false,
+          "Indications": false,
+          "DispensingFrom": false,
+          "AMTherapyStartDate": false
+        }
+      },
+      "SkipQtyToDoseConversionForCodes": [
+        "35368211000001106",
+        "35368111000001100",
+        "35368311000001103"
+      ],
+      "Titration": {
+        "Percentage Oxygen Saturation": {
+          "values": [
+            "88-92",
+            "94-98"
+          ],
+          "mandatory": true
+        }
+      },
+      "IntervalPresets": {
+        "mor": "08:00",
+        "mid": "12:00",
+        "eve": "18:00",
+        "night": "22:00",
+        "1x": [
+          "08:00"
+        ],
+        "2x": [
+          "08:00",
+          "20:00"
+        ],
+        "3x": [
+          "08:00",
+          "14:00",
+          "20:00"
+        ],
+        "4x": [
+          "08:00",
+          "12:00",
+          "18:00",
+          "22:00"
+        ],
+        "6h": [
+          "00:00",
+          "06:00",
+          "12:00",
+          "18:00"
+        ],
+        "8h": [
+          "07:00",
+          "15:00",
+          "23:00"
+        ],
+        "12h": [
+          "08:00",
+          "20:00"
+        ],
+        "24h": [
+          "08:00"
+        ]
+      },
+
+      "InfusionRoutes": [
+        "Epidural",
+        "Perineural",
+        "Subcutaneous",
+        "Intrathecal",
+        "Intraosseous",
+        "Body cavity use",
+        "Endotracheolpulmonary",
+        "Epilesional",
+        "Haemodialysis",
+        "Haemofiltration",
+        "Intraamniotic",
+        "Intraarterial",
+        "Intrabursal",
+        "Intraamniotic",
+        "Intraarterial",
+        "Intraarticular",
+        "Intrabursal",
+        "Intracameral",
+        "Intracardiac",
+        "Intracavernous",
+        "Intracerebroventricular",
+        "Intracervical",
+        "Intracoronary",
+        "Intradermal",
+        "Intradiscal",
+        "Intraepidermal",
+        "Intraglandular",
+        "Intralesional",
+        "Intralymphatic",
+        "Intramuscular",
+        "Intraocular",
+        "Intraosseous",
+        "Intraperitoneal",
+        "Intrapleural",
+        "Intrasternal",
+        "Intrathecal",
+        "Intratumoral",
+        "Intrauterine",
+        "Intravenous",
+        "Intraventricular cardiac",
+        "Intravesical",
+        "Intravitreal",
+        "Iontophoreses",
+        "Periarcticualr",
+        "Regional perfusion",
+        "Submucosal rectal"
+      ],
+      "MOASortBy": "prescription::createdon::asc",
+      "MODSortBy": "prescription::createdon::asc",
+      "IPBasketSortBy": "prescription::createdon::asc",
+      "OPBasketSortBy": "prescription::createdon::asc"
+    },
+    "basicgrouping": [
+      "Stat",
+      "Anticoagulation",
+      "Medical Gases",
+      "Antidiabetics",
+      "Antimicrobials",
+      "Regular drugs",
+      "Variable/Continuous infusion",
+      "PRN",
+      "IV Fluid"
+    ],
+    "DCGroups": [
+      {
+        "GroupName": "IV Fluid",
+        "SortOder": 1,
+        "MatchConditions": {
+          "Indications": [        
+          ],
+          "ClassificationCodes": [
+            {
+              "CodeType": "bnf",
+              "Code": "090202"
+            }
+          ],
+          "MatchType": "or"
+        }
+      },
+      {
+        "GroupName": "Medical Gases",
+        "SortOder": 1,
+        "MatchConditions": {
+          "Indications": [        
+          ],
+          "ClassificationCodes": [
+            {
+              "CodeType": "bnf",
+              "Code": "03.06"
+            },
+            {
+              "CodeType": "bnf",
+              "Code": "19.15"
+            }
+          ],
+          "MatchType": "or"
+        }
+      },
+      {
+        "GroupName": "Anticoagulation",
+        "SortOder": 1,
+        "MatchConditions": {
+          "Indications": [
+            {
+              "Code": "3032",
+              "Indication": "Treatment of venous thromboembolic disease with DVT or pulmonary embolism"
+            },
+            {
+              "Code": "4157",
+              "Indication": "Venous thromboembolism in surgical patients: prophylaxis"
+            },
+            {
+              "Code": "4166",
+              "Indication": "Venous thromboembolism in medical patients: prophylaxis"
+            },
+            {
+              "Code": "4146",
+              "Indication": "Treatment of VTE in pregnancy"
+            },
+            {
+              "Code": "3350",
+              "Indication": "Thromboprophylaxis in bedridden patients with predisposing factors for VTE"
+            }
+          ],
+          "ClassificationCodes": [
+            {
+              "CodeType": "bnf",
+              "Code": "02.08"
+            }
+          ],
+          "MatchType": "or"
+        }
+      },
+      {
+        "GroupName": "Antimicrobials",
+        "SortOder": 2,
+        "MatchConditions": {
+          "Indications": [],
+          "ClassificationCodes": [
+            {
+              "CodeType": "bnf",
+              "Code": "05"
+            },
+            {
+              "CodeType": "bnf",
+              "Code": "11.03"
+            },
+            {
+              "CodeType": "bnf",
+              "Code": "120101"
+            },
+            {
+              "CodeType": "bnf",
+              "Code": "120203"
+            },
+            {
+              "CodeType": "bnf",
+              "Code": "13.10"
+            },
+            {
+              "CodeType": "bnf",
+              "Code": "120302"
+            }
+          ],
+          "MatchType": "or"
+        }
+      },
+      {
+        "GroupName": "Antidiabetics",
+        "SortOder": 2,
+        "MatchConditions": {
+          "Indications": [],
+          "ClassificationCodes": [
+            {
+              "CodeType": "bnf",
+              "Code": "06.01"
+            }
+          ],
+          "MatchType": "or"
+        }
+      }
+    ],
+    "BannerWarningOverrides": [
+      {
+        "warninggroup": "weight",
+        "canbedismissed": false,
+        "canberesolved": true,
+        "resolvemodule": "",
+        "dismissreasonrequired": true
+      },
+      {
+        "warninggroup": "vte",
+        "canbedismissed": true,
+        "canberesolved": true,
+        "resolvemodule": "app-assessments-module",
+        "dismissreasonrequired": true
+      },
+      {
+        "warninggroup": "allergies",
+        "canbedismissed": false,
+        "canberesolved": true,
+        "resolvemodule": "app-terminus-allergies",
+        "dismissreasonrequired": true
+      },
+      {
+        "warninggroup": "allergies overridden",
+        "canbedismissed": true,
+        "canberesolved": true,
+        "resolvemodule": "app-terminus-allergies",
+        "dismissreasonrequired": true
+      }
+    ],
+    "prescriptionCommentsMaxLenth": 1000,
+    "reviewCommentsMaxLenth": 1000,
+    "customMedicationNameMaxLength": 256,
+    "reminderTextMaxLenth": 256,
+    "startAMTherapyCountFromDay0": false,
+    "amTherapyCount24Hrs": false,
+    "prescriptionCardCommentsMaxLenth": 256,
+    "enableRBAC": true,
+    "encounterInpatientClassCode": "ip",
+    "encounterTCIClassCode": "tci",
+    "ivToOralActivationinhours": 48,
+    "maxNoDaysForSupplyRequest": 31,
+    "titratesIdMapping": {
+      "g": [
+        "G","GLUF"
+      ],
+      "inr": [
+        "SWLP2158","SWLP2356"
+      ],
+      "esr": [
+        "SWLP1774"
+      ]
+    },
+    "minSafariVersionSupported":13,
+    "GroupsAuthorisedToWitness":["EPMA Registered Nurse","EPMA Doctor", "EPMA Super User"],
+    "EPMAGroups":["EPMA AIT Non Medical Prescriber", "EPMA Clinical User","EPMA Doctor", "EPMA DTC approver", "EPMA Pharmacist", "EPMA Pharmacy tech", "EPMA Registered Nurse", "EPMA Student Nurse"],
+    "administrationTimeDiffInMinute" : 5,
+    "SupplyNotReqReasons" : [
+      "Patient still has medicines they brought in",
+      "Previously supplied by hospital pharmacy",
+      "Patient's own supply at home (POSH)",
+      "Supply at discharged destination",
+      "Not required"
+    ]
+  }
+}

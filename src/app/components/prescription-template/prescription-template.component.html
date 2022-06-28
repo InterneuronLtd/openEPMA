@@ -1,0 +1,1556 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div [ngClass]="{'epma-bg-gray': (prescriptionstatus=='suspended'|| prescriptionstatus=='stopped' || prescriptionstatus=='cancelled' || isMOAPrescription) && componenttype!='therapyoverview'}"
+    class="p-card-template"
+    *ngIf="componenttype=='timeline' || componenttype=='therapyoverview'  || componenttype=='therapytimeline'">
+    <ng-container *ngTemplateOutlet="statustemplate"></ng-container>
+    <div #poptherapy="bs-popover" container="body" [outsideClick]="true" [popover]="medicationDetailPopover"
+        placement="right">
+        <div class="width-s2" *ngIf="componenttype!='therapyoverview'">
+            <ng-container *ngTemplateOutlet="therapytypetemp"></ng-container>
+            <br />
+            <div class="badge-position">
+                <span *ngIf="badgeText" class="badge badge-pill badge-primary">{{badgeText}}</span>
+            </div>
+        </div>
+
+    </div>
+    <div style="padding-left: 3px;" class="w-100">
+        <div #poptemplate="bs-popover" container="body" [outsideClick]="true" [popover]="medicationDetailPopover"
+            placement="right">
+            <ng-container *ngTemplateOutlet="maintemplate;context: { componenttype: componenttype}"></ng-container>
+        </div>
+        <div class="row">
+            <div class="col-8">
+                <ng-container *ngTemplateOutlet="medicationpropertytemp;context: { componenttype: componenttype}">
+                </ng-container>
+            </div>
+            <div class="col-4" *ngIf="componenttype!='therapyoverview'">
+                <div style="display: flex;float:right;">
+                    <button title="{{NursingInstruction }}"
+                        *ngIf="prescription.__nursinginstructions && prescription.__nursinginstructions.length >0"
+                        (click)="showNursingInstructions()" type="button"
+                        class='{{"btn-flat btn-menu pharmacist-property-icon Nursing_Instruction"}}'></button>
+                    <button title="{{pharmacyreview }}" *ngIf="reviewStatusIcon" (click)="openPrescriptionHistory()"
+                        type="button"
+                        class='{{"btn-flat btn-menu pharmacist-property-icon "  + reviewStatusIcon }}'></button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div *ngIf="componenttype!='therapyoverview' && (!appService.warningService || !appService.warningServiceIPContext.loader)"
+        class="width-s4">
+        <div class="direction-horizontal-nowrap justify-content-flex-end align-items-flex-start align-content-center"
+            tabindex="-1" tm-element="true">
+            <div class="btn-group" container="body" dropdown placement="right top">
+                <button id="button-basic" dropdownToggle type="button" class="btn-flat btn-menu menu-icon"
+                    aria-controls="dropdown-basic">
+                </button>
+
+
+                <ul id="dropdown-basic" [ngClass]="{'dropdown-menu-right': componenttype=='therapytimeline'}"
+                    class="dropdown-menu multi-level" *dropdownMenu role="menu" aria-labelledby="dropdownMenu">
+                    <li class="dropdown-submenu multi-level"
+                        [ngClass]="{'dropdown-submenu-left': componenttype=='therapytimeline'}">
+                        <a *ngIf="appService.AuthoriseAction('epma_access_amendprescription') && (appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled)) && appService.bannerWarningStatus"
+                            (click)="$event.stopPropagation()" class="dropdown-item" tabindex="-1" href="#">
+                            <div class="icon-edittherapy dc-icon-menu">
+                                <span class="dc-icon-menu-text">Amend</span>
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu" [ngClass]="{'dropdown-menu-left': componenttype=='therapytimeline'}">
+                            <li *ngIf="appService.AuthoriseAction('epma_edit_ip') && prescriptionstatus!='suspended' && prescriptionstatus!='stopped'  && prescriptionstatus!='cancelled'  && !(appService.GetCurrentPosology(prescription).infusiontypeid=='ci' || appService.GetCurrentPosology(prescription).infusiontypeid=='rate' ) && appService.bannerWarningStatus && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus"
+                                role="menuitem">
+                                <a class="dropdown-item" (click)="editTherapy()" href="#">
+                                    <div class="icon-edittherapy dc-icon-menu"><span class="dc-icon-menu-text">Edit
+                                            therapy</span></div>
+
+                                </a>
+                            </li>
+                            <li role="menuitem"
+                                *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid!='ci' && !isMOAPrescription && prescriptionstatus!='suspended' && prescriptionstatus!='stopped' && prescriptionstatus!='cancelled'">
+                                <a (click)="suspendTherapy()" class="dropdown-item" href="javascript:void(0)">
+                                    <div class="icon-suspendtherapy dc-icon-menu"><span
+                                            class="dc-icon-menu-text">Suspend therapy</span></div>
+                                </a>
+                            </li>
+                            <li role="menuitem"
+                                *ngIf="prescriptionstatus!='stopped'  && prescriptionstatus!='cancelled' "><a
+                                    (click)="stopTherapy()" class="dropdown-item" href="javascript:void(0)">
+                                    <div class="icon-stoporremove dc-icon-menu"> <span class="dc-icon-menu-text">Stop
+                                            therapy</span></div>
+                                </a>
+                            </li>
+                            <li style="display: none;" role="menuitem"><a (click)="selfAdministration()"
+                                    class="dropdown-item" href="javascript:void(0)">
+                                    <div class="icon-selfadministration dc-icon-menu"> <span
+                                            class="dc-icon-menu-text">Self administration/Perfusion pump</span></div>
+                                </a>
+                            </li>
+                            <li *ngIf="appService.AuthoriseAction('epma_schedule_additionaladministration') && !appService.GetCurrentPosology(prescription).prn && !isMOAPrescription && appService.GetCurrentPosology(prescription).infusiontypeid!='ci' && appService.GetCurrentPosology(prescription).infusiontypeid!='rate' && prescriptionstatus!='suspended' && prescriptionstatus!='stopped'  && prescriptionstatus!='cancelled' && appService.bannerWarningStatus && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus"
+                                role="menuitem"><a (click)="scheduleAdditionalAdministration()" class="dropdown-item"
+                                    href="javascript:void(0)">
+                                    <div class="dc-icon-plus dc-icon-menu"> <span class="dc-icon-menu-text">Schedule
+                                            additional administration</span></div>
+                                </a>
+                            </li>
+                            <li *ngIf="appService.AuthoriseAction('epma_record_additionaladministration') && !appService.GetCurrentPosology(prescription).prn && !isMOAPrescription && appService.GetCurrentPosology(prescription).infusiontypeid!='ci' && appService.GetCurrentPosology(prescription).infusiontypeid!='rate' && prescriptionstatus!='suspended'  && appService.bannerWarningStatus && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus"
+                                role="menuitem"><a (click)="recordAdditionalAdministration()" class="dropdown-item"
+                                    href="javascript:void(0)">
+                                    <div class="dc-icon-plus dc-icon-menu"> <span class="dc-icon-menu-text">Record
+                                            additional administration</span></div>
+                                </a>
+                            </li>
+                            <li style="display: none;" role="menuitem"><a class="dropdown-item"
+                                    href="javascript:void(0)">
+                                    <div class="icon-preparemed dc-icon-menu"><span class="dc-icon-menu-text">Prepare
+                                            medication</span></div>
+                                </a>
+                            </li>
+                            <li style="display: none;" role="menuitem"><a
+                                    *ngIf="!isresupply && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus"
+                                    (click)="pleaseResupply()" class="dropdown-item" href="javascript:void(0)">
+                                    <div class="icon-pleaseresupply dc-icon-menu"><span class="dc-icon-menu-text">Please
+                                            resupply</span></div>
+                                </a>
+                            </li>
+
+                            <li *ngIf="!isMOAPrescription && isAdministered && appService.GetCurrentPosology(prescription).infusiontypeid && !(eventType=='pause' || eventType=='endinfusion') && prescriptionstatus!='suspended' && prescriptionstatus!='stopped'  && prescriptionstatus!='cancelled' && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus"
+                                role="menuitem"><a (click)="changeInfusion()" class="dropdown-item"
+                                    href="javascript:void(0)">
+                                    <div class="icon-changeinfusion dc-icon-menu"><span class="dc-icon-menu-text">Change
+                                            kit/device</span></div>
+                                </a>
+                            </li>
+                            <!-- <li *ngIf="!isMOAPrescription && isAdministered && appService.GetCurrentPosology(prescription).infusiontypeid=='ci' && !(eventType=='pause' || eventType=='endinfusion') && prescriptionstatus!='suspended' && prescriptionstatus!='stopped'  && prescriptionstatus!='cancelled' "
+                                role="menuitem"><a (click)="addInfusionRate()" class="dropdown-item"
+                                    href="javascript:void(0)">
+                                    <div class="dc-icon-plus dc-icon-menu"><span class="dc-icon-menu-text">Adjust
+                                            infusion
+                                            rate</span></div>
+                                </a>
+                            </li> -->
+                            <!-- <li *ngIf="!isMOAPrescription && isAdministered && appService.GetCurrentPosology(prescription).infusiontypeid=='ci' && !(eventType=='pause' || eventType=='endinfusion') && prescriptionstatus!='suspended' && prescriptionstatus!='stopped'  && prescriptionstatus!='cancelled' "
+                                role="menuitem"><a (click)="pauseInfusion()" class="dropdown-item"
+                                    href="javascript:void(0)">
+                                    <div class="dc-icon-plus dc-icon-menu"><span class="dc-icon-menu-text">Pause
+                                            infusion</span>
+                                    </div>
+                                </a>
+                            </li> -->
+                            <!-- <li *ngIf="!isMOAPrescription && isAdministered && !isPrescriptionGas && (appService.GetCurrentPosology(prescription).infusiontypeid=='ci' || appService.GetCurrentPosology(prescription).infusiontypeid=='bolus') && !(eventType=='pause' || eventType=='endinfusion') && prescriptionstatus!='suspended' && prescriptionstatus!='stopped'  && prescriptionstatus!='cancelled' "
+                                role="menuitem"><a (click)="addBolus()" class="dropdown-item" href="javascript:void(0)">
+                                    <div class="dc-icon-plus dc-icon-menu"><span class="dc-icon-menu-text">Add
+                                            bolus</span>
+                                    </div>
+                                </a>
+                            </li> -->
+                            <!-- <li *ngIf="!isMOAPrescription && isAdministered && appService.GetCurrentPosology(prescription).infusiontypeid=='ci' && eventType=='pause' && prescriptionstatus!='suspended' && prescriptionstatus!='stopped'  && prescriptionstatus!='cancelled' "
+                                role="menuitem"><a (click)="restartInfusion()" class="dropdown-item"
+                                    href="javascript:void(0)">
+                                    <div class="dc-icon-plus dc-icon-menu"><span class="dc-icon-menu-text">Restart
+                                            infusion</span></div>
+                                </a>
+                            </li> -->
+                        </ul>
+                    </li>
+                    <li class="dropdown-submenu multi-level"
+                        *ngIf="!isMOAPrescription && prescriptionstatus!='stopped' && prescriptionstatus!='cancelled' && (appService.AuthoriseAction('epma_access_patientdrugs_ip') || appService.AuthoriseAction('epma_access_supplyrequest_ip')) && appService.bannerWarningStatus && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus"
+                        [ngClass]="{'dropdown-submenu-left': componenttype=='therapytimeline'}">
+                        <a (click)="$event.stopPropagation()" class="dropdown-item" tabindex="-1" href="#">
+                            <div class="please-resupply dc-icon-menu">
+                                <span class="dc-icon-menu-text">Supply</span>
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu" [ngClass]="{'dropdown-menu-left': componenttype=='therapytimeline'}">
+                            <li *ngIf="appService.AuthoriseAction('epma_access_patientdrugs_ip')" role="menuitem">
+                                <a class="dropdown-item" (click)="patientDrugs()" href="#">
+                                    <div class="empa-p-drug dc-icon-menu"><span class="dc-icon-menu-text">Patient's
+                                            Drugs</span></div>
+                                </a>
+                            </li>
+                            <li *ngIf="appService.AuthoriseAction('epma_access_supplyrequest_ip') && appService.bannerWarningStatus && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus"
+                                role="menuitem"><a (click)="supplyRequest(componenttype)" class="dropdown-item"
+                                    href="javascript:void(0)">
+                                    <div class="please-resupply dc-icon-menu"><span class="dc-icon-menu-text">Supply
+                                            Requests</span></div>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li *ngIf="!isMOAPrescription" role="menuitem"><a class="dropdown-item" href="javascript:void(0)"
+                            (click)="reminder()">
+                            <div class="template-reminder-icon-set dc-icon-menu"><span
+                                    class="dc-icon-menu-text">Reminder</span></div>
+                        </a>
+                    </li>
+                    <li *ngIf="appService.isCurrentEncouner && !isMOAPrescription && appService.AuthoriseAction('epma_copy_ip') && appService.bannerWarningStatus && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus"
+                        role="menuitem"><a class="dropdown-item" href="javascript:void(0)" (click)="editTherapy(true)">
+                            <div class="icon-copy dc-icon-menu"><span class="dc-icon-menu-text">Copy</span></div>
+                        </a>
+                    </li>
+                    <li role="menuitem"><a (click)="drugInformation()" class="dropdown-item" href="javascript:void(0)">
+                            <div class="icon-druginfo dc-icon-menu"><span class="dc-icon-menu-text">Drug
+                                    information</span></div>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div title={{resupply}}>
+            <button *ngIf="isresupply==true" type="button" class="btn-flat btn-menu please-resupply">
+
+            </button>
+        </div>
+        <button
+            *ngIf="(prescriptionstatus=='suspended' || isMOAPrescription) && appService.AuthoriseAction('epma_access_amendprescription') && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus && appService.bannerWarningStatus"
+            (click)="restartTherapy()" type="button" class="btn-flat btn-menu review-icon">
+        </button>
+    </div>
+
+    <ng-template #medicationDetailPopover>
+        <div>
+            <h3 class="popover-title popover-header medication-header">Medication
+                <div class="close close-medication" (click)="poptherapy.hide();poptemplate.hide()"></div>
+            </h3>
+
+        </div>
+        <ng-container *ngTemplateOutlet="popvertemplate;context: { poptherapy: poptherapy, poptemplate:poptemplate}">
+        </ng-container>
+    </ng-template>
+
+</div>
+
+
+
+<div class="p-card-template p-1"
+    *ngIf="componenttype=='medication' || componenttype=='medicationOrderSet'  || componenttype=='medication_rec' || componenttype=='medication_rec_moa'">
+    <div class="width-s2">
+        <div class='{{"layers-container therapy-type "  + therapyType }}'>
+
+        </div>
+    </div>
+    <div class="width-s3">
+        <div *ngIf="!appService.GetCurrentPosology(prescription).infusiontypeid">
+            <app-prescription-non-infusion-template [prescription]="prescription" componenttype={{componenttype}}>
+            </app-prescription-non-infusion-template>
+        </div>
+
+        <div *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid">
+            <app-prescription-infusion-template [prescription]="prescription" componenttype={{componenttype}}>
+            </app-prescription-infusion-template>
+        </div>
+        <div *ngIf="componenttype=='medication_rec' || componenttype=='medication_rec_moa'">
+            <ng-container *ngTemplateOutlet="fromuntilsection;context: { componenttype: componenttype}"></ng-container>
+        </div>   
+    </div>
+    <div class="width-s4" style="position: unset;"
+        *ngIf="componenttype=='medication'  || componenttype=='medication_rec' || componenttype=='medication_rec_moa'">
+        <div class="direction-horizontal-nowrap justify-content-flex-end align-items-flex-start align-content-center"
+            tabindex="-1" tm-element="true">
+            <div class="btn-group" container="body" dropdown placement="right top">
+                <button id="button-basic" dropdownToggle type="button" class="btn-flat btn-menu menu-icon"
+                    aria-controls="dropdown-basic">
+                </button>
+                <ul id="dropdown-basic" *dropdownMenu class="dropdown-menu dropdown-menu-right" role="menu"
+                    aria-labelledby="button-basic">
+                    <li role="menuitem"><a class="dropdown-item" href="javascript:void(0)"
+                            (click)="medicationBasketAction('Edit')">
+                            <div class="icon-edittherapy dc-icon-menu"><span class="dc-icon-menu-text">Edit</span></div>
+                        </a></li>
+                    <li role="menuitem"><a class="dropdown-item" href="javascript:void(0)"
+                            (click)="medicationBasketAction('Delete')">
+                            <div class="icon-stoporremove dc-icon-menu"><span class="dc-icon-menu-text">Delete</span>
+                            </div>
+                        </a></li>
+                    <li *ngIf="componenttype!='medication_rec' && componenttype!='medication_rec_moa'" componenttype role="menuitem"><a class="dropdown-item"
+                            href="javascript:void(0)" (click)="medicationBasketAction('orderset')">
+                            <div *ngIf="!appService.AuthoriseAction('epma_create_org_orderset')"
+                                class="dc-icon-plus dc-icon-menu"><span class="dc-icon-menu-text">Add to
+                                    Favourites</span></div>
+                            <div *ngIf="appService.AuthoriseAction('epma_create_org_orderset')"
+                                class="dc-icon-plus dc-icon-menu"><span class="dc-icon-menu-text">Add to
+                                    Order sets</span></div>
+                        </a></li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<div class="p-card-template" *ngIf="componenttype=='administer'">
+    <div class="width-s1 active-status-line" *ngIf="prescriptionstatus=='active'"> </div>
+    <div class="width-s1 stopped-status-line" *ngIf="prescriptionstatus=='stopped' || prescriptionstatus=='cancelled'">
+    </div>
+    <div class="width-s1 suspended-status-line" *ngIf="prescriptionstatus=='suspended'"> </div>
+    <div class="width-s1 changed-status-line" *ngIf="prescriptionstatus=='modified'"> </div>
+    <div class="width-s2">
+        <div class='{{"layers-container therapy-type "  + therapyType }}'>
+            <!-- <div class="layer h-right v-top icon_day_number">12</div> -->
+            <div [ngClass]="{'layer h-right v-bottom status-icon modified' : prescriptionstatus=='modified'}"></div>
+            <div
+                [ngClass]="{'layer h-center v-bottom status-icon pharmacistreviewcomplete': prescriptionstatus=='pharmacistreviewcomplete'}">
+            </div>
+            <div [ngClass]="{'layer h-right v-center status-icon stopped': prescriptionstatus=='stopped'}"></div>
+            <div [ngClass]="{'layer h-right v-bottom status-icon cancelled': prescriptionstatus=='cancelled'}"></div>
+        </div>
+    </div>
+    <div class="width-s3">
+        <div *ngIf="!appService.GetCurrentPosology(prescription).infusiontypeid">
+            <app-prescription-non-infusion-template [administration]="administration" [prescription]="prescription"
+                [posologyid]="posologyid" componenttype="administer"></app-prescription-non-infusion-template>
+        </div>
+        <div *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid">
+            <app-prescription-infusion-template [administration]="administration" [prescription]="prescription"
+                [posologyid]="posologyid" componenttype="administer"></app-prescription-infusion-template>
+        </div>
+
+    </div>
+    <div class="width-s4" style="margin-right: 10px;">
+        <div class="direction-horizontal-nowrap justify-content-flex-end align-items-flex-start align-content-center"
+            tabindex="-1" tm-element="true">
+            <button (click)="drugInformation()" type="button" class="btn-flat btn-menu drug-information"
+                aria-controls="dropdown-basic">
+            </button>
+        </div>
+
+        <div *ngIf="prescription.titrationtype"
+            class="direction-horizontal-nowrap justify-content-flex-end align-items-flex-start align-content-center"
+            tabindex="-1" tm-element="true">
+            <button (click)="doseTitration()" type="button" class="btn-flat btn-menu line-chart"
+                aria-controls="dropdown-basic">
+            </button>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div style="display: flex;float:right;">
+                    <button *ngIf="prescription.__nursinginstructions && prescription.__nursinginstructions.length >0"
+                        (click)="showNursingInstructions()" type="button"
+                        class='{{"btn-flat btn-menu pharmacist-property-icon Nursing_Instruction"}}'></button>
+                    <!-- <button *ngIf="reviewStatusIcon" (click)="openPrescriptionHistory()" type="button"
+                        class='{{"btn-flat btn-menu pharmacist-property-icon "  + reviewStatusIcon }}'></button> -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="p-card-template" *ngIf="componenttype=='additional'">
+    <div class="width-s1 active-status-line" *ngIf="prescriptionstatus=='active'"> </div>
+    <div class="width-s1 stopped-status-line" *ngIf="prescriptionstatus=='stopped' || prescriptionstatus=='cancelled'">
+    </div>
+    <div class="width-s1 suspended-status-line" *ngIf="prescriptionstatus=='suspended'"> </div>
+    <div class="width-s1 changed-status-line" *ngIf="prescriptionstatus=='modified'"> </div>
+    <div class="width-s2">
+        <div class='{{"layers-container therapy-type "  + therapyType }}'>
+            <!-- <div class="layer h-right v-top icon_day_number">12</div> -->
+            <div [ngClass]="{'layer h-right v-bottom status-icon modified' : prescriptionstatus=='modified'}"></div>
+            <div
+                [ngClass]="{'layer h-center v-bottom status-icon pharmacistreviewcomplete': prescriptionstatus=='pharmacistreviewcomplete'}">
+            </div>
+            <div [ngClass]="{'layer h-right v-center status-icon stopped': prescriptionstatus=='stopped'}"></div>
+            <div [ngClass]="{'layer h-right v-bottom status-icon cancelled': prescriptionstatus=='cancelled'}"></div>
+        </div>
+    </div>
+    <div class="width-s3">
+        <div *ngIf="!appService.GetCurrentPosology(prescription).infusiontypeid">
+            <app-prescription-non-infusion-template [prescription]="prescription" componenttype="additional">
+            </app-prescription-non-infusion-template>
+        </div>
+        <div *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid">
+            <app-prescription-infusion-template [prescription]="prescription" componenttype="additional">
+            </app-prescription-infusion-template>
+        </div>
+
+    </div>
+    <div class="width-s4" style="margin-right: 10px;">
+        <div class="direction-horizontal-nowrap justify-content-flex-end align-items-flex-start align-content-center"
+            tabindex="-1" tm-element="true">
+            <button (click)="drugInformation()" type="button" class="btn-flat btn-menu drug-information"
+                aria-controls="dropdown-basic">
+            </button>
+        </div>
+        <div *ngIf="prescription.titrationtype"
+            class="direction-horizontal-nowrap justify-content-flex-end align-items-flex-start align-content-center"
+            tabindex="-1" tm-element="true">
+            <button (click)="doseTitration()" type="button" class="btn-flat btn-menu line-chart"
+                aria-controls="dropdown-basic">
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="p-card-template" *ngIf="componenttype=='titration'">
+    <div class="width-s2">
+        <div class='{{"layers-container therapy-type "  + therapyType }}'>
+            <!-- <div class="layer h-right v-top icon_day_number">12</div> -->
+            <div [ngClass]="{'layer h-right v-bottom status-icon modified' : prescriptionstatus=='modified'}"></div>
+            <div
+                [ngClass]="{'layer h-center v-bottom status-icon pharmacistreviewcomplete': prescriptionstatus=='pharmacistreviewcomplete'}">
+            </div>
+            <div [ngClass]="{'layer h-right v-center status-icon stopped': prescriptionstatus=='stopped'}"></div>
+            <div [ngClass]="{'layer h-right v-bottom status-icon cancelled': prescriptionstatus=='cancelled'}"></div>
+        </div>
+    </div>
+    <div class="width-s3">
+        <div *ngIf="!appService.GetCurrentPosology(prescription).infusiontypeid">
+            <app-prescription-non-infusion-template [administration]="administration" [prescription]="prescription"
+                componenttype="titration"></app-prescription-non-infusion-template>
+        </div>
+        <div *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid">
+            <app-prescription-infusion-template [administration]="administration" [prescription]="prescription"
+                componenttype="titration"></app-prescription-infusion-template>
+        </div>
+
+    </div>
+</div>
+<div class="p-card-template" style="min-height: 40px;" *ngIf="componenttype=='viewadministration'">
+    <div class="width-s1"> </div>
+    <div class="width-s2">
+        <div class='{{"layers-container therapy-type "  + therapyType }}'>
+        </div>
+    </div>
+    <div class="width-s3">
+        <span *ngFor="let med of prescription.__medications; let i = index">
+            <span class="empa-template-bold">{{med.name}} </span>
+            <span *ngIf="med.__ingredients.length==1"> ({{med.__ingredients[0].name}}) </span>
+            <span *ngIf="i!=prescription.__medications.length-1">
+                <br />
+            </span>
+        </span>
+    </div>
+
+</div>
+
+
+<div class="p-card-template p-1"
+    *ngIf="componenttype=='MOA' || componenttype=='MOD' || componenttype=='SUM'|| componenttype=='MODNO' || componenttype=='SUMNO' || componenttype=='OP'">
+    <div class="width-s2-medrec" #poptherapy="bs-popover" container="body" [outsideClick]="true"
+        [popover]="medicationDetailPopover" placement="right">
+        <div class='{{"layers-container med-rec-therapy-type "  + therapyType }}'>
+            <div style="left: -8px;" *ngIf="componenttype=='MOD' || componenttype=='SUM'"
+                [ngClass]="'layer v-center h-left status-icon continued-therapy'">
+            </div>
+        </div>
+    </div>
+    <div style="padding-left: 3px;min-height: 160px;" class="w-100">
+        <div #poptemplate="bs-popover" container="body" [outsideClick]="true" [popover]="medicationDetailPopover"
+            placement="right">
+            <ng-container *ngTemplateOutlet="maintemplate;context: { componenttype: componenttype}"></ng-container>
+        </div>
+        <div class="row">
+            <div class="col-8">
+                <ng-container *ngTemplateOutlet="medicationpropertytemp;context: { componenttype: componenttype}">
+                </ng-container>
+            </div>
+            <div class="col-4">
+                <div style="display: flex;float:right;">
+                    <button
+                        *ngIf="componenttype=='MOA' && prescription.__nursinginstructions && prescription.__nursinginstructions.length >0"
+                        (click)="showNursingInstructions()" type="button"
+                        class='{{"btn-flat btn-menu pharmacist-property-icon Nursing_Instruction"}}'></button>
+                    <button *ngIf="(componenttype=='MOA' || componenttype=='SUM' || componenttype=='SUMNO') && reviewStatusIcon" (click)="openPrescriptionHistory()"
+                        type="button"
+                        class='{{"btn-flat btn-menu pharmacist-property-icon "  + reviewStatusIcon }}'></button>
+                    <!-- below is dummy button only for alignment in reconcelation  -->
+                    <div *ngIf="componenttype=='SUM' || componenttype=='SUMNO' || componenttype=='MOD' || componenttype=='MODNO'"
+                        class='{{"btn-flat btn-menu pharmacist-property-icon " }}'></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="width-s4" style="position: unset;">
+        <div *ngIf="componenttype=='SUMNO' || componenttype=='MOA' || componenttype=='SUM' || componenttype=='OP'"
+            class="direction-horizontal-nowrap justify-content-flex-end align-items-flex-start align-content-center"
+            tabindex="-1" tm-element="true">
+            <div class="btn-group" container="body" dropdown placement="right top">
+                <button id="button-basic" dropdownToggle type="button" class="btn-flat btn-menu menu-icon"
+                    aria-controls="dropdown-basic">
+                </button>
+                <ul id="dropdown-basic" *dropdownMenu  class="dropdown-menu dropdown-menu-right"  role="menu" aria-labelledby="button-basic">
+                    <li role="menuitem"
+                        *ngIf="componenttype=='MOA' && appService.AuthoriseAction('epma_access_patientdrugs_moa')">
+                        <a class="dropdown-item" (click)="patientDrugs()" href="#">
+                            <div class="empa-p-drug dc-icon-menu"><span class="dc-icon-menu-text">Patient's Own
+                                    Drugs</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li role="menuitem"
+                        *ngIf="componenttype=='SUM' || componenttype=='SUMNO'">
+                        <a (click)="supplyRequest(componenttype)" class="dropdown-item" href="javascript:void(0)">
+                            <div class="please-resupply dc-icon-menu"><span class="dc-icon-menu-text">Discharge Supply</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li role="menuitem" 
+                        *ngIf="componenttype=='OP' && appService.bannerWarningStatus && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus">
+                        <a (click)="supplyRequest(componenttype)" class="dropdown-item" href="javascript:void(0)">
+                            <div class="please-resupply dc-icon-menu">
+                                <span class="dc-icon-menu-text">Supply</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li role="menuitem"
+                        *ngIf="!isAdministered && componenttype=='OP' && appService.bannerWarningStatus && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus">
+                        <a (click)="addAdministration()" class="dropdown-item" href="javascript:void(0)">
+                            <div class="please-resupply dc-icon-menu">
+                                <span class="dc-icon-menu-text">Administer</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li role="menuitem"
+                        *ngIf="isAdministered && componenttype=='OP' && appService.bannerWarningStatus && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus">
+                        <a (click)="viewAdministration()" class="dropdown-item" href="javascript:void(0)">
+                            <div class="please-resupply dc-icon-menu">
+                                <span class="dc-icon-menu-text">View Administration</span>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div title={{resupply}}>
+                <button *ngIf="isresupply==true" type="button" class="btn-flat btn-menu please-resupply">
+    
+                </button>
+            </div>
+            <div title={{resupply}}>
+                <button  (click)="viewAdministration()"   *ngIf="isAdministered==true" type="button" class="btn-flat btn-menu {{opAdministeredCSSClass}}">
+                       
+                </button>
+            </div>
+            
+        </div>
+
+    </div>
+    <ng-template #medicationDetailPopover>
+        <div>
+            <h3 class="popover-title popover-header medication-header">Medication
+                <div class="close close-medication" (click)="poptherapy.hide();poptemplate.hide()"></div>
+            </h3>
+
+        </div>
+        <ng-container *ngTemplateOutlet="popvertemplate;context: { poptherapy: poptherapy, poptemplate:poptemplate}">
+        </ng-container>
+    </ng-template>
+</div>
+
+<ng-template #statustemplate>
+    <div class="width-s1 active-status-line" *ngIf="prescriptionstatus=='active'"> </div>
+    <div class="width-s1 stopped-status-line"
+        *ngIf="(prescriptionstatus=='stopped' || prescriptionstatus=='cancelled')"> </div>
+    <div class="width-s1 suspended-status-line" *ngIf="prescriptionstatus=='suspended'"> </div>
+    <div class="width-s1 suspended-status-line" *ngIf="isMOAPrescription && prescriptionstatus!='stopped'"> </div>
+    <div class="width-s1 changed-status-line" *ngIf="prescriptionstatus=='modified' && showModifiedStatus"> </div>
+</ng-template>
+
+<ng-template #therapytypetemp>
+    <div class='{{"layers-container therapy-type "  + therapyType }}'>
+        <div *ngIf="prescriptionstatus != 'stopped' && prescriptionstatus != 'cancelled' && appService.GetCurrentPosology(prescription).antimicrobialstartdate && dayNumber!=undefined"
+            class="layer h-right v-top icon_day_number">{{dayNumber}}</div>
+        <div [ngClass]="{'layer h-right v-bottom status-icon stopped': prescriptionstatus=='stopped'}"></div>
+        <div [ngClass]="{'layer h-right v-bottom status-icon suspendedtherapy': prescriptionstatus=='suspended'}">
+        </div>
+        <div
+            [ngClass]="{'layer h-right v-bottom status-icon modified' : prescriptionstatus=='modified' && showModifiedStatus}">
+        </div>
+        <div
+            [ngClass]="{'layer h-center v-bottom status-icon pharmacistreviewcomplete': prescriptionstatus=='pharmacistreviewcomplete'}">
+        </div>
+        <div [ngClass]="{'layer h-right v-bottom status-icon cancelled': prescriptionstatus=='cancelled'}">
+
+        </div>
+        <div style="left: -4px;" [ngClass]="{'layer h-left v-center status-icon continued-therapy': isNewMedicine==0}">
+        </div>
+        <div style="left: -4px;"
+            [ngClass]="{'layer h-left v-center status-icon continued-therapy-orange': isNewMedicine==1}">
+        </div>
+    </div>
+</ng-template>
+<ng-template #maintemplate let-componenttype="componenttype">
+    <div *ngIf="!appService.GetCurrentPosology(prescription).infusiontypeid">
+        <app-prescription-non-infusion-template [prescription]="prescription" componenttype="{{componenttype}}">
+        </app-prescription-non-infusion-template>
+    </div>
+
+    <div *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid">
+        <app-prescription-infusion-template [prescription]="prescription" componenttype="{{componenttype}}">
+        </app-prescription-infusion-template>
+    </div>
+    <ng-container *ngTemplateOutlet="fromuntilsection;context: { componenttype: componenttype}"></ng-container>
+</ng-template>
+<ng-template #fromuntilsection let-componenttype="componenttype">
+    <span *ngIf="dischargeSummaryComment && (componenttype=='SUM'|| componenttype=='SUMNO')">
+        <span>
+            <span class="empa-template-induction-label">
+                REASON FOR STATUS({{dischargeSummarystatus | uppercase}}):
+            </span>
+            <span class="empa-template-dose-text">
+                {{dischargeSummaryComment}}
+            </span>
+        </span>
+    </span>
+    <span *ngIf="componenttype!='additional'">
+        <span *ngIf="componenttype=='administer' && !appService.GetCurrentPosology(prescription).prn">
+            <span *ngIf="administration.planneddatetime"><span class="empa-template-induction-label">PLANNED TIME:
+                </span>
+                <span class="dose-text"><strong>{{plannedTime}} </strong> </span></span>
+        </span>
+
+        <span
+            *ngIf="componenttype!='medication_rec_moa' && componenttype!='MOA' && componenttype!='MOANO' && componenttype!='administer' && !prescription.linkedinfusionid">
+            <span *ngIf="startDate"><span class="empa-template-induction-label">FROM:
+                </span> <span class="empa-template-dose-text">{{startDate | date :
+                    "dd-MMM-yyyy HH:mm"}} </span>
+                    <br /> 
+            </span>
+            <span *ngIf="modifiedFrom"><span class="empa-template-induction-label">MODIFIED FROM:
+                </span> <span class="empa-template-dose-text">{{modifiedFrom | date :
+                    "dd-MMM-yyyy HH:mm"}} </span>
+                <br /> 
+            </span>
+ 
+            <span *ngIf="appService.GetCurrentPosology(prescription).prescriptionenddate"><span
+                    class="empa-template-induction-label">UNTIL:
+                </span> <span
+                    class="empa-template-dose-text">{{appService.GetCurrentPosology(prescription).prescriptionenddate |
+                    date :
+                    "dd-MMM-yyyy HH:mm"}} </span>
+                    <br />
+            </span>
+
+        </span>
+        <span *ngIf="prescription.comments"><span class="empa-template-induction-label">COMMENTS: </span> <span
+                class="empa-template-dose-text emp-card-comment-block">{{prescriptionCardComment}} </span>
+                <br />
+        </span>
+        <span *ngIf="prescription.indication"><span class="empa-template-induction-label">INDICATION: </span>
+            <span class="empa-template-dose-text break-word">{{indicationstring}} </span>
+            <br />
+        </span>
+        <span>            
+            <span class="empa-template-induction-label" *ngIf="!isMOAPrescription"> PRESCRIBED BY: </span>
+            <span class="empa-template-induction-label" *ngIf="isMOAPrescription"> ADDED BY: </span>
+            <span>{{prescription.createdby}}</span>
+        </span>
+    </span>
+</ng-template>
+<ng-template #medicationpropertytemp let-componenttype="componenttype">
+    <span class="medication-property">
+        <span
+            [ngClass]="{'medication-property-icon High_alert_medication_with_response':prescription.__warningOverrideREQ === true && prescription.__severityWarning == '4'}"></span>
+        <span
+            [ngClass]="{'medication-property-icon High_alert_medication': prescription.__warningOverrideREQ===false && prescription.__severityWarning == '4'}"></span>
+        <span
+            [ngClass]="{'medication-property-icon blacktrianglemedcine':primaryMedication.isblacktriangle === true}"></span>
+        <span [ngClass]="{'medication-property-icon controlleddrug':primaryMedication.iscontrolled === true}"></span>
+        <span title={{critialdrug}}
+            [ngClass]="{'medication-property-icon critialdrug':primaryMedication.iscritical === true}"></span>
+        <span title={{nonformularymedication}}
+            [ngClass]="{'medication-property-icon nonformularymedication': primaryMedication.isformulary === false}"></span>
+        <span title={{clinicaltrialmedicine}}
+            [ngClass]="{'medication-property-icon clinicaltrialmedicine':primaryMedication.isclinicaltrial === true}"></span>
+        <span title={{expensivemedication}}
+            [ngClass]="{'medication-property-icon expensivemedication':primaryMedication.isexpensive === true}"></span>
+        <span title={{highalertmedication}}
+            [ngClass]="{'medication-property-icon highalertmedication':primaryMedication.ishighalert === true}"></span>
+        <span title={{unlicencedmedicine}}
+            [ngClass]="{'medication-property-icon unlicencedmedicine':primaryMedication.isunlicenced === true}"></span>
+
+        <span title={{ComplianceAid}} [ngClass]="{'medication-property-icon complianceaid': showCompliance}"></span>
+        <span title="Patient Own Supply at Home"
+            [ngClass]="{'medication-property-icon ownsupply': showOwnSupply }"></span>
+         
+        <span title="Supply from ward stock"
+            [ngClass]="{'medication-property-icon wardstock': showWardStockIcon }"></span>
+
+
+        <span [ngClass]="{'medication-property-icon bloodproduct':primaryMedication.isbloodproduct === true}"></span>
+        <span *ngIf="reminderIcon && componenttype!='therapyoverview'"
+            class='{{"reminder-property-icon "  + reminderIcon }}'></span>
+        <span *ngIf="reminderIconIvtoOral && componenttype!='therapyoverview'"
+            class='{{"reminder-property-icon "  + reminderIconIvtoOral }}'></span>
+
+    </span>
+</ng-template>
+
+<ng-template #popvertemplate let-poptherapy="poptherapy" let-poptemplate="poptemplate">
+    <div class="p-popover-header">
+        <div class="p-popover">
+            <div class="p-popover-header-width-s1">
+                <div class='{{"layers-container therapy-type "  + therapyType }}'>
+                </div>
+            </div>
+            <div class="p-popover-header-width-s2">
+                <div>
+                    <span *ngFor="let med of prescription.__medications; let i = index">
+                        <span class="empa-template-bold">{{med.name}} </span>
+                        <span *ngIf="med.__ingredients.length==1"> ({{med.__ingredients[0].name}}) </span>
+                        <span *ngIf="med.isprimary && appService.GetCurrentPosology(prescription).infusiontypeid">
+                            <span
+                                *ngIf="appService.GetCurrentPosology(prescription).__dose.length>0 && (appService.GetCurrentPosology(prescription).__dose[0].dosesize || appService.GetCurrentPosology(prescription).__dose[0].strengthneumerator || appService.GetCurrentPosology(prescription).__dose[0].descriptivedose)">
+                                -
+                                <span *ngIf="appService.GetCurrentPosology(prescription).dosetype=='units'">
+                                    <span class="empa-template-bold text-primary"
+                                        *ngIf="!appService.GetCurrentPosology(prescription).__dose[0].dosestrength">{{appService.GetCurrentPosology(prescription).__dose[0].dosesize|
+                                        number}}
+                                        <span
+                                            *ngIf="appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax">
+                                            -
+                                            {{appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax|number}}
+                                        </span>
+                                        {{appService.GetCurrentPosology(prescription).__dose[0].doseunit}}
+                                    </span>
+
+                                    <span class="empa-template-bold text-primary"
+                                        *ngIf="appService.GetCurrentPosology(prescription).__dose[0].dosestrength">{{appService.GetCurrentPosology(prescription).__dose[0].dosestrength|
+                                        number}}
+                                        <span
+                                            *ngIf="appService.GetCurrentPosology(prescription).__dose[0].dosestrengthrangemax">
+                                            -
+                                            {{appService.GetCurrentPosology(prescription).__dose[0].dosestrengthrangemax|number}}
+                                        </span>
+                                        {{appService.GetCurrentPosology(prescription).__dose[0].dosestrengthunits}}
+                                    </span>
+
+                                </span>
+
+                                <span *ngIf="appService.GetCurrentPosology(prescription).dosetype=='strength'">
+                                    <span class="empa-template-bold text-primary">
+                                        <span>
+                                            {{appService.GetCurrentPosology(prescription).__dose[0].strengthneumerator |
+                                            number}}{{appService.GetCurrentPosology(prescription).__dose[0].strengthneumeratorunit}}</span>
+                                        <span *ngIf="prescription.__medications.length==1"> /
+                                            {{appService.GetCurrentPosology(prescription).__dose[0].strengthdenominator
+                                            |
+                                            number}}{{appService.GetCurrentPosology(prescription).__dose[0].strengthdenominatorunit}}
+                                        </span>
+                                    </span>
+                                </span>
+                                <span *ngIf="appService.GetCurrentPosology(prescription).dosetype=='descriptive'">
+                                    <span
+                                        class="empa-template-bold">{{appService.GetCurrentPosology(prescription).__dose[0].descriptivedose}}</span>
+                                </span>
+
+                            </span>
+                        </span>
+                        <span *ngIf="!med.isprimary && appService.GetCurrentPosology(prescription).infusiontypeid">
+                            <span class="text-primary empa-template-bold" *ngIf="med.doseformunits">-
+                                {{med.doseformsize}} {{med.doseformunits}}</span>
+                            <span class="text-primary empa-template-bold" *ngIf="med.strengthdenominatorunit">-
+                                {{med.strengthdenominator}} {{med.strengthdenominatorunit}}</span>
+                        </span>
+                        <span *ngIf="prescription.ismodifiedrelease">-MR</span>
+                        <span *ngIf="prescription.isgastroresistant">-GR</span>
+                        <span *ngIf="i!=prescription.__medications.length-1">
+                            <br />
+                        </span>
+                    </span>
+                </div>
+                <div class="medication-property">
+                    <span
+                        [ngClass]="{'medication-property-icon High_alert_medication_with_response':prescription.__warningOverrideREQ === true && prescription.__severityWarning == '4'}"></span>
+                    <span
+                        [ngClass]="{'medication-property-icon High_alert_medication': prescription.__warningOverrideREQ===false && prescription.__severityWarning == '4'}"></span>
+
+                    <span
+                        [ngClass]="{'medication-property-icon blacktrianglemedcine':primaryMedication.isblacktriangle === true}"></span>
+                    <span
+                        [ngClass]="{'medication-property-icon controlleddrug':primaryMedication.iscontrolled === true}"></span>
+                    <span title={{critialdrug}}
+                        [ngClass]="{'medication-property-icon critialdrug':primaryMedication.iscritical === true}"></span>
+                    <span title={{nonformularymedication}}
+                        [ngClass]="{'medication-property-icon nonformularymedication': primaryMedication.isformulary === false}"></span>
+                    <span
+                        [ngClass]="{'medication-property-icon clinicaltrialmedicine':primaryMedication.isclinicaltrial === true}"></span>
+                    <span title={{expensivemedication}}
+                        [ngClass]="{'medication-property-icon expensivemedication':primaryMedication.isexpensive === true}"></span>
+                    <span title={{highalertmedication}}
+                        [ngClass]="{'medication-property-icon highalertmedication':primaryMedication.ishighalert === true}"></span>
+                    <span title={{unlicencedmedicine}}
+                        [ngClass]="{'medication-property-icon unlicencedmedicine':primaryMedication.isunlicenced === true}"></span>
+
+                    <span title={{ComplianceAid}}
+                        [ngClass]="{'medication-property-icon complianceaid': showCompliance }"></span>
+                    <span title="Patient Own Supply at Home"
+                        [ngClass]="{'medication-property-icon ownsupply': showOwnSupply }"></span>
+
+                        <span title="Supply from ward stock"
+                        [ngClass]="{'medication-property-icon wardstock': showWardStockIcon }"></span>
+                    <span
+                        [ngClass]="{'medication-property-icon bloodproduct':primaryMedication.isbloodproduct === true}"></span>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+    <div class="p-popover-body">
+        <div class="p-popover">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted" *ngIf="!appService.GetCurrentPosology(prescription).infusiontypeid">DOSE</span>
+                <span class="text-muted" *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid">RATE</span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span *ngIf="prescription.titration">
+                    <span *ngIf="prescription.titration" class="empa-template-bold">Titrate</span>
+                    <span class="empa-template-dose-label" *ngIf="prescription.titration"> TARGET
+                        {{prescription.titrationtype}}
+                        <span *ngIf="prescription.titrationtargetmin"> {{prescription.titrationtargetmin}}
+                            {{prescription.titrationtargetunits}}</span>
+                        <span *ngIf="prescription.titrationtargetmax"> - {{prescription.titrationtargetmax}}
+                            {{prescription.titrationtargetunits}}</span>
+                    </span>
+                </span>
+                <span *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid && !prescription.titration">
+                    <span *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid=='bolus'">
+                        <span>BOLUS</span>
+                    </span>
+                    <span *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid=='ci'">
+                        <span *ngIf="primaryMedication">
+                            <span *ngIf="!prescription.ismedicinalgas"><span>CONTINUOUS
+                                    INFUSION - </span>
+                            </span>
+                        </span>
+
+                        <span *ngIf="appService.GetCurrentPosology(prescription).frequency=='variable'">
+                            <span class="empa-template-bold">Variable</span>
+                        </span>
+                        <span *ngIf="appService.GetCurrentPosology(prescription).frequency=='protocol'">
+                            <span class="empa-template-bold">Protocol</span>
+                        </span>
+                        <span
+                            *ngIf="appService.GetCurrentPosology(prescription).frequency!='variable' && appService.GetCurrentPosology(prescription).frequency!='protocol'">
+                            <span> {{appService.GetCurrentPosology(prescription).infusionrate | number}}
+                                {{appService.GetCurrentPosology(prescription).infusionrateunits}}
+                            </span>
+                        </span>
+                    </span>
+                    <span *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid=='rate'">
+                        <span>INTERMITTENT - </span>
+                        <span *ngIf="appService.GetCurrentPosology(prescription).frequency=='variable'">
+                            <span class="empa-template-bold">Variable</span>
+                        </span>
+                        <span *ngIf="appService.GetCurrentPosology(prescription).frequency=='protocol'">
+                            <span class="empa-template-bold">Protocol</span>
+                        </span>
+                        <span
+                            *ngIf="appService.GetCurrentPosology(prescription).frequency!='variable' && appService.GetCurrentPosology(prescription).frequency!='protocol'">
+                            <span>{{appService.GetCurrentPosology(prescription).infusionrate | number}}
+                                {{appService.GetCurrentPosology(prescription).infusionrateunits}}
+                            </span> - <span>DURATION
+                            </span> {{appService.GetCurrentPosology(prescription).infusionduration}}h
+                        </span>
+
+                    </span>
+                </span>
+                <span *ngIf="!appService.GetCurrentPosology(prescription).infusiontypeid && !prescription.titration">
+                    <span *ngIf="prescription.titration" class="empa-template-bold">Titrate</span>
+                    <span
+                        *ngIf="appService.GetCurrentPosology(prescription).frequency!='variable' && appService.GetCurrentPosology(prescription).frequency!='protocol'">
+                        <span
+                            *ngIf="appService.GetCurrentPosology(prescription).__dose.length>0 && appService.GetCurrentPosology(prescription).dosetype=='units' && !prescription.titration">
+                            <span class="empa-template-bold"
+                                *ngIf="!appService.GetCurrentPosology(prescription).__dose[0].dosestrength">
+                                <span *ngIf="appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax">
+                                    {{appService.GetCurrentPosology(prescription).__dose[0].dosesize|number}}{{appService.GetCurrentPosology(prescription).__dose[0].doseunit}}
+                                    -
+                                    {{appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax|number}}{{appService.GetCurrentPosology(prescription).__dose[0].doseunit}}
+                                </span>
+                                <span *ngIf="!appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax">
+                                    {{appService.GetCurrentPosology(prescription).__dose[0].dosesize|number}}{{appService.GetCurrentPosology(prescription).__dose[0].doseunit}}
+                                </span>
+
+                            </span>
+
+                            <span class="empa-template-bold"
+                                *ngIf="appService.GetCurrentPosology(prescription).__dose[0].dosestrength">
+                                <span
+                                    *ngIf="appService.GetCurrentPosology(prescription).__dose[0].dosestrengthrangemax">
+                                    {{appService.GetCurrentPosology(prescription).__dose[0].dosestrength|number}}{{appService.GetCurrentPosology(prescription).__dose[0].dosestrengthunits}}
+                                    -
+                                    {{appService.GetCurrentPosology(prescription).__dose[0].dosestrengthrangemax|number}}{{appService.GetCurrentPosology(prescription).__dose[0].dosestrengthunits}}
+                                </span>
+                                <span
+                                    *ngIf="!appService.GetCurrentPosology(prescription).__dose[0].dosestrengthrangemax">
+                                    {{appService.GetCurrentPosology(prescription).__dose[0].dosestrength|number}}{{appService.GetCurrentPosology(prescription).__dose[0].dosestrengthunits}}
+                                </span>
+
+                            </span>
+
+                        </span>
+                        <span
+                            *ngIf="appService.GetCurrentPosology(prescription).__dose.length>0 && appService.GetCurrentPosology(prescription).dosetype=='strength' && !prescription.titration">
+                            <span
+                                class="empa-template-bold">{{appService.GetCurrentPosology(prescription).__dose[0].strengthneumerator
+                                |
+                                number}}{{appService.GetCurrentPosology(prescription).__dose[0].strengthneumeratorunit}}
+                                /
+                                {{appService.GetCurrentPosology(prescription).__dose[0].strengthdenominator |
+                                number}}{{appService.GetCurrentPosology(prescription).__dose[0].strengthdenominatorunit}}</span>
+                        </span>
+                        <span
+                            *ngIf="appService.GetCurrentPosology(prescription).__dose.length>0 && appService.GetCurrentPosology(prescription).dosetype=='descriptive' && !prescription.titration">
+                            <span
+                                class="empa-template-bold">{{appService.GetCurrentPosology(prescription).__dose[0].descriptivedose}}</span>
+                        </span>
+                    </span>
+                    <span
+                        *ngIf="appService.GetCurrentPosology(prescription).frequency=='variable' && !prescription.titration">
+                        <span class="empa-template-bold">Variable</span>
+                    </span>
+                    <span
+                        *ngIf="appService.GetCurrentPosology(prescription).frequency=='protocol' && !prescription.titration">
+                        <span class="empa-template-bold">Protocol</span>
+                    </span>
+
+                </span>
+
+            </div>
+        </div>
+        <div class="p-popover"
+            *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid && appService.GetCurrentPosology(prescription).__dose.length>0 && (appService.GetCurrentPosology(prescription).__dose[0].dosesize || appService.GetCurrentPosology(prescription).__dose[0].strengthneumerator || appService.GetCurrentPosology(prescription).__dose[0].descriptivedose)">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">DOSE</span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span
+                    *ngIf="appService.GetCurrentPosology(prescription).__dose.length>0 && appService.GetCurrentPosology(prescription).dosetype=='units'">
+                    <span class="empa-template-bold"
+                        *ngIf="!appService.GetCurrentPosology(prescription).__dose[0].dosestrength">
+                        <span *ngIf="appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax">
+                            {{appService.GetCurrentPosology(prescription).__dose[0].dosesize|number}}{{appService.GetCurrentPosology(prescription).__dose[0].doseunit}}
+                            -
+                            {{appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax|number}}{{appService.GetCurrentPosology(prescription).__dose[0].doseunit}}
+                        </span>
+                        <span *ngIf="!appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax">
+                            {{appService.GetCurrentPosology(prescription).__dose[0].dosesize|number}}
+                            {{appService.GetCurrentPosology(prescription).__dose[0].doseunit}}
+                        </span>
+
+                    </span>
+
+                    <span class="empa-template-bold"
+                        *ngIf="appService.GetCurrentPosology(prescription).__dose[0].dosestrength">
+                        <span *ngIf="appService.GetCurrentPosology(prescription).__dose[0].dosestrengthrangemax">
+                            {{appService.GetCurrentPosology(prescription).__dose[0].dosestrength|number}}{{appService.GetCurrentPosology(prescription).__dose[0].dosestrengthunits}}
+                            -
+                            {{appService.GetCurrentPosology(prescription).__dose[0].dosestrengthrangemax|number}}{{appService.GetCurrentPosology(prescription).__dose[0].dosestrengthunits}}
+                        </span>
+                        <span *ngIf="!appService.GetCurrentPosology(prescription).__dose[0].dosestrengthrangemax">
+                            {{appService.GetCurrentPosology(prescription).__dose[0].dosestrength|number}}
+                            {{appService.GetCurrentPosology(prescription).__dose[0].dosestrengthunits}}
+                        </span>
+
+                        (<span *ngIf="appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax">
+                            {{appService.GetCurrentPosology(prescription).__dose[0].dosesize|number}}
+                            {{appService.GetCurrentPosology(prescription).__dose[0].doseunit}})
+                            -
+                            {{appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax|number}}
+                            {{appService.GetCurrentPosology(prescription).__dose[0].doseunit}})
+                        </span>
+                        <span *ngIf="!appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax">
+                            {{appService.GetCurrentPosology(prescription).__dose[0].dosesize|number}}
+                            {{appService.GetCurrentPosology(prescription).__dose[0].doseunit}})
+                        </span>
+
+                    </span>
+
+                </span>
+                <span
+                    *ngIf="appService.GetCurrentPosology(prescription).__dose.length>0 && appService.GetCurrentPosology(prescription).dosetype=='strength'">
+                    <span class="empa-template-bold">
+                        <span> {{appService.GetCurrentPosology(prescription).__dose[0].strengthneumerator |
+                            number}}{{appService.GetCurrentPosology(prescription).__dose[0].strengthneumeratorunit}}</span>
+                        <span *ngIf="prescription.__medications.length==1"> /
+                            {{appService.GetCurrentPosology(prescription).__dose[0].strengthdenominator |
+                            number}}{{appService.GetCurrentPosology(prescription).__dose[0].strengthdenominatorunit}}
+                        </span>
+                    </span>
+                </span>
+                <span
+                    *ngIf="appService.GetCurrentPosology(prescription).__dose.length>0 && appService.GetCurrentPosology(prescription).dosetype=='descriptive'">
+                    <span
+                        class="empa-template-bold">{{appService.GetCurrentPosology(prescription).__dose[0].descriptivedose}}</span>
+                </span>
+            </div>
+        </div>
+        <div class="p-popover" *ngIf="appService.GetCurrentPosology(prescription).totalinfusionvolume">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">TOTAL VOLUME </span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span class="empa-template-bold">{{appService.GetCurrentPosology(prescription).totalinfusionvolume}}
+                    ml</span>
+            </div>
+        </div>
+
+        <div class="p-popover" *ngIf="prescription.__medications.length>0 && primaryMedication.form">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">MEDICATION FORM</span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span>{{primaryMedication.form}}</span>
+            </div>
+        </div>
+        <div class="p-popover"
+            *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid!='ci' && appService.GetCurrentPosology(prescription).frequency!='variable' && appService.GetCurrentPosology(prescription).frequency!='protocol'">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2"
+                *ngIf="appService.GetCurrentPosology(prescription).frequency || appService.GetCurrentPosology(prescription).daysofweek.length>2 || appService.GetCurrentPosology(prescription).dosingdaysfrequencysize>0">
+                <span class="text-muted">DOSE INTERVAL</span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span class="dose-text" *ngIf="appService.GetCurrentPosology(prescription).frequency=='mor'">
+                    Morning
+                </span>
+                <span class="dose-text" *ngIf="appService.GetCurrentPosology(prescription).frequency=='mid'">
+                    Noon
+                </span>
+                <span class="dose-text" *ngIf="appService.GetCurrentPosology(prescription).frequency=='night'">
+                    Night
+                </span>
+                <span class="dose-text" *ngIf="appService.GetCurrentPosology(prescription).frequency=='eve'">
+                    Evening
+                </span>
+                <span class="dose-text" *ngIf="appService.GetCurrentPosology(prescription).frequency=='stat'">
+                    Stat. dose
+                </span>
+                <span class="dose-text" *ngIf="appService.GetCurrentPosology(prescription).frequency=='x'">
+                    {{appService.GetCurrentPosology(prescription).frequencysize}} time(s) per day
+                </span>
+                <span class="dose-text" *ngIf="appService.GetCurrentPosology(prescription).frequency=='h'">
+                    - Every {{appService.GetCurrentPosology(prescription).frequencysize}} hour(s)
+                </span>
+                <span class="dose-text"
+                    *ngIf="appService.GetCurrentPosology(prescription).daysofweek && appService.GetCurrentPosology(prescription).daysofweek.length>2">
+                    - Every {{chosenDays}}</span>
+                <span class="dose-text"
+                    *ngIf="appService.GetCurrentPosology(prescription).dosingdaysfrequencysize && appService.GetCurrentPosology(prescription).dosingdaysfrequencysize>0">
+                    - Every {{appService.GetCurrentPosology(prescription).dosingdaysfrequencysize}}
+                    {{appService.GetCurrentPosology(prescription).dosingdaysfrequency}}</span>
+                <span class="dose-text" *ngIf="prescriptionAdditionalConditions !='No additional criteria'">
+                    – {{prescriptionAdditionalConditions}}</span>
+                <span *ngIf="appService.GetCurrentPosology(prescription).prn"> - When needed</span>
+                <br />
+                <span
+                    *ngIf="appService.GetCurrentPosology(prescription).prn && appService.GetCurrentPosology(prescription).maxnumofdosesperday">Max
+                    {{appService.GetCurrentPosology(prescription).maxnumofdosesperday}}
+                    {{appService.GetCurrentPosology(prescription).__dose[0].doseunit}} per day</span>
+                <span *ngIf="appService.GetCurrentPosology(prescription).doctorsorder">-Prescriber to confirm</span>
+            </div>
+        </div>
+        <div class="p-popover" *ngIf="!appService.GetCurrentPosology(prescription).prn">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">ADMINISTRATION TIME</span>
+            </div>
+            <div class="p-popover-body-width-s3"
+                *ngIf="appService.GetCurrentPosology(prescription).frequency!='variable' && appService.GetCurrentPosology(prescription).frequency!='protocol'"
+                style="max-height:200px;overflow-y:auto;overflow-x:hidden">
+                <span *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid">
+                    <span *ngFor="let dose of appService.GetCurrentPosology(prescription).__dose;">
+                        <span *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid!='bolus'">
+                            <span class="empa-template-bold" style="width:100px;display: inline-flex;"
+                                *ngIf="distinctDate.length>1">{{isShowDate(dose)}} </span>
+                            {{dose.dosestartdatetime | date : "HH:mm"}}
+                            <!-- <span
+                                class="empa-template-bold">{{dose.infusionrate | number}}
+                                <span *ngIf="dose.doseunit">{{dose.doseunit}}</span>
+                                <span *ngIf="!dose.doseunit">ml/h</span>
+                            </span><br /> -->
+                        </span>
+                        <span *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid=='bolus'">
+                            <span class="empa-template-bold" style="width:100px;display: inline-flex;"
+                                *ngIf="distinctDate.length>1">{{isShowDate(dose)}} </span>
+                            {{dose.dosestartdatetime | date : "HH:mm"}} <span
+                                class="empa-template-bold">{{dose.strengthneumerator |
+                                number}}{{dose.strengthneumeratorunit}} / {{dose.strengthdenominator |
+                                number}}{{dose.strengthdenominatorunit}}</span><br />
+                        </span>
+
+                    </span>
+                </span>
+                <span *ngIf="!appService.GetCurrentPosology(prescription).infusiontypeid">
+                    <span *ngFor="let dose of appService.GetCurrentPosology(prescription).__dose;">
+                        <span class="empa-template-bold" style="width:100px;display: inline-flex;"
+                            *ngIf="distinctDate.length>1">{{isShowDate(dose)}} </span> {{dose.dosestartdatetime
+                        | date : "HH:mm"}} <br />
+                    </span>
+                </span>
+
+            </div>
+            <div class="p-popover-body-width-s3"
+                *ngIf="appService.GetCurrentPosology(prescription).frequency=='variable' || appService.GetCurrentPosology(prescription).frequency=='protocol'"
+                style="max-height:200px;overflow-y:auto;overflow-x:hidden">
+                <div *ngFor="let dose of appService.GetCurrentPosology(prescription).__dose;let d = index">
+
+                    <span *ngIf="appService.GetCurrentPosology(prescription).dosetype=='units'">
+                        <span *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid">
+                            <b style="width:100px;display: inline-flex;"
+                                *ngIf="distinctDate.length>1">{{isShowDate(dose,d)}}
+                            </b> {{dose.dosestartdatetime |
+                            date : "HH:mm"}} - <b>{{dose.infusionrate | number}}
+                                {{appService.GetCurrentPosology(prescription).infusionrateunits}}</b>
+                        </span>
+                        <span *ngIf="!appService.GetCurrentPosology(prescription).infusiontypeid && dose.dosesize">
+                            <b style="width:100px;display: inline-flex;"
+                                *ngIf="distinctDate.length>1">{{isShowDate(dose,d)}}
+                            </b>
+
+                            <b>
+                                {{dose.dosestartdatetime | date : "HH:mm"}} -
+                                {{dose.dosesize | number}}
+                                <span *ngIf="dose.dosesizerangemax">
+                                    - {{dose.dosesizerangemax|number}}
+                                </span>
+                                {{dose.doseunit}}
+                            </b>
+                        </span>
+
+                    </span>
+                    <span *ngIf="appService.GetCurrentPosology(prescription).dosetype=='strength'">
+                        <span *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid">
+                            <b style="width:100px;display: inline-flex;"
+                                *ngIf="distinctDate.length>1">{{isShowDate(dose,d)}} </b> {{dose.dosestartdatetime
+                            | date : "HH:mm"}} - <b>{{dose.infusionrate | number}}
+                                <span
+                                    *ngIf="appService.GetCurrentPosology(prescription).infusionrateunits">{{appService.GetCurrentPosology(prescription).infusionrateunits}}</span>
+                                <span *ngIf="!appService.GetCurrentPosology(prescription).infusionrateunits">ml/h</span>
+                            </b>
+                        </span>
+                        <span
+                            *ngIf="!appService.GetCurrentPosology(prescription).infusiontypeid && dose.strengthneumerator">
+                            <b style="width:100px;display: inline-flex;"
+                                *ngIf="distinctDate.length>1">{{isShowDate(dose,d)}} </b> {{dose.dosestartdatetime
+                            | date : "HH:mm"}} -
+                            <b
+                                *ngIf="!(appService.GetCurrentPosology(prescription).frequency=='protocol' && !dose.strengthdenominator && !dose.strengthneumerator)">
+                                {{dose.strengthneumerator | number}}{{dose.strengthneumeratorunit}} /
+                                {{dose.strengthdenominator | number}}{{dose.strengthdenominatorunit}}
+                            </b>
+                        </span>
+
+                    </span>
+                    <span *ngIf="appService.GetCurrentPosology(prescription).dosetype=='descriptive'">
+                        <b style="width:100px;display: inline-flex;"
+                            *ngIf="distinctDate.length>1">{{isShowDate(dose,d)}}
+                        </b> {{dose.dosestartdatetime |
+                        date : "HH:mm"}} - <b>{{dose.descriptivedose}}</b>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="p-popover" *ngIf="protocolMessage">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted"></span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span>{{protocolMessage}}</span>
+            </div>
+        </div>
+        <div class="p-popover" *ngIf="prescription.__routes.length>0">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">ROUTE OF ADMINISTRATION</span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span *ngFor="let r of prescription.__routes; let i = index">
+                    <span *ngIf="r.isdefault"
+                        [ngClass]="{'induction-label':true, 'unlicensedroute':r.isunlicensed}">{{r.route}}</span>
+                    <span [ngClass]="{'unlicensedroute':r.isunlicensed}" *ngIf="!r.isdefault">{{r.route}}</span>
+                    <span *ngIf="i!=prescription.__routes.length-1">
+                        ,
+                    </span>
+                </span>
+            </div>
+        </div>
+        <div class="p-popover" *ngIf="prescriptionsource">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">SOURCE </span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span>{{prescriptionsource}}</span>
+            </div>
+        </div>
+        <div class="p-popover" *ngIf="prescription.oxygenadditionalinfo && prescription.oxygenadditionalinfo.length>2">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">ADDITIONAL INFO </span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span>{{oxygenAdditionalInformation}}</span>
+            </div>
+        </div>
+        <div class="p-popover" *ngIf="appService.GetCurrentPosology(prescription).antimicrobialstartdate">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">ANTIMICROBIAL DATE </span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span>{{antimicobialDate}}</span>
+            </div>
+        </div>
+        <div class="p-popover" *ngIf="prescription.indication">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">INDICATION </span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span>{{indicationstring}}</span>
+            </div>
+        </div>
+
+        <div class="p-popover" *ngIf="prescription.comments">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">COMMENTS </span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span class="emp-card-comment-block">{{prescription.comments}}</span>
+            </div>
+        </div>
+        <div class="p-popover" *ngIf="prescriptionEventComment && !(componenttype=='SUM'|| componenttype=='SUMNO')">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">REASON FOR STATUS({{prescriptionstatus | uppercase}}) </span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span class="emp-card-comment-block">{{prescriptionEventComment}}</span>
+            </div>
+        </div>
+        <div class="p-popover" *ngIf="dischargeSummaryComment && (componenttype=='SUM'|| componenttype=='SUMNO')">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">REASON FOR STATUS({{dischargeSummarystatus | uppercase}}) </span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span class="emp-card-comment-block">{{dischargeSummaryComment}}</span>
+            </div>
+        </div>
+
+        <div class="p-popover">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="empa-template-induction-label" *ngIf="!isMOAPrescription"> PRESCRIBED BY: </span>
+                <span class="empa-template-induction-label" *ngIf="isMOAPrescription"> ADDED BY: </span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span>{{prescription.createdby}}</span>
+            </div>
+        </div>
+
+        <div class="p-popover" *ngIf="componenttype=='MOD' ||  componenttype =='MODNO'">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">DISPENSING FROM </span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span>{{prescription.dispensingfrom}}</span>
+            </div>
+        </div>
+
+        <div class="p-popover">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted" *ngIf="!isMOAPrescription">PRESCRIBED ON</span>
+                <span class="text-muted" *ngIf="isMOAPrescription">ADDED ON</span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span>{{prescription.createdon | date : "dd-MMM-yyyy HH:mm"}}</span>
+            </div>
+        </div>
+
+        <div class="p-popover" *ngIf="startDate && !isMOAPrescription">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">FROM </span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span>{{startDate | date : "dd-MMM-yyyy HH:mm"}}</span>
+            </div>
+        </div>
+        <div class="p-popover" *ngIf="modifiedFrom && !isMOAPrescription">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">MODIFIED BY </span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span>{{prescription.lastmodifiedby}}</span>
+            </div>
+        </div>
+        <div class="p-popover" *ngIf="modifiedFrom && !isMOAPrescription">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">MODIFIED ON </span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span>{{prescription.lastmodifiedon | date : "dd-MMM-yyyy HH:mm"}}</span>
+            </div>
+        </div>
+        <div class="p-popover" *ngIf="modifiedFrom && !isMOAPrescription">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">MODIFIED FROM </span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span>{{modifiedFrom | date : "dd-MMM-yyyy HH:mm"}}</span>
+            </div>
+        </div>
+        <div class="p-popover" *ngIf="appService.GetCurrentPosology(prescription).prescriptionenddate">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">TO </span>
+            </div>
+            <div *ngIf="!this.isMOAPrescription" class="p-popover-body-width-s3">
+                <span>{{appService.GetCurrentPosology(prescription).prescriptionenddate | date : "dd-MMM-yyyy
+                    HH:mm"}}</span>
+            </div>
+            <div *ngIf="this.isMOAPrescription && appService.GetCurrentPosology(prescription).prescriptionstartdate"
+                class="p-popover-body-width-s3">
+                <span>Day {{GetEndDateNumber()}} {{appService.GetCurrentPosology(prescription).prescriptionenddate |
+                    date : "HH:mm"}}</span>
+            </div>
+        </div>
+
+
+        <div class="p-popover" *ngIf="prescription.titration">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">TARGET VALUES</span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span *ngIf="prescription.titrationtype=='INR'">{{prescription.titrationtype}}
+                    {{prescription.targetinr}}</span>
+                <span *ngIf="prescription.titrationtype!='INR'">{{prescription.titrationtype}}
+                    {{prescription.targetsaturation}}</span>
+            </div>
+        </div>
+        <!-- <div class="p-popover" *ngIf="prescriptionstatus=='suspended' || prescriptionstatus==''restarted' || prescriptionstatus='stopped' || prescriptionstatus='cancelled'">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">REASON FOR CHANGE</span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span>Traceability</span>
+
+            </div>
+        </div> -->
+        <div class="p-popover" *ngIf="componenttype!='therapyoverview'">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">HISTORY</span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span><a href="javascript:void(0)"
+                        (click)="poptherapy.hide();poptemplate.hide();openPrescriptionHistory()">Traceability</a></span>
+
+            </div>
+        </div>
+        <hr />
+        <div class="p-popover">
+
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">LEGEND </span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <div class="legend-medication-display" *ngIf="primaryMedication.isblacktriangle">
+                    <div class="legend-medication-icon blacktrianglemedcine"></div>
+                    <div class="legend-medication-text">Black triangle medicine</div>
+                </div>
+                <div class="legend-medication-display" *ngIf="primaryMedication.iscontrolled">
+                    <div class="legend-medication-icon controlleddrug"></div>
+                    <div class="legend-medication-text">Controlled drug</div>
+                </div>
+                <div class="legend-medication-display" *ngIf="primaryMedication.iscritical">
+                    <div class="legend-medication-icon critialdrug"></div>
+                    <div class="legend-medication-text">Critical drug</div>
+                </div>
+                <div class="legend-medication-display" *ngIf="primaryMedication.isformulary === false">
+                    <div class="legend-medication-icon nonformularymedication"></div>
+                    <div class="legend-medication-text">Non formulary medication</div>
+                </div>
+                <div class="legend-medication-display" *ngIf="primaryMedication.isclinicaltrial === true">
+                    <div class="legend-medication-icon clinicaltrialmedicine"></div>
+                    <div class="legend-medication-text">Clinical trial medicine</div>
+                </div>
+                <div class="legend-medication-display" *ngIf="primaryMedication.isexpensive === true">
+                    <div class="legend-medication-icon expensivemedication"></div>
+                    <div class="legend-medication-text">Expensive</div>
+                </div>
+                <div class="legend-medication-display" *ngIf="primaryMedication.ishighalert === true">
+                    <div class="legend-medication-icon highalertmedication"></div>
+                    <div class="legend-medication-text">High alert medication</div>
+                </div>
+                <div class="legend-medication-display" *ngIf="primaryMedication.isunlicenced === true">
+                    <div class="legend-medication-icon unlicencedmedicine"></div>
+                    <div class="legend-medication-text">Unlicenced medicine</div>
+                </div>
+                <div class="legend-medication-display" *ngIf="primaryMedication.isbloodproduct === true">
+                    <div class="legend-medication-icon bloodproduct"></div>
+                    <div class="legend-medication-text">Blood Product</div>
+                </div>
+                <div class="legend-medication-display" *ngIf="prescriptionstatus == 'stopped' ">
+                    <div class="legend-medication-icon stopped"></div>
+                    <div class="legend-medication-text">Stopped</div>
+                </div>
+                <div class="legend-medication-display" *ngIf="prescriptionstatus == 'cancelled'">
+                    <div class="legend-medication-icon cancelled"></div>
+                    <div class="legend-medication-text">Cancelled</div>
+                </div>
+                <div class="legend-medication-display" *ngIf="prescriptionstatus == 'modified' && showModifiedStatus">
+                    <div class="legend-medication-icon modified"></div>
+                    <div class="legend-medication-text">Modified</div>
+                </div>
+                <div class="legend-medication-display" *ngIf="prescriptionstatus == 'suspended'">
+                    <div class="legend-medication-icon suspendedtherapy"></div>
+                    <div class="legend-medication-text">Suspended Therapy</div>
+
+                </div>
+                <div class="legend-medication-display" *ngIf="showCompliance">
+                    <div class="legend-medication-icon complianceaid"></div>
+                    <div class="legend-medication-text">Compliance aid</div>
+                </div>
+
+                <div class="legend-medication-display" *ngIf="showOwnSupply">
+                    <div class="legend-medication-icon ownsupply"></div>
+                    <div class="legend-medication-text">Patient own supply at home</div>
+                </div>
+                
+                <div class="legend-medication-display" *ngIf="showWardStockIcon">
+                    <div class="legend-medication-icon wardstock"></div>
+                    <div class="legend-medication-text">Resupply from ward stock</div>
+                </div>
+
+                <div class="legend-medication-display"
+                    *ngIf="prescriptionstatus != 'stopped' && prescriptionstatus != 'cancelled' && appService.GetCurrentPosology(prescription).antimicrobialstartdate && dayNumber!=undefined">
+                    <div class="legend-medication-icon icon_day_number">{{dayNumber}}</div>
+                    <div class="legend-medication-text">Consecutive days for antibiotic</div>
+                </div>
+
+                <!--                        <div class="legend-medication-display">
+                    <div class="legend-medication-icon chartedbynurse"></div>
+                    <div class="legend-medication-text">Not witnessed by nurse</div>
+                </div>
+                <div class="legend-medication-display">
+                    <div class="legend-medication-icon delayofconfirmation"></div>
+                    <div class="legend-medication-text">Delay of confirmation</div>
+                </div>
+                <div class="legend-medication-display">
+                    <div class="legend-medication-icon linkedinfusions2"></div>
+                    <div class="legend-medication-text">Linked Infusions2</div>
+                </div>
+                <div class="legend-medication-display">
+                    <div class="legend-medication-icon longdelayofconfirmation"></div>
+                    <div class="legend-medication-text">Long Delay of Confirmation</div>
+                </div>
+                <div class="legend-medication-display">
+                    <div class="legend-medication-icon overriddenwarning"></div>
+                    <div class="legend-medication-text">Overridden Warning</div>
+                </div>   -->
+                <div class="legend-medication-display"
+                    *ngIf="prescription.__nursinginstructions && prescription.__nursinginstructions .length >0 && componenttype!='therapyoverview'">
+                    <div class="legend-medication-icon Nursing_Instruction"></div>
+                    <div class="legend-medication-text">Nursing instructions</div>
+                </div>
+                <div class="legend-medication-display"
+                    *ngIf="reviewStatusIcon=='Pharmacist_review_not_required' && componenttype!='therapyoverview' && componenttype!='OP'">
+                    <div class="legend-medication-icon {{reviewStatusIcon}}"></div>
+                    <div class="legend-medication-text">{{reviewStatusDesc}}</div>
+                </div>
+                <div class="legend-medication-display"
+                    *ngIf="reviewStatusIcon=='Waiting_for_pharmacist_review' && componenttype!='therapyoverview' && componenttype!='OP'">
+                    <div class="legend-medication-icon {{reviewStatusIcon}}"></div>
+                    <div class="legend-medication-text">{{reviewStatusDesc}}</div>
+                </div>
+                <div class="legend-medication-display"
+                    *ngIf="reviewStatusIcon=='Pharmacist_review_complete' && componenttype!='therapyoverview' && componenttype!='OP'">
+                    <div class="legend-medication-icon {{reviewStatusIcon}}"></div>
+                    <div class="legend-medication-text">{{reviewStatusDesc}}</div>
+                </div>
+
+                <div class="legend-medication-display"
+                    *ngIf="reviewStatusIcon=='Pharmacist_reviewed_back_to_prescriber' && componenttype!='therapyoverview' && componenttype!='OP'">
+                    <div class="legend-medication-icon {{reviewStatusIcon}}"></div>
+                    <div class="legend-medication-text">{{reviewStatusDesc}}</div>
+                </div>
+
+                <div class="legend-medication-display" *ngIf="reminderIcon && componenttype!='therapyoverview'">
+                    <div class="legend-medication-icon {{reminderIcon}}"></div>
+                    <div class="legend-medication-text">{{reminderIconDesc}}</div>
+                </div>
+                <div class="legend-medication-display" *ngIf="reminderIconIvtoOral && componenttype!='therapyoverview'">
+                    <div class="legend-medication-icon {{reminderIconIvtoOral}}"></div>
+                    <div class="legend-medication-text">{{reminderIconDescIvtoOral}}</div>
+                </div>
+                <div class="legend-medication-display"
+                    *ngIf="prescription.__warningOverrideREQ === true && prescription.__severityWarning == '4'">
+                    <div class="legend-medication-icon High_alert_medication_with_response"></div>
+                    <div class="legend-medication-text">High alert warning with override</div>
+                </div>
+
+                <div class="legend-medication-display"
+                    *ngIf="prescription.__warningOverrideREQ === false && prescription.__severityWarning == '4'">
+                    <div class="legend-medication-icon High_alert_medication"></div>
+                    <div class="legend-medication-text">High alert warning</div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</ng-template>

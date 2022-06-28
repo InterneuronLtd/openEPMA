@@ -1,0 +1,71 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<!-- Doctor conformation popup -->
+
+<div  *ngIf="!showEditpopup" class="modal fade bd-example-modal-sm"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
+    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <h3 class="popover-title popover-header">
+                Administration of treatment
+                <div class="close close-adminstration" (click)="closePopup()"></div>
+             </h3>
+            <div class="modal-body">
+                <app-prescription-template [posologyid]="this.dose.posology_id" [prescription]="prescription" [administration]="administration" componenttype="additional">
+                </app-prescription-template>
+            </div>
+            <div class="modal-footer" style="padding: 0.4rem 0rem;">
+
+                <div *ngIf="this.appService.AuthoriseAction('epma_confirm_doctorsorder') && appService.bannerWarningStatus && appService.warningServiceIPContext.existingWarningsStatus" class="container">
+
+                    <div class="row">
+                        <div class="col-6">
+                            <button  [disabled]="showSpinnerCancel"  data-dismiss="modal"  type="button" class="btn btn-sm btn-secondary btn-block" (click)="cancelAdministration()">
+                                <span class="spinner-border spinner-border-sm" *ngIf="showSpinnerCancel" role="status" aria-hidden="true"></span>  Cancel dose
+                            </button>
+                            
+                        </div>
+
+                        <div class="col-6">
+                            <button style="color: white;" type="button" class="btn btn-sm btn-info btn-block" (click)="confirmAdministration()" [disabled]="showSpinnerConfirm"> <span class="spinner-border spinner-border-sm" *ngIf="showSpinnerConfirm" role="status" aria-hidden="true"></span> Confirm dose</button>                           
+                        </div>
+
+                    </div>
+
+
+                </div>
+                <div *ngIf="!this.appService.AuthoriseAction('epma_confirm_doctorsorder')" class="p-2 rounded alert-danger">
+                    This dose needs to be confirmed by a prescriber prior to administration. Please contact a prescriber to confirm.
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<div *ngIf="showEditpopup">
+    <app-timelineinfo [dose]="dose" [prescription]="prescription"
+        [editpopuptypetype]="editpopuptypetype" (hideAdministrationForm)="hidecancel($event)">
+    </app-timelineinfo>
+</div>

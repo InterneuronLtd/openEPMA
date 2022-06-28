@@ -1,0 +1,177 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div class="modal fade bd-example-modal-lg" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal
+    tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+    aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg  modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <h3 class="popover-title popover-header">
+                {{headerLabel}}
+                <div *ngIf="!showSpinner" class="close close-adminstration" (click)="closePopup()"></div>
+            </h3>
+
+            <div class="modal-body">
+
+                <div class="row">
+                    <div class="col-12">
+                        <app-prescription-template [prescription]="prescription" [administration]="administration"
+                            componenttype="additional">
+                        </app-prescription-template>
+                    </div>
+
+                </div>
+
+
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row border-bottom  pb-1">
+                            <div class="col-4">
+                                MEDICATION
+                            </div>
+                            <div class="col-8">
+                                <span class="float-right">
+                                    <span><span class="empa-bold">{{medication.name}} </span> </span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="row border-bottom  pb-1 pt-1"
+                            *ngIf="!prescription.titration || (prescription.titration && adminstrationType == 'record')">
+                            <div class="col-3">
+                                DOSE
+                            </div>
+                            <div class="col-9">
+                                <span class="float-right">
+                                    <span *ngIf="currentposology.dosetype=='units'">
+                                        <span *ngIf="currentposology.frequency=='x' || currentposology.frequency=='h'">
+                                            <span class="empa-bold" *ngIf="currentposology.__dose.length>0"><input
+                                                    type="number" min="0" class="epma-adminstration-form-control"
+                                                    style="width:80px" [(ngModel)]="dose.dosesize"
+                                                    value="dose.dosesize"> <strong>{{dose.doseunit}}</strong></span>
+                                        </span>
+                                        <span
+                                            *ngIf="currentposology.frequency=='stat.' || currentposology.frequency=='mor'  || currentposology.frequency=='mid' || currentposology.frequency=='eve'">
+                                            <span class="empa-bold" *ngIf="currentposology.__dose.length>0"><input
+                                                    type="number" min="0" class="epma-adminstration-form-control"
+                                                    style="width:80px" [(ngModel)]="dose.dosesize"
+                                                    value="dose.dosesize"> <strong>{{dose.doseunit}}</strong></span>
+                                        </span>
+                                        <span
+                                            *ngIf="currentposology.frequency=='variable' || currentposology.frequency=='protocol' || currentposology.frequency=='rate of infusion'">
+                                            <span class="empa-bold" *ngIf="currentposology.__dose.length>0"><input
+                                                    type="number" min="0" class="epma-adminstration-form-control"
+                                                    style="width:80px" [(ngModel)]="dose.dosesize"
+                                                    value="dose.dosesize"> <strong>{{dose.doseunit}}</strong></span>
+                                        </span>
+                                    </span>
+                                    <span *ngIf="currentposology.dosetype=='strength'">
+                                        <span class="empa-bold" *ngIf="currentposology.__dose.length>0">
+                                            <input type="number" min="0" class="epma-adminstration-form-control"
+                                                style="width:80px" (change)="volumeFordose()"
+                                                [(ngModel)]="dose.strengthneumerator" value="dose.strengthneumerator">
+                                            <strong>{{dose.strengthneumeratorunit}} </strong>
+                                            <input type="number" min="0" class="epma-adminstration-form-control"
+                                                style="width:80px" (change)="doseForVolume()"
+                                                [(ngModel)]="dose.strengthdenominator" value="dose.strengthdenominator">
+                                            <strong>{{dose.strengthdenominatorunit}} </strong>
+                                        </span>
+                                    </span>
+                                    <span *ngIf="currentposology.dosetype=='descriptive'">
+                                        <span class="empa-bold">{{dose.descriptivedose}}</span>
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="row border-bottom  pb-1 pt-1">
+                            <div class="col-7">
+                                ADMINISTRATION TIME
+                            </div>
+                            <div class="col-5">
+                                <span class="float-right" style="display: flex;">
+                                    <input onkeydown="event.preventDefault()" type="text" [minDate]="minDate"
+                                        [maxDate]="maxDate" [(ngModel)]="doseStartDate" placeholder="Start Date"
+                                        class="epma-adminstration-form-control" style="width:120px" bsDatepicker
+                                        [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'bg-light' }" />
+                                    <input type="text" name="startime" [(ngModel)]="doseStarTime" style="width:80px;"
+                                        class="epma-adminstration-form-control" placeholder="HH:mm"
+                                        [appTimepicker]="timepicker1">
+                                    <app-time-picker #timepicker1 (onTimeSelected)="onTimeSelected($event)">
+                                    </app-time-picker>
+                                </span>
+
+                            </div>
+                        </div>
+
+                        <div class="row pb-1 pt-1">
+                            <div class="col-12">
+                                COMMENTS
+                            </div>
+                        </div>
+                        <div class="row mt-1">
+                            <div class="col-12">
+                                <textarea maxlength="1024" class="form-control"
+                                    [(ngModel)]="dose.additionaladministrationcomment" rows="2"></textarea>
+                            </div>
+                        </div>
+                        <div class="row mt-1" *ngIf="validatiommessage">
+                            <div class="col-12">
+                                <div class="text-danger">{{validatiommessage}}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+            <div *ngIf="appService.warningService && !appService.warningServiceIPContext.loader && !appService.warningServiceIPContext.existingWarningsStatus"
+                class="alert alert-danger" role="alert">
+                One or more high alerts require an override.
+            </div>
+            <div class="modal-footer" style="padding: 0.4rem 0rem;">
+
+                <div class="container" *ngIf="!appService.isTitrationPopOverOpen">
+                    <div class="row">
+                        <div class="col-6">
+
+                        </div>
+                        <div class="col-6 text-right">
+                            <button
+                                *ngIf="!(appService.warningService && !appService.warningServiceIPContext.loader && !appService.warningServiceIPContext.existingWarningsStatus)"
+                                style="color: white;" type="button" class="btn btn-sm btn-info mr-3"
+                                (click)="saveAdministrationForm()" [disabled]="showSpinner"> <span
+                                    class="spinner-border spinner-border-sm" *ngIf="showSpinner" role="status"
+                                    aria-hidden="true"></span> Confirm</button>
+                            <button *ngIf="!showSpinner" data-dismiss="modal" type="button" class="btn btn-sm btn-secondary"
+                                (click)="closePopup()">Cancel</button>
+                        </div>
+
+                    </div>
+
+
+
+                </div>
+            </div>
+            <!-- <button type="button" class="btn  btn-sm btn-outline-primary">Conferm</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-dismiss="modal">Cancel</button> -->
+        </div>
+    </div>
+</div>

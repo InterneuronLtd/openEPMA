@@ -1,0 +1,167 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div class="container border rounded" style="max-width: 41em;">
+    <div class="row pb-2 pr-2" *ngIf="showsearchbar" #search>
+        <div class="col">
+            <!-- <label class="small">
+                <input (change)="Searchtextchange(false)" checked type="checkbox" id="f" value="f" #formulary>
+                <span>Formulary</span>
+            </label>
+            <label class="small ml-1">
+                <input (change)="Searchtextchange(false)" type="checkbox" id="nf" value="nf" #nonformulary>
+                <span>Non Formulary</span>
+            </label>
+            <br> -->
+            <input class="mt-2 searchboxwidth" placeholder="Min. 3 characters..." type="text"
+                (input)="Searchtextchange(false)" spellcheck="false" autocomplete="off" #searchtext>
+            <span class="hamburgerimage p-1 pr-4" (click)="ShowUniversalForm()">
+            </span>
+        </div>
+    </div>
+    <div class="row productspopdown" *ngIf="showloadingmessage">
+        <div class="col text-muted card" #loading>
+            Loading {{searchtype}}...
+        </div>
+    </div>
+    <div class="row productspopdown" *ngIf="shownoresultsmessage">
+        <div class="col text-muted card" #loading>
+            No Results
+            <div>
+                <a href="#" *ngIf="searchtype=='formulary results'" (click)="Searchtextchange(true)">Show Non
+                    Formulary Medications</a>
+                <a href="#" *ngIf="searchtype=='non-formulary results'" (click)="Searchtextchange(false)">Show Formulary
+                    Medications</a>
+
+            </div>
+        </div>
+    </div>
+    <div class="row productspopdown" *ngIf="results && results.data.length>0">
+        <div class="col card" #products>
+            <div *ngFor="let l1 of results.data" class="l1" #l1>
+                <div class="row" *ngIf="l1.recStatusCode == null || l1.recStatusCode == '003'">
+                    <div class="col-md-1">
+                        <div *ngIf="l1.children.length!=0" style="padding: 0.5rem;">
+                            <img src="assets/images/epma/down-arrow.png" style="width: 20px; height: 20px;"
+                                *ngIf="expanded.indexOf(l1.code)!=-1" (click)="expandtoggle(l1.code)">
+                            <img src="assets/images/epma/right-arrow.png" style="width: 20px; height: 20px;"
+                                *ngIf="expanded.indexOf(l1.code)==-1" (click)="expandtoggle(l1.code)">
+                        </div>
+                    </div>
+                    <div class="col-md-11">
+                        <div [ngClass]="{'productname':true, 'text-muted':!l1.prescribable || (l1.productType == 'VTM' && (formContext =='op'|| formContext =='mod'))}">
+                            <span (click)="selectmedication(l1)">{{l1.name}}</span>
+                            <!-- <span style="font-size: .5em;" class="text-muted mt-3 float-right small">
+                        {{l1.productType}}</span> -->
+                            <!-- - <i class="text-muted">{{l1.productType}}</i> -->
+                        </div>
+                    </div>
+                </div>
+                <div *ngFor="let l2 of l1.children" class="l2" #l2>
+                    <div class="row"
+                        *ngIf="(l2.recStatusCode == null || l2.recStatusCode == '003') && expanded.indexOf(l1.code)!=-1 && (l2.prescribable || HasPrescribableChildren(l2))">
+                        <div class="col-md-1">
+                            <div *ngIf="l2.children.length!=0 && HasPrescribableChildren(l2)" style="padding: 0.5rem;">
+                                <img src="assets/images/epma/down-arrow.png" style="width: 20px; height: 20px;"
+                                    *ngIf="expanded.indexOf(l2.code)!=-1" (click)="expandtoggle(l2.code)">
+                                <img src="assets/images/epma/right-arrow.png" style="width: 20px; height: 20px;"
+                                    *ngIf="expanded.indexOf(l2.code)==-1" (click)="expandtoggle(l2.code)">
+                            </div>
+                        </div>
+                        <div class="col-md-11">
+                            <div [ngClass]="{'productname':true, 'text-muted':!l2.prescribable}"
+                                (click)="selectmedication(l2)">
+                                {{l2.name}}
+                                <!-- <span style="font-size: .5em;" class="text-muted mt-3 float-right small">
+                            {{l2.productType}}</span> -->
+                                <!-- - <i class="text-muted">{{l2.productType}}</i> -->
+                            </div>
+                        </div>
+                    </div>
+                    <div *ngFor="let l3 of l2.children" class="l3" #l3>
+                        <div class="row"
+                            *ngIf="l3.prescribable && (l3.recStatusCode == null || l3.recStatusCode == '003') && (expanded.indexOf(l1.code)!=-1 && expanded.indexOf(l2.code)!=-1 )">
+                            <div class="col-md-1">
+                            </div>
+                            <div class="col-md-11">
+                                <div [ngClass]="{'productname':true, 'text-muted':!l3.prescribable}"
+                                    (click)="selectmedication(l3)">
+                                    {{l3.name}}
+                                    <!-- <span style="font-size: .5em;"
+                                class="text-muted mt-3 float-right small">
+                                {{l3.productType}}</span> -->
+                                    <!-- - <i class="text-muted">{{l3.productType}}</i> -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <a href="#" *ngIf="searchtype=='formulary results'" (click)="Searchtextchange(true)">Show Non
+                    Formulary Medications</a>
+                <a href="#" *ngIf="searchtype=='non-formulary results'" (click)="Searchtextchange(false)">Show Formulary
+                    Medications</a>
+            </div>
+        </div>
+    </div>
+    <div *ngIf="!showsearchbar" class="font-weight-bold headerlabeldiv">
+        <label>Universal form</label>
+    </div>
+    <div class="row p-2" *ngIf="!showsearchbar" #universalform>
+
+        <div class="col">
+            <!-- <div class="row headerlabeldiv">
+                <label>Name</label>
+            </div> -->
+            <div class="row">
+                <input placeholder="Name" style="width: 65%;" type="text" [(ngModel)]="u_name" class="form-control">
+            </div>
+            <div class="row headerlabeldiv">
+                <label></label>
+            </div>
+            <div class="row">
+                <input placeholder="Form" style="width: 65%;" [(ngModel)]="u_form" [typeahead]="forms"
+                    class="form-control">
+            </div>
+            <div class="row small headerlabeldiv">
+                <label></label>
+            </div>
+            <div class="row">
+                <input positiveNumbersOnly style="width: 60px;" [(ngModel)]="u_sn" class="form-control">
+                <input style="width: 100px;" placeholder="units" [(ngModel)]="u_snu" [typeahead]="uoms"
+                    class="ml-1 form-control">
+                <label style="font-size: 1.5em; margin: 0 0.3em;"> / </label>
+                <input positiveNumbersOnly style="width: 60px;" [(ngModel)]="u_sd" class="form-control">
+                <input style="width: 100px;" placeholder="units" [(ngModel)]="u_sdu" [typeahead]="uoms"
+                    class="ml-1 form-control">
+                <div class="ml-1 mt-1 float-right">
+                    <button type="button" class="btn btn-sm btn-info" (click)="SaveUniversalForm()">OK</button>
+                    <button type="button" class="ml-1 btn btn-sm btn-secondary"
+                        (click)="CancelUniversalForm()">Cancel</button>
+                </div>
+            </div>
+            <div class="row">
+                <label class="text-danger">{{u_error}}</label>
+            </div>
+
+        </div>
+    </div>
+</div>

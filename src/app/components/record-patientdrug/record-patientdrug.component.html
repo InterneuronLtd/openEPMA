@@ -1,0 +1,185 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div class="modal fade bd-example-modal-lg"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
+    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-md  modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <h3 class="popover-title popover-header">
+                Patients Drugs               
+                <div *ngIf="isSaving" class="close close-adminstration" (click)="closePopup()"></div>
+            </h3>
+            <div class="modal-body">
+                <div class="container-md">
+                    <form>
+                        <div class="row pb-2 pt-2 border rounded">
+                            <div class='{{"layers-container therapy-type "  + therapyType }}'></div>
+                            <div class="col">
+                                <span class="field-heading">{{medicationFullName}}</span>
+                            </div>
+                        </div>
+                        <div class="row pb-2 pt-2">
+                            <div class="col-12">
+                                <span class="field-heading">{{typeOfMedicine}}</span>
+                            </div>
+                        </div>
+                        <div class="row pb-2 pt-2">
+                            <div class="col-4">
+                                <span class="field-heading">Quantity</span>
+                                <span class="text-danger field-label">&nbsp;*</span>
+                            </div>
+                            <div class="col-8">
+                               
+                                <div class="row" *ngIf="!isInfusion && productType!='VTM' && frequency!='protocol' && doseType!='descriptive'">
+                                    <div class="col-6" style="display: flex;padding:0;">
+                                        <input type="number" positiveNumbersOnly name="nooftablets" [disabled]="!appService.isCurrentEncouner"
+                                            class="form-control" maxlength="5"
+                                            [(ngModel)]="patientDrugs.availablequantity"
+                                            (change)="quantityChange($event)">
+                                            <span class="field-label" style="padding-top: 5px;">&nbsp;{{patientDrugs.quantityunits}}<span *ngIf="doseType=='units'">(s)</span></span>
+                                            <span class="mt-1 pl-1"> /</span>
+                                    </div>                                   
+                                    <div class="col-6"  style="display: flex;">
+                                        <input type="number" positiveNumbersOnly name="noofdays" [disabled]="!appService.isCurrentEncouner"
+                                            class="form-control" maxlength="5"
+                                            (change)="daysChange($event)" [(ngModel)]="patientDrugs.noofdays">
+                                            <span class="field-label" style="padding-top: 5px;">&nbsp;days&nbsp;</span>
+                                    </div>                                    
+                                </div>
+
+                                <div class="row" *ngIf="isInfusion || productType=='VTM' || frequency=='protocol' || doseType=='descriptive'">
+
+                                    <div class="col-12" style="display: flex;">
+                                        <input type="text" name="nooftablets"  [disabled]="!appService.isCurrentEncouner"
+                                            class="form-control"style="min-width: 60px; width:  65%;"
+                                            [(ngModel)]="patientDrugs.availablequantity" maxlength="255"
+                                           >
+                                           <!-- <span class="field-label" style="padding-top: 5px;">&nbsp;
+                                            {{patientDrugs.quantityunits}}
+                                        </span> -->
+                                    </div>                                     
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row pb-2 pt-2" *ngIf="patientDrugs.quantityentrydate">
+                            <div class="col-6">
+                                <span class="field-heading">Entry Date</span>
+                            </div>
+                            <div class="col-6">                           
+                                <span class="float-right" style="display: flex;">
+                                    {{startdate}}
+                                    <!-- <input onkeydown="event.preventDefault()" type="text" name="startdate"  [(ngModel)]="startdate"  placeholder="Entry Date" class="form-control" style="width:120px"  bsDatepicker
+                                   [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'bg-light' }"
+                                    />                                 
+                                   <input type="text" name="startime" [(ngModel)]="startime" style="width:80px;" class="form-control" placeholder="HH:mm" [appTimepicker]="timepicker1">
+                                    <app-time-picker #timepicker1 (onTimeSelected)="onTimeSelected($event)"></app-time-picker> -->
+                                </span>   
+                            </div>
+                        </div>
+                        <div class="row pb-2 pt-2">
+                            <div class="col-6">
+                                <span class="field-heading">Multi-compartment Compliance Aid (MCA)</span>
+                                <!-- <span class="text-danger field-label">&nbsp;*</span> -->
+                            </div>
+                            <div class="col-6">
+                                <select class="form-control form-control-md" name="complianceaid" 
+                                    [(ngModel)]="patientDrugs.complianceaid"  [disabled]="!appService.isCurrentEncouner">
+                                    <option [ngValue]="null">Select</option>
+                                    <option *ngFor="let compaid of complianceAidList"
+                                        [ngValue]="compaid.complianceaid_id">
+                                        {{compaid.complianceaid_name}}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row pb-2 pt-2">
+                            <div class="col-10">
+                                <span class="field-heading">Does the patient have their own supply at home?</span>
+                            </div>
+                            <div class="col-2">
+                                <input type="checkbox"  [disabled]="!appService.isCurrentEncouner" name="supplyathome" [(ngModel)]="patientDrugs.ownsupplyathome">
+                            </div>
+                        </div>
+                        <div class="row pb-2 pt-2">
+                            <div class="col-4">
+                                <span class="field-heading">Resupply from</span>
+                                <span class="text-danger field-label">&nbsp;*</span>
+                            </div>
+                            <div class="col-8">
+                                <div class="form-check form-check-inline">
+                                    <input type="radio"  [disabled]="!appService.isCurrentEncouner" name="resupplyfrom" [(ngModel)]="patientDrugs.resupplyfrom"
+                                        value="Ward stock" class="form-check-input">
+                                    <label class="form-check-label">
+                                        Ward stock
+                                    </label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input type="radio"  [disabled]="!appService.isCurrentEncouner" name="resupplyfrom" [(ngModel)]="patientDrugs.resupplyfrom"
+                                        value="Pharmacy" class="form-check-input">
+                                    <label class="form-check-label">
+                                        Pharmacy
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row pb-1 pt-1">
+                            <div>
+                                <input type="text" name="prescriptionmedicaitonsupplyid"
+                                    [(ngModel)]="patientDrugs.epma_prescriptionmedicaitonsupply_id" hidden>
+                            </div>
+                        </div>
+                        <div class="row pb-2 pt-2">
+                            <div class="col" *ngIf="validationMessage">
+                                <span class="text-danger field-label">{{validationMessage}}</span>
+                            </div>
+                            <div class="col" *ngIf="informationMessage">
+                                <span class="text-info field-label">{{informationMessage}}</span>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <div class="container">
+                                <div class="row" *ngIf="!isSaving">
+                                    <div class="col-6"></div>
+                                    <div class="col-6 text-right">
+                                        <button type="button" class="btn btn-info" style="color:white" *ngIf="appService.isCurrentEncouner"
+                                            (click)="onSave()">&nbsp;Save&nbsp;</button>&nbsp;&nbsp;
+                                        <button type="button" class="btn btn-secondary"
+                                            (click)="closePopup()">Close</button>
+                                    </div>
+                                </div>
+                                <div class="row" *ngIf="isSaving">
+                                    <div class="col text-right">
+                                        <button type="button" class="btn btn-info" disabled>
+                                            <span class="spinner-border spinner-border-sm"></span>
+                                            Saving..
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

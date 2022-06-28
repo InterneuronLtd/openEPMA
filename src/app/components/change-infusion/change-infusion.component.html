@@ -1,0 +1,134 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+
+<div class="modal fade bd-example-modal-lg" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal
+tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
+<div class="modal-dialog modal-lg  modal-dialog-centered" role="document">
+    <div class="modal-content">
+        <h3 class="popover-title popover-header">
+            Change of infusion kit / bag
+            <div *ngIf="!showSpinner" class="close close-adminstration" (click)="closePopup()"></div>
+         </h3>
+        
+        <div class="modal-body">
+
+            <div class="row">
+                <div class="col-12">
+                    <app-prescription-template [prescription]="prescription"  componenttype="additional">
+                    </app-prescription-template>
+                </div>
+                
+            </div>
+            
+        
+            <div class="card">
+                <div class="card-body" id="changeinfusionform">
+                   
+                    <div class="row border-bottom  pb-1">
+                        <div class="col-lg-8 col-md-10 col-sm-12 mb-1">
+                            <div class="btn-group btn-group-sm btn-group-justified " style="width: 100%;" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-primary" [ngClass]="{'active' : infusionType==changeInfusion.changeinfusion}" (click)="infusionType=changeInfusion.changeinfusion">Change infusion</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary" [ngClass]="{'active' : infusionType==changeInfusion.changeinfusionkit}" (click)="infusionType=changeInfusion.changeinfusionkit"> Change infusion kit</button> 
+                            </div>
+                      </div>   
+                         
+                    </div>
+                    <div class="row border-bottom  pb-1 pt-1">
+                        <div class="col-4">
+                            BATCH NUMBER
+                        </div>
+                        <div class="col-8">
+                             <span class="float-right">
+                                <input [(ngModel)]="infusionEvents.batchnumber" type="text" maxlength="15" class="epma-adminstration-form-control" />
+                             </span>   
+                        </div>
+                    </div>
+                    <div class="row border-bottom  pb-1 pt-1">
+                        <div class="col-4">
+                            EXPIRY DATE
+                        </div>
+                        <div class="col-8">
+                             <span class="float-right">
+                                <input [minDate]="currDate" onkeydown="event.preventDefault()" type="text"   [(ngModel)]="expirydate"  class="epma-adminstration-form-control" style="width:120px"  bsDatepicker
+                                [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'bg-light' }" />
+                             </span>   
+                        </div>
+                    </div>
+                    <div class="row border-bottom  pb-1 pt-1">
+                        <div class="col-7">
+                            ADMINISTRATION TIME
+                        </div>
+                        <div class="col-5">
+                            <span class="float-right" style="display: flex;">
+                                <input onkeydown="event.preventDefault()" type="text" [minDate]="minDate" [maxDate]="maxDate"  [(ngModel)]="stardate"  placeholder="Start Date" class="epma-adminstration-form-control" style="width:120px"  bsDatepicker
+                               [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'bg-light' }" />                                 
+                               <input type="text" name="startime" [(ngModel)]="startime" style="width:80px;" class="epma-adminstration-form-control" placeholder="HH:mm" [appTimepicker]="timepicker1">
+                                <app-time-picker #timepicker1 (onTimeSelected)="onTimeSelected($event)"></app-time-picker>
+                            </span>
+                              
+                        </div>
+                    </div>
+                    
+                    <div class="row pb-1 pt-1">
+                        <div class="col-12">
+                            COMMENTS
+                        </div>
+                    </div>
+                    <div class="row mt-1">
+                        <div class="col-12">
+                            <textarea  maxlength="1024" class="form-control" [(ngModel)]="comments" rows="2"></textarea>
+                        </div>
+                    </div>      
+                    <div class="row mt-1" *ngIf="validatiommessage">
+                        <div class="col-12">
+                            <div class="text-danger">{{validatiommessage}}</div>
+                        </div>
+                    </div>  
+                </div>
+                              
+            </div>
+           
+        </div>
+        <div *ngIf="appService.warningService && !appService.warningServiceIPContext.loader && !appService.warningServiceIPContext.existingWarningsStatus" class="alert alert-danger" role="alert">
+            One or more high alerts require an override.
+          </div>
+        <div class="modal-footer" style="padding: 0.4rem 0rem;">
+
+            <div class="container" *ngIf="!appService.isTitrationPopOverOpen">
+
+                
+                <div class="row">
+                    <div class="col-6">
+                         
+                    </div>
+                    <div class="col-6 text-right">
+                        <button *ngIf="!(appService.warningService && !appService.warningServiceIPContext.loader && !appService.warningServiceIPContext.existingWarningsStatus)" style="color:white" type="button" class="btn btn-sm btn-info mr-3" (click)="saveChangeInfusion()" [disabled]="showSpinner"> <span class="spinner-border spinner-border-sm" *ngIf="showSpinner" role="status" aria-hidden="true"></span> Confirm</button>
+                        <button *ngIf="!showSpinner"  data-dismiss="modal"  type="button" class="btn btn-sm btn-secondary" (click)="closePopup()">Cancel</button>
+                    </div>
+                     
+                </div>               
+            </div>
+        </div>
+       
+    </div>
+</div>
+</div>

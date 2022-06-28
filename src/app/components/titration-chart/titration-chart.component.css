@@ -1,0 +1,161 @@
+.close-adminstration {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAYdJREFUeNq0VdFtgzAQNVEH8AZtN+gGhQ2SDZoJyH+kJK3U75YJyAZlg5AJ8AiMwAb0jM7UPnzGNMqTLCQbv2ffvTsnfd+LJElECKePTwmfFzKtTod9F9o3cIcEgPgNPrmHfBSBUYDQeZEAEGvCMkBM0cLYgJCiAivm1JcF5BpPMBrc68C5AZ68Ebchg5vUkxBhIhs8jYFJomTIfOt67lkbgIZo5yHPcHQMuW9dItcAWyAnBNodChNHSToMhVkvyN7cEYDwpJ4wHE3SiMhIbpniSPZKmF/bN0iZGJceEUpeMnsHFz5EuEKLaIGz7fMZco1HmoMQvtBlzlxEbUQJmJhTJ3HuMrjaAu0M+RhzJvFsjRiBOoYcY15GitR/Nj3sW49IEXALFSk8rVw5vQhr4UJ+3BpCJgzcuu6s1aRdg8gPfNY3NrsKyDdcu97iI/JfKOtWk14k0IoZk/Q51D47s08mhGuHPUZG1Mk7EH8vfpMtB71iZabWaVsspop7/EeBe2Il7oxfAQYArevp53qUQ7cAAAAASUVORK5CYII=);
+    width: 24px;
+    height: 24px;
+    margin-top: -3px;
+    cursor: pointer;
+  }
+  .epma-adminstration-form-control 
+  {
+    line-height: 1.5rem;
+    color: #5c6873;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #e4e7ea;
+    border-radius: 0.25rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    padding-left: 5px;
+    margin-right: 5px;
+    outline: 0;
+}
+.empa-bold{
+  font-size: .8em;
+  line-height: 14px;
+  color: #646464;
+  font-weight: bold;
+}
+::ng-deep .card {
+  margin-bottom: 0rem;
+}
+  .p-card-template{
+    width: 100%;
+    min-width: 100%;
+    height: auto;
+    min-height: auto;
+    flex: 0 0 auto;
+    -webkit-box-flex: 0;
+    order: 0;
+    overflow: visible;
+    display: flex;
+    font-size: 11px;
+  
+}
+ .bold{
+    font-size: 1.1em;
+    line-height: 14px;
+    color: #646464;
+    font-weight: bold;
+}
+.dose-label,.induction-label {
+  color: #7891D8;
+   
+}
+.p-card-template .width-s1 {   
+    width: 2px;
+    min-width: 2px;
+    height: auto;
+    min-height: auto;
+    flex: 0 0 5px;
+    -webkit-box-flex: 0;
+    align-self: stretch;
+    order: 0;
+}
+.p-card-template .width-s2 {
+    width: 48px;
+    min-width: 48px;
+    height: 48px;
+    min-height: 48px;
+    margin: 2px 4px 2px 3px;
+    cursor: pointer;
+    flex: 0 0 auto;
+    -webkit-box-flex: 0;
+    align-self: flex-start;
+    order: 0;
+    overflow: hidden;
+}
+.p-card-template .width-s3 {
+    width: auto;
+    min-width: auto;
+    display: -webkit-inline-box;
+    line-height: 18px;
+    height: auto;
+    min-height: auto;
+    cursor: pointer;
+    flex: 0 1 auto;
+    -webkit-box-flex: 0;
+    align-self: flex-start;
+    order: 0;
+    overflow: hidden;
+    margin-right: 19px;
+}
+.p-card-template .width-s4 {
+    width: 24px;
+    min-width: 24px;
+    height: auto;
+    min-height: auto;
+    flex: 0 0 auto;
+    -webkit-box-flex: 0;
+    align-self: flex-start;
+    order: 0;
+    overflow: visible;
+    position: absolute;
+    right: 0px;
+}
+.p-card-template .layers-container {
+    position: relative;
+    float: left;
+    background-position: center;
+    background-repeat: no-repeat;
+    margin: 0;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+.therapy-type {
+  background-size: 100%;
+  width: 45px;
+  height: 45px
+}
+.BasicFluids {
+  background-image: url(/assets/images/epma/therapy/Basic_Fluids.svg);
+}
+.BloodProduct {
+  background-image: url(/assets/images/epma/therapy/Blood_Product.svg);
+}
+.ContinuousInfusion {
+  background-image: url(/assets/images/epma/therapy/Continuous_Infusion.svg);
+}
+.Infusion {
+  background-image: url(/assets/images/epma/therapy/Infusion.svg);
+}
+.Inhalation {
+  background-image: url(/assets/images/epma/therapy/Inhalation.svg);
+}
+.Injection {
+  background-image: url(/assets/images/epma/therapy/Injection.svg);
+}
+.MentalHealth {
+  background-image: url(/assets/images/epma/therapy/Mental_Health.svg);
+}
+.TabletorCapsule {
+  background-image: url(/assets/images/epma/therapy/Tablet_Or_Capsule.svg);
+}
+.therapy {
+  background-image: url(/assets/images/epma/therapy/Medication_Type_Not_Defined.svg);
+}
+#titration-chart .vis-current-time {
+  background-color : none !important;
+}
+::ng-deep .vis-time-axis {
+  background-color : none !important;
+}
+::ng-deep .vis-data-axis  {
+  min-width: 43px;
+}
+::ng-deep .vis-left  {
+  min-width: 60px;
+}
+
+::ng-deep .vis-line-graph text {
+  font-size: 10px;
+}

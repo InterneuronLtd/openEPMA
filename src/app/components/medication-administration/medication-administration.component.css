@@ -1,0 +1,198 @@
+.colfooterBtns {
+  color: #2978CC;
+  ;
+  cursor: pointer;
+}
+
+
+.modal-body {
+  /* 100% = dialog height, 120px = header + footer */
+  max-height: calc(100% - 60px);
+  overflow-y: auto;
+}
+
+.modal-dialog-centered {
+  min-width: 40%;
+}
+
+::-webkit-scrollbar {
+  -webkit-appearance: none;
+  width: 7px;
+  height: 7px;
+  -webkit-overflow-scrolling: auto;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, .5);
+
+}
+
+.enableBlur>* {
+  /*filter: blur(1.2px);*/
+  opacity: .94;
+}
+
+.disableBlur {
+  filter: blur(0);
+}
+
+.close-adminstration {
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAYdJREFUeNq0VdFtgzAQNVEH8AZtN+gGhQ2SDZoJyH+kJK3U75YJyAZlg5AJ8AiMwAb0jM7UPnzGNMqTLCQbv2ffvTsnfd+LJElECKePTwmfFzKtTod9F9o3cIcEgPgNPrmHfBSBUYDQeZEAEGvCMkBM0cLYgJCiAivm1JcF5BpPMBrc68C5AZ68Ebchg5vUkxBhIhs8jYFJomTIfOt67lkbgIZo5yHPcHQMuW9dItcAWyAnBNodChNHSToMhVkvyN7cEYDwpJ4wHE3SiMhIbpniSPZKmF/bN0iZGJceEUpeMnsHFz5EuEKLaIGz7fMZco1HmoMQvtBlzlxEbUQJmJhTJ3HuMrjaAu0M+RhzJvFsjRiBOoYcY15GitR/Nj3sW49IEXALFSk8rVw5vQhr4UJ+3BpCJgzcuu6s1aRdg8gPfNY3NrsKyDdcu97iI/JfKOtWk14k0IoZk/Q51D47s08mhGuHPUZG1Mk7EH8vfpMtB71iZabWaVsspop7/EeBe2Il7oxfAQYArevp53qUQ7cAAAAASUVORK5CYII=);
+  width: 24px;
+  height: 24px;
+  margin-top: -3px;
+  cursor: pointer;
+}
+
+.empa-label {
+  font-size: .875rem;
+}
+
+.empa-bold {
+  font-size: .8em;
+  line-height: 14px;
+  color: #646464;
+  font-weight: bold;
+}
+
+.epma-adminstration-form-control {
+  line-height: 1.5rem;
+  color: #5c6873;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid #e4e7ea;
+  border-radius: 0.25rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  padding-left: 5px;
+  margin-right: 5px;
+  outline: 0;
+}
+
+#adminform .btn:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.emp-comment-block {
+  white-space: pre-line;
+  word-wrap: break-word;
+  max-height: 250px;
+  overflow-x: auto;
+}
+
+.l1 {
+  padding-left: 1px;
+}
+
+.l2 {
+  padding-left: 10px;
+}
+
+.l3 {
+  padding-left: 20px;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+  outline-color: lightblue;
+}
+
+.searchboxwidth {
+  margin-top: 10px;
+  width: 100%;
+  max-width: 500px;
+  border: 0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, .2), 0 1px 1px 0 rgba(0, 0, 0, .14), 0 2px 1px -1px rgba(58, 29, 29, 0.12)
+}
+
+.container {
+  margin-left: 0px;
+}
+
+.card {
+  border: 0;
+  border-top: solid 1px;
+  border-top-color: lightblue;
+  margin-bottom: 5px;
+  background-color: white;
+
+}
+
+.card-header {
+  height: 1.5em;
+  padding-top: 2px;
+}
+
+.card-body {
+  margin-bottom: 2em;
+}
+
+hr {
+  margin: 0px !important;
+}
+h6 {
+  margin-bottom: 4px !important;
+}
+
+
+.productspopdown {
+  /* border-width: .5px;
+  border-color: gainsboro;
+  border-style: solid; */
+  z-index: 999;
+  right: 0;
+  position: absolute;
+  /* background-color: #ffffff; */
+  margin-left: 0px;
+  margin-right: 15px;
+  /* min-width: 100%; */
+  max-width: 450px;
+  min-width: 450px;
+  overflow-y: auto;
+  max-height: 500px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, .2), 0 1px 1px 0 rgba(0, 0, 0, .14), 0 2px 1px -1px rgba(58, 29, 29, 0.12);
+  border-radius: 4px;
+  background-color: white;
+}
+
+.productname {
+  flex: 1 1 auto;
+  padding: 0.5rem;
+  border-bottom: solid;
+  border-bottom-width: thin;
+  border-bottom-color: #EAF1FD;
+}
+
+::ng-deep .High_alert_medication {
+  width: 24px;
+  height: 24px;
+  background-repeat: no-repeat;
+  background-image: url("/assets/images/epma/High_alert_medication.svg");
+}
+
+::ng-deep .required-field::after {
+  content: "*";
+  color: red;
+}
+
+.medication-property-icon {
+  width: 25px;
+  height: 25px;
+  background-repeat: no-repeat;
+  background-size: 100%;
+}
+
+::ng-deep .High_alert_medication {
+  width: 40px;
+  height: 24px;
+  background-repeat: no-repeat;
+  background-image: url("/assets/images/epma/High_alert_medication.svg");
+}
+
+.btn-administration-history {
+  text-align: right;
+  float: right;
+}

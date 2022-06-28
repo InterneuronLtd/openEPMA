@@ -1,0 +1,267 @@
+//BEGIN LICENSE BLOCK 
+//Interneuron Terminus
+
+//Copyright(C) 2022  Interneuron CIC
+
+//This program is free software: you can redistribute it and/or modify
+//it under the terms of the GNU General Public License as published by
+//the Free Software Foundation, either version 3 of the License, or
+//(at your option) any later version.
+
+//This program is distributed in the hope that it will be useful,
+//but WITHOUT ANY WARRANTY; without even the implied warranty of
+//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+//See the
+//GNU General Public License for more details.
+
+//You should have received a copy of the GNU General Public License
+//along with this program.If not, see<http://www.gnu.org/licenses/>.
+//END LICENSE BLOCK 
+import { Injectable } from "@angular/core";
+import { Dose, Prescription } from "../models/EPMA";
+import { AppService } from "./app.service";
+import { DoseType } from "./enum";
+
+
+
+export interface MarRecord {
+  endDate?: string;
+  dose?: string;
+  time?: string;
+  doseType?: string;
+  frequency?: string;
+  descriptiveDose?: string;
+  doseunit?: string;
+  protocolCount?: number;
+  protocolDays?: number;
+  bolusDose?: string;
+  rateDose?: string;
+  ciDose?: string;
+  ciDate?: string;
+  doseId?: string;
+}
+
+
+@Injectable({
+  providedIn: 'root'
+})
+export class HelperService {
+
+  constructor(private appService: AppService) {
+
+  }
+  marRecords: Array<MarRecord> = [];
+  prescriptionDictionary = {};
+  protocolCount: number;
+  getDosesPrescriptions(prescriptions: Array<Prescription>) {
+    prescriptions.forEach(pres => {
+      this.marRecords = [];
+      const doses = this.appService.GetCurrentPosology(pres).__dose;
+      // this.addAdditionalDoses(doses);
+      const frequency = this.appService.GetCurrentPosology(pres).frequency;
+      let showDoses = this.createDosesForTemplate(pres);
+      let protocolDays;
+      if (frequency === 'protocol') {
+        protocolDays = showDoses.length;
+      }
+      if (!(showDoses instanceof Object)) {
+        if (pres.__routes.length > 0) {
+          showDoses = showDoses + ' - ' + pres.__routes[0].route;
+        }
+      }
+      this.marRecords.forEach(obj => {
+        let endDate = this.appService.GetCurrentPosology(pres).prescriptionenddate ? this.appService.GetCurrentPosology(pres).prescriptionenddate.split('T')[0] : null;
+        obj.endDate = endDate ? this.changeDateFormat(endDate) : null;
+        if (obj.frequency === 'protocol' || obj.ciDose) {
+          obj.protocolCount = this.protocolCount + 1;
+          obj.protocolDays = protocolDays;
+        }
+      })
+      pres['showDoses'] = showDoses;
+      this.addMarObjectToPrescriptionId(pres.prescription_id);
+    });
+
+  }
+
+  addAdditionalDoses(doses: Array<Dose>) {
+    doses.forEach((dose, i) => {
+      let date = dose.dosestartdatetime.split('T')[0];
+      let time = dose.dosestartdatetime.split('T')[1].slice(0, 5);
+      const doseEvent = this.appService.DoseEvents.filter(doseEvent => {
+        let [startDate, startTime] = doseEvent.startdatetime.split('T');
+        startTime = startTime.slice(0, 5);
+        return (doseEvent.dose_id === dose.dose_id) && (startDate === date) && (startTime === time);
+      });
+      if (doseEvent.length) {
+        dose.dosestartdatetime = doseEvent[0].startdatetime;
+      }
+    })
+  }
+
+  addMarObjectToPrescriptionId(presId: string) {
+    this.prescriptionDictionary[presId] = JSON.parse(JSON.stringify(this.marRecords));
+  }
+
+  changeDateFormat(s: string) {
+    return s.split("").reverse().join("").replace('-', '/');
+  }
+
+
+  createDosesForTemplate(prescriptions) {
+    let doseToShow = '';
+    let posology = this.appService.GetCurrentPosology(prescriptions);
+    if (posology.frequency == 'variable' && posology.infusiontypeid !== 'ci') {
+      // check dose type for strength unit ......
+
+      posology.__dose.forEach(dose => {
+        let date = dose.dosestartdatetime.split('T')[0];
+        let time = dose.dosestartdatetime.split('T')[1].slice(0, 5);
+        if (dose.dosetype == DoseType.descriptive) {
+
+          let x = time + ' - ' + dose.descriptivedose + ',';
+          doseToShow = doseToShow + ' ' + x;
+
+
+        } else if (dose.dosetype == DoseType.strength) {
+          let x = dose.dosestartdatetime.split('T')[1].slice(0, 5) + ' - ' + dose.dosesize + ' ' + dose.strengthdenominatorunit + ',';
+          doseToShow = doseToShow + ' ' + x;
+        } else {
+          let x = dose.dosestartdatetime.split('T')[1].slice(0, 5) + ' - ' + dose.dosesize + ' ' + dose.doseunit + ',';
+          doseToShow = doseToShow + ' ' + x;
+        }
+        this.marRecords.push({
+          time,
+          descriptiveDose: dose.descriptivedose,
+          doseType: dose.dosetype,
+          frequency: posology.frequency,
+          dose: dose.dosesize,
+          doseunit: dose.strengthdenominatorunit || dose.doseunit,
+          ciDose: dose.infusionrate + ' ' + dose.strengthdenominatorunit,
+          doseId: dose.dose_id
+        });
+      });
+
+    } else if (posology.frequency == 'protocol' || posology.infusiontypeid === 'ci') {
+      let currDoses = [];
+      let currDose = '';
+      let currDate = '';
+      let count = 0;
+      posology.__dose.forEach((dose, index) => {
+        let dateTime = dose.dosestartdatetime.split('T');
+        let date = dateTime[0];
+        let time = dateTime[1].slice(0, 5);
+        let doseDescription;
+        if (dose.dosetype == DoseType.descriptive) {
+          doseDescription = dose.descriptivedose;
+
+        } else if (dose.dosetype == DoseType.strength) {
+          doseDescription = dose.dosesize + ' ' + dose.strengthdenominatorunit;
+        } else {
+          doseDescription = dose.dosesize + ' ' + dose.doseunit;
+        }
+        if (currDate !== date && index) {
+          currDoses.push(currDose);
+          currDate = date
+          currDose = ' ' + time + ' - ' + doseDescription + ',';
+          this.protocolCount = count;
+          count = 0;
+        } else if (currDate !== date && !index) {
+          currDate = date;
+          currDose += ' ' + time + ' - ' + doseDescription + ',';
+          count += 1
+        } else {
+          currDose += ' ' + time + ' - ' + doseDescription + ',';
+          count += 1
+        }
+        this.marRecords.push({
+          time,
+          descriptiveDose: dose.descriptivedose,
+          doseType: dose.dosetype,
+          frequency: posology.frequency,
+          dose: dose.dosesize,
+          doseunit: dose.strengthdenominatorunit || dose.doseunit,
+          ciDose: posology.infusiontypeid === 'ci' ? dose.infusionrate + ' ' + dose.strengthdenominatorunit : '',
+          ciDate: date,
+          doseId: dose.dose_id
+
+        });
+
+      });
+      currDoses.push(currDose);
+      let presAdditionalCondition = '';
+      let additional_condition = this.appService.MetaPrescriptionadditionalcondition.find((x) =>
+          x.prescriptionadditionalconditions_id ==
+          prescriptions.prescriptionadditionalconditions_id
+      );
+      if(additional_condition)
+      {
+        presAdditionalCondition = additional_condition.additionalcondition
+      }
+      else{
+        presAdditionalCondition = " ";
+      }
+      currDoses[currDoses.length - 1] = currDoses[currDoses.length - 1] + (presAdditionalCondition != ' '?' - ':' ') + presAdditionalCondition + ' - ' + ((prescriptions.__routes.length > 0) ? prescriptions.__routes[0].route : '');
+      return currDoses;
+    } else {
+      if (posology.dosetype == DoseType.units) {
+          if(this.appService.GetCurrentPosology(prescriptions, prescriptions.posologyid).frequency=='' || this.appService.GetCurrentPosology(prescriptions, prescriptions.posologyid).frequency=='x' || this.appService.GetCurrentPosology(prescriptions, prescriptions.posologyid).frequency=='h' || this.appService.GetCurrentPosology(prescriptions, prescriptions.posologyid).frequency=='stat' || this.appService.GetCurrentPosology(prescriptions, prescriptions.posologyid).frequency=='mor'  || this.appService.GetCurrentPosology(prescriptions, prescriptions.posologyid).frequency=='mid' || this.appService.GetCurrentPosology(prescriptions, prescriptions.posologyid).frequency=='eve'  || this.appService.GetCurrentPosology(prescriptions, prescriptions.posologyid).frequency=='night') {
+            if(this.appService.GetCurrentPosology(prescriptions, prescriptions.posologyid).__dose.length>0 && !this.appService.GetCurrentPosology(prescriptions, prescriptions.posologyid).__dose[0].dosestrength) {
+              let x = posology.__dose[0].dosestartdatetime.split('T')[1].slice(0, 5) + ' - ' + posology.__dose[0].dosesize + ' ' + posology.__dose[0].doseunit + ',';
+              doseToShow = doseToShow + ' ' + x;
+            }
+            if(this.appService.GetCurrentPosology(prescriptions, prescriptions.posologyid).__dose.length>0 && this.appService.GetCurrentPosology(prescriptions, prescriptions.posologyid).__dose[0].dosestrength){
+              let x = posology.__dose[0].dosestartdatetime.split('T')[1].slice(0, 5) + ' - ' + posology.__dose[0].dosestrength + ' ' + posology.__dose[0].dosestrengthunits + ',';
+              doseToShow = doseToShow + ' ' + x;             
+            }
+          }
+      }
+
+      if (posology.dosetype == DoseType.strength) {
+        let x = posology.__dose[0].dosestartdatetime.split('T')[1].slice(0, 5) + ' - ' + posology.__dose[0].strengthneumerator + ' ' + posology.__dose[0].strengthdenominatorunit + ',';
+        doseToShow = doseToShow + ' ' + x;
+      }
+      if (posology.dosetype == DoseType.descriptive) {
+
+        let x = posology.__dose[0].dosestartdatetime.split('T')[1].slice(0, 5) + ' - ' + posology.__dose[0].descriptivedose + ',';
+        doseToShow = doseToShow + ' ' + x;
+      }
+
+      posology.__dose.forEach(dose => {
+        let date = dose.dosestartdatetime.split('T')[0];
+        let time = dose.dosestartdatetime.split('T')[1].slice(0, 5);
+
+        doseToShow = doseToShow + ' ' + time + ',';
+        this.marRecords.push({
+          time,
+          descriptiveDose: dose.descriptivedose,
+          doseType: dose.dosetype,
+          frequency: posology.frequency,
+          dose: dose.dosesize,
+          doseunit: dose.strengthdenominatorunit || dose.doseunit,
+          bolusDose: dose.strengthdenominator + ' ' + dose.strengthdenominatorunit,
+          rateDose: dose.infusionrate + ' ' + dose.strengthdenominatorunit + '/' + dose.infusionduration + ' hrs',
+          ciDose: dose.infusionrate + ' ' + dose.strengthdenominatorunit,
+          ciDate: date,
+          doseId: dose.dose_id
+        });
+
+      });
+      this.protocolCount = posology.__dose.length;
+    }
+    let presAdditionalCondition = '';
+      let additional_condition = this.appService.MetaPrescriptionadditionalcondition.find((x) =>
+          x.prescriptionadditionalconditions_id ==
+          prescriptions.prescriptionadditionalconditions_id
+      );
+      if(additional_condition)
+      {
+        presAdditionalCondition = additional_condition.additionalcondition
+      }
+      else{
+        presAdditionalCondition = " ";
+      }
+      
+    return doseToShow + (presAdditionalCondition != ' '?' - ':' ') + presAdditionalCondition;
+  }
+}

@@ -1,0 +1,473 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<ng-template #recordChart>
+  <!-- <div class="container"> -->
+  <div *ngIf="marType === 'active' || marType === 'empty'" #presParentNode>
+    <div class="row margin-left-total" #activeTemplate
+      [ngClass]="{'table-height': i === 0, 'table-height-2': i > 0, 'margin-first': i === 1, 'margin-second': (i-1)%3 === 0 && i > 1}"
+      *ngFor="let pres of prescription; let i = index; let k = index;">
+      <div class="col-xs-5 remove-border">
+        <div class="text-center each-page-header" [ngClass]="{'header-visibility': i > 0}" #pageHeader>
+          <div *ngIf="i > 0">
+            <span>
+              Name: <strong>{{' ' +
+                patientDetails.fullname.split(',')[0]}},&nbsp;&nbsp;{{patientDetails.fullname.split(',')[1]}}</strong>
+            </span>
+            <span>
+              DOB: <strong>{{' ' + patientDetails.dob + ' '}}</strong>
+            </span>
+            <span>
+              Age: <strong>{{' ' + patientDetails.age + ' '}}</strong>
+            </span>
+            <span>
+              Gender: <strong>{{' ' + ((patientDetails.gender == 'Male')?'M':'F') + ' '}}</strong>
+            </span>
+            <span>
+              Hospital Number: <strong>{{' ' + patientDetails.hospitalnumber + ' '}}</strong>
+            </span>
+            <span>
+              NHS Number: <strong>{{' ' + patientDetails.nhsnumber + ' '}}</strong>
+            </span>
+          </div>
+
+        </div>
+        <ng-container *ngIf="i === 0">
+
+
+          <ng-container *ngTemplateOutlet="descriptionTemplate">
+
+          </ng-container>
+          <div class="base-header" style="margin-left: 220px" *ngIf="marType === 'active'">
+            <strong>MEDICATIONS &nbsp; PRESCRIBED &nbsp;&nbsp; FOR &nbsp; 3 &nbsp;DAYS</strong>
+          </div>
+          <div class="base-header" style="margin-left: 220px" *ngIf="marType === 'empty'">
+            <strong>MEDICATION ADMINISTRATION RECORD</strong>
+          </div>
+        </ng-container>
+        <div class="row">
+          <div class="col-3 remove-border">
+            <div class="row">
+              <div class="col remove-double-border-right col-extend">
+                <div>
+                  <span class="text-center">Medication - generic name(brand</span>
+                </div>
+                <div>
+                  <span class="text-center">name),dose,dosing interval</span>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div #presDescription
+                class="col col-width remove-double-border-right col-height-1 remove-double-border-top"
+                [ngClass]="{'col-height-1-updated': arrayForTemplate(pres,k).length >= 12}">
+                <app-prescription-infusion-template style="font-size: 9px;" *ngIf="marType === 'active' && pres" [prescription]="pres"
+                  componenttype="timeline" [fromPrinting]="true">
+                </app-prescription-infusion-template>
+                <!-- <span *ngIf="pres && appService.GetCurrentPosology(pres).prescriptionenddate"><span class="empa-template-induction-label">UNTIL
+                  </span> <span class="empa-template-dose-text">{{appService.GetCurrentPosology(pres).prescriptionenddate | date :
+                    "dd-MMM-yyyy"}}
+                  </span>&nbsp;<span
+                    class="empa-template-dose-text">{{appService.GetCurrentPosology(pres).prescriptionenddate | date :
+                    "HH:mm"}}</span></span> -->
+                <div *ngIf="pres &&  appService.GetCurrentPosology(pres).prn">
+                  PRN
+                </div>
+                <div *ngIf="pres && appService.GetCurrentPosology(pres).doctorsorder">
+                  Prescriber to confirm
+                </div>
+                <div
+                  *ngIf="pres && pres.infusiontype_id === 'ci' && appService.GetCurrentPosology(pres).frequency !== 'variable' && appService.GetCurrentPosology(pres).prescriptionenddate">
+                  <div>
+                    {{'Treatment End Date: ' + appService.GetCurrentPosology(pres).prescriptionenddate?.split('T')[0]}}
+                  </div>
+                  <div>
+                    {{'Treatment End Time: ' + appService.GetCurrentPosology(pres).prescriptionenddate?.split('T')[1]}}
+                  </div>
+
+                </div>
+              </div>
+            </div>
+            <!-- <div class="row">
+            <div class="col remove-double-border-right barcode-align remove-double-border-top">
+              <span>Barcode</span>
+            </div>
+          </div> -->
+          </div>
+          <div class="col-8 remove-double-border-left remove-double-border-right remove-double-border-top col-extend">
+            <div class="row">
+              <div class="col-2 remove-double-border-right remove-double-border-bottom text-align col-extend">
+                <strong>Date</strong>
+              </div>
+              <div class="col-2 remove-double-border-right remove-double-border-bottom text-align col-extend">
+                <span *ngIf="marType === 'active'">{{dates[0] | date: 'dd/MM/yyyy'}}</span>
+              </div>
+              <div class="col-2 remove-double-border-right remove-double-border-bottom text-align col-extend">
+              </div>
+              <div class="col-2 remove-double-border-right remove-double-border-bottom text-align col-extend">
+                <span *ngIf="marType === 'active'">{{dates[1] | date: 'dd/MM/yyyy'}}</span>
+              </div>
+              <div class="col-2 remove-double-border-right remove-double-border-bottom text-align col-extend">
+              </div>
+              <div class="col-2 remove-double-border-bottom text-align col-extend">
+                <span *ngIf="marType === 'active'">{{dates[2] | date: 'dd/MM/yyyy'}}</span>
+              </div>
+              <!-- <div class="col  remove-double-border-bottom text-align">
+              <span *ngIf="marType === 'active'">{{dates[3] | date: 'dd/MM/yyyy'}}</span>
+            </div> -->
+            </div>
+            <div class="row">
+              <ng-container *ngFor="let item of repeatArray; let i = index">
+                <div class="col-2 remove-double-border-right remove-double-border-top  text-align">
+                  <strong>Time/Dose</strong>
+                </div>
+                <div class="col-2 remove-border">
+                  <div class="row">
+                    <div class="col-5 remove-double-border-top text-align given-padding"
+                      [ngClass]="{'remove-double-border-right': i >= 0}">
+                      <span>Given</span>
+                    </div>
+                    <div class="col-7 remove-double-border-top remove-double-border-right text-align checked-padding"
+                      [ngClass]="{'add-right-border': i === repeatArray.length - 1}">
+                      <span>Checked</span>
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+            </div>
+            <div class="row row-height" *ngFor="let item of arrayForTemplate(pres,k); let i = index"
+              [ngClass]="{'updated-row-height': arrayForTemplate(pres,k).length >= 12 }">
+              <ng-container *ngFor="let item of repeatArray; let j = index">
+                <div class="col-2 remove-border">
+                  <div class="row">
+                    <div class="col-5 remove-double-border-right remove-double-border-top date-time-padding">
+                      <div *ngIf="pres && pres.infusiontype_id !== 'ci' && appService.GetCurrentPosology(pres).frequency !== 'protocol'">
+                        <div *ngIf="pres">
+                          {{returnTimeDose('x',i,j,k, pres, dates[j])}}
+                        </div>
+                      </div>
+
+                      <div *ngIf="pres && pres.infusiontype_id === 'ci'">
+                        {{returnTimeDose('x',i,j,k,pres, dates[j])}}
+                      </div>
+
+                      <div *ngIf="pres && appService.GetCurrentPosology(pres).frequency === 'protocol'">
+                        <div *ngIf="pres">
+                          {{returnTimeDose('protocol',i,j,k,pres, dates[j])}}
+                        </div>
+
+                      </div>
+
+                    </div>
+                    <div class="col-7 remove-double-border-right remove-double-border-top dose-padding">
+                      <div *ngIf="pres && appService.GetCurrentPosology(pres).frequency !== 'protocol' && pres.infusiontype_id !== 'ci'">
+                        <div *ngIf="pres">
+                          {{returnTimeDose('x',i,j,k,pres, dates[j],'dose')}}
+                        </div>
+                      </div>
+                      <div *ngIf="pres && pres.infusiontype_id === 'ci'">
+                        {{returnTimeDose('x',i, j, k, pres ,dates[j], 'dose')}}
+                      </div>
+                      <div *ngIf="pres && appService.GetCurrentPosology(pres).frequency === 'protocol'">
+                        <div *ngIf="pres">
+                          {{returnTimeDose('protocol',i,j,k, pres ,dates[j], 'dose')}}
+                        </div>
+
+                      </div>
+                    </div>
+
+
+                  </div>
+                </div>
+                <div class="col-2 remove-border">
+                  <div class="row">
+                    <div class="col-5 remove-double-border-right remove-double-border-top">
+                      <div *ngIf="pres && appService.GetCurrentPosology(pres).frequency !== 'protocol' && pres.infusiontype_id !== 'ci'">
+                        <div *ngIf="pres" class="given-checked">
+                          {{returnTimeDose('x',i,j,k,pres, dates[j],'administered')}}
+
+
+                        </div>
+                      </div>
+                      <div *ngIf="pres && pres.infusiontype_id === 'ci'" class="given-checked">
+                        {{returnTimeDose('x',i, j, k, pres ,dates[j], 'administered')}}
+                      </div>
+                      <div *ngIf="pres && appService.GetCurrentPosology(pres).frequency === 'protocol'" class="given-checked">
+                        <div *ngIf="pres">
+                          {{returnTimeDose('protocol',i,j,k, pres ,dates[j], 'administered')}}
+                        </div>
+
+                      </div>
+
+                    </div>
+                    <div class="col-7 remove-double-border-right remove-double-border-top"
+                      [ngClass]="{'add-right-border': j === repeatArray.length - 1}">
+                      <div *ngIf="pres && appService.GetCurrentPosology(pres).frequency !== 'protocol' && pres.infusiontype_id !== 'ci'">
+                        <div *ngIf="pres">
+                          {{returnTimeDose('x',i,j,k,pres, dates[j],'administered')}}
+                        </div>
+                      </div>
+                      <div *ngIf="pres && pres.infusiontype_id === 'ci'">
+                        {{returnTimeDose('x',i, j, k, pres ,dates[j], 'administered')}}
+                      </div>
+                      <div *ngIf="pres && appService.GetCurrentPosology(pres).frequency === 'protocol'">
+                        <div *ngIf="pres">
+                          {{returnTimeDose('protocol',i,j,k, pres ,dates[j], 'administered')}}
+                        </div>
+
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+        <div class="text-center each-page-footer header-visibility" #pageFooter>
+          
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <!-- <div class="page-break"></div>
+  <div style="page-break-after: always;"></div> -->
+  <!-- <div class="row" class="margin-left-total" *ngIf="marType !== 'active'">
+    <div class="col-xs-9 remove-border">
+      <ng-container *ngTemplateOutlet="descriptionTemplate">
+
+      </ng-container>
+    </div>
+  </div> -->
+  <div class="row" *ngIf="marType === 'active' || marType === 'current' || marType === 'report'" class="margin-left"
+    [ngClass]="{'modified-header': marType === 'current' || marType === 'report'}">
+    <div class="col-xs-9 remove-border" [ngClass]="{'x-height': marType!=='active'}" #activeHeaderHeight>
+      <div *ngIf="marType === 'report' || marType === 'current'">
+        <ng-container *ngTemplateOutlet="descriptionTemplate">
+
+        </ng-container>
+      </div>
+
+      <ng-container *ngTemplateOutlet="activeHeader"></ng-container>
+    </div>
+  </div>
+
+  <div class="row" *ngIf="marType === 'active' || marType === 'current' || marType === 'report'"
+    class="margin-left-total">
+    <div class="col-xs-9 remove-border">
+
+      <ng-container *ngTemplateOutlet="activeSecondPart"></ng-container>
+    </div>
+  </div>
+  <!-- </div> -->
+</ng-template>
+
+
+<ng-template #descriptionTemplate>
+  <div class="row header-margin" [ngClass]="{'update-margin': marType === 'report' || marType === 'current'}">
+    <div class="col-4 remove-double-border-right header-col-height">
+      <div class="row patient-description">
+        Name: &nbsp;{{' ' +
+        patientDetails.fullname?.split(',')[0]}},&nbsp;&nbsp;{{patientDetails.fullname?.split(',')[1]}}
+      </div>
+      <div class="row patient-description">
+        {{'DOB: ' + patientDetails.dob}}
+      </div>
+      <div class="row patient-description">
+        {{'Age: ' + patientDetails.age}}
+      </div>
+      <div class="row patient-description">
+        {{(patientDetails.gender == 'Male')? 'Gender: M':'Gender: F'}}
+      </div>
+      <div class="row patient-description">
+        {{'Hospital Number: ' + patientDetails.hospitalnumber}}
+      </div>
+      <div class="row patient-description">
+        {{'NHS Number: ' + patientDetails.nhsnumber}}
+      </div>
+      <div class="row patient-description" *ngIf="appService.refHeightValue">
+        {{'Height: ' + appService.refHeightValue + ' ' + 'cms, ' + 'Weight: ' + appService.refWeightValue + ' ' + 'kg'}}
+      </div>
+
+    </div>
+    <div class="col-7 header-col-height">
+      <div class="row">
+        <div class="col-8 barcode-align remove-double-border-left remove-double-border-top" style="height: 50px;">
+          <div>
+            <span class="remove-border">Department</span>
+          </div>
+          <div>
+            <span>{{encounterDetails.assignedpatientlocationpointofcare}}</span>
+          </div>
+        </div>
+        <div class="col-4 remove-double-border-left remove-double-border-top remove-double-border-right" style="height: 50px;">
+          <div>
+            <span class="remove-border">Room/Bed</span>
+          </div>
+          <div>
+            {{(encounterDetails.assignedpatientlocationroom || encounterDetails.assignedpatientlocationbay) + ' / ' + encounterDetails.assignedpatientlocationbed }}
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div
+          class="col-3 remove-double-border-left remove-double-border-top remove-double-border-bottom col-advanced padding-administration">
+          <div>
+            <span class="remove-border change-font-size">Admission Date </span>
+          </div>
+          <div>
+            {{this.encounterDetails.admitdate?.split('-').reverse().join('-')}}
+          </div>
+          <div>
+            <span class="remove-border change-font-size">Hospitalisation Day {{' ' +
+              this.encounterDetails.dayspassed}}</span>
+          </div>
+
+        </div>
+        <div class="col-3 remove-double-border-left remove-double-border-top remove-double-border-bottom col-advanced">
+          <div>
+            <span class="remove-border">Consultant </span>
+          </div>
+          <div>
+            {{(encounterDetails.attendingdoctortext?.split('
+            ')[0] || '')}}&nbsp;&nbsp;{{(encounterDetails.attendingdoctortext?.split(' ')[1] || '')}}
+          </div>
+        </div>
+        <div
+          class="col-6 remove-double-border-left remove-double-border-top remove-double-border-bottom remove-double-border-right col-advanced">
+          <div>
+            <span class="remove-border">Known Allergies </span>
+          </div>
+          <div>
+            {{patientDetails.allergies}}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #activeHeader>
+  <div class="text-center each-page-header">
+
+    <div class="base-header" *ngIf="marType === 'active'">
+      <strong>RECORDED &nbsp;&nbsp;ADMINISTRATIONS FOR &nbsp;PAST &nbsp;5 DAYS </strong>
+    </div>
+    <div class="base-header" *ngIf="marType === 'report'">
+      <strong>RECORDED&nbsp;ADMINISTRATIONS &nbsp;&nbsp;&nbsp;&nbsp;FOR &nbsp;PERIOD
+        &nbsp;{{sdate?.split('-').reverse().join('-') + ' to ' + edate?.split('-').reverse().join('-') }} </strong>
+    </div>
+    <div class="base-header" *ngIf="marType === 'current'">
+      <strong>MEDICATION ADMINISTRATION RECORD &nbsp;&nbsp; {{ todaysDate }} </strong>
+    </div>
+    <div *ngIf="marType === 'active'">
+      <strong>{{'Name: ' + patientDetails.fullname + ' Age: ' + patientDetails.age + ((patientDetails.gender == 'Male')?' Gender: M':' Gender: F') + ' DOB: ' + patientDetails.dob + '
+        Hospital Number: ' + patientDetails.hospitalnumber + ' NHS Number: ' + patientDetails.nhsnumber}}</strong>
+    </div>
+
+  </div>
+  <div class="row extend-width">
+
+
+  </div>
+</ng-template>
+
+<ng-template #activeSecondPart>
+  <div *ngFor="let data of partTwoPrescriptions; let ik = index">
+    <div class="text-center each-page-header header-visibility-2" #headerSecondPart>
+      <strong>{{'Name: ' + patientDetails.fullname + ' Age: ' + patientDetails.age + ((patientDetails.gender == 'Male')?' Gender: M':' Gender: F') + ' DOB: ' + patientDetails.dob + '
+        Hospital Number: ' + patientDetails.hospitalnumber + ' NHS Number: ' + patientDetails.nhsnumber}}</strong>
+    </div>
+    <div #secondActivePart>
+
+
+      <div class="row header-margin-3 extend-width">
+        <div class="col-4 remove-double-border-bottom col-extend">
+          <div>
+            <span class="text-center">Medication - generic name(brand</span>
+          </div>
+          <div>
+            <span class="text-center">name),dose,dosing interval</span>
+          </div>
+        </div>
+        <div class="col-2 remove-double-border-left remove-double-border-bottom col-extend">
+          <div>
+            Status
+          </div>
+        </div>
+        <div class="col-2 remove-double-border-left remove-double-border-bottom col-extend">
+          <div> Date</div>
+
+        </div>
+        <div class="col-2 remove-double-border-left remove-double-border-bottom col-extend">
+          <div>Time and Dose / Rate </div>
+        </div>
+        <div class="col-2 remove-double-border-left remove-double-border-bottom col-extend">
+          <div>Comment </div>
+        </div>
+      </div>
+      <div class="row extend-width">
+
+        <div class="col-4 active-second-part overflow-data" [style.minHeight]="this.partTwoHeights[ik]">
+          <div class="row height-1  padding-medication">
+            <!-- {{prescriptionMappingForTemplate[key].name}} -->
+            <app-prescription-infusion-template style="font-size: 9px;" [fromPrinting]="true" [prescription]="prescriptionMapping[data.key]" componenttype="timeline">
+            </app-prescription-infusion-template>
+            <div *ngIf="getStatus(prescriptionMappingForTemplate[data.key].status)">
+              <strong>{{'Status: ' + getStatus(prescriptionMappingForTemplate[data.key].status)}}</strong>
+            </div>
+          </div>
+          <div class="row height-2">
+            <!-- <div class="col remove-border">
+          Barcode
+        </div> -->
+          </div>
+        </div>
+        <div class="col-8 active-second-part remove-double-border-left update overflow">
+          <div class="row" *ngFor="let infoObj of data['prescription_information']; let i = index">
+            <div class="col-3 remove-double-border-left remove-double-border-right remove-double-border-top">
+              {{infoObj.stat}}
+            </div>
+            <div class="col-3 remove-double-border-right remove-double-border-top">
+              {{infoObj.date}}
+            </div>
+            <div class="col-3 remove-double-border-right remove-double-border-top">
+              {{infoObj.time}}
+            </div>
+            <div class="col-3 remove-double-border-right remove-double-border-top">
+
+            </div>
+          </div>
+        </div>
+        <div class="text-center each-page-footer-2 header-visibility" #pageFooter2>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</ng-template>
+
+
+
+
+
+<app-print-discharge [customTemplate]="recordChart" [view]="'l'" (destroyComponent)="pdfDownloaded()"
+  [title]="'Medication Administration Record'" [dimensions]="[842, 595]" [saveTitle]="'MAR'"></app-print-discharge>

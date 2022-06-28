@@ -1,0 +1,56 @@
+{ 
+    "medication":
+    {
+       "name" : "Amoxicillin 500mg",
+       "genericname" : "",
+       "medicationtype": "",
+       "displayname": "",
+       "form": "",
+       "formcode":"",
+       "strengthneumerator" :"",
+       "strengthdenominator":"",
+       "strengthneumeratorunit":"",
+       "strengthdenominatorunit":"",
+       "doseformunits":"",
+       "doseformsize":"",
+       "doseformunitofmeasure":"",
+        "bnf":"",
+        "ddd":"",
+        "doseform":"",
+        "roundingfactor": "",
+        "maxdoseperday":"",
+        "maxdoseperweek": "",
+        "maxdoseperdayunit":"",
+        "maxdoseperweekunit":"",
+        "titrationtype":"",
+        "producttype":"AMP",
+        "isformulary":true,
+        "isBlackTriangle":false,
+        "isControlled":false,
+        "isCritical":false,
+        "markedmodifier":"",
+        "modifiedreleasehrs":"",
+        "reviewreminderdays":"",
+        "code": [
+           { "code":"",
+            "terminology":""
+           }],
+        "route":[{
+            "code":"",
+            "route":"Oral",
+            "type":"",
+            "default":true,
+            "unlicensed":false
+
+        }],
+        "ingredients" : [{
+            "name": "",
+            "displayname":"",
+            "strengthneumerator" :"",
+            "strengthdenominator":"",
+            "strengthneumeratorunit":"",
+            "strengthdenominatorunit":"",
+            "primary":true
+            }]
+    }
+}

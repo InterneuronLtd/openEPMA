@@ -1,0 +1,134 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div *ngIf="isLoading">
+    <div class="col text-muted card" #loading>
+        Loading therapy...
+    </div>
+</div>
+<!-- <table class="table table-responsive date-header" *ngIf="!isLoading">
+  <tr class="tr ">
+    <td *ngFor="let head of therapyoverview" class="td" width="{{head.width}}%">
+        <table class="table table-responsive table-bordered">
+            <tr>
+                <td class="td empa-header-cell">
+                    <div>
+                        <span style="float: left;">{{head.weight}}kg</span>
+                        <span style="float:right;">
+                            <span *ngIf="head.iscurrentdate">Today </span> {{head.therapydate | date:
+                            'dd-MMM-yyyy'}}
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </td>
+
+</tr>
+</table> -->
+<table class="table table-responsive" *ngIf="!isLoading">
+  <tr class="tr">
+    <td *ngFor="let head of therapyoverview" class="td" width="{{head.width}}%">
+        <table class="table table-responsive table-bordered">
+            <tr>
+                <td class="td empa-header-cell">
+                    <div>
+                      <span style="float: left;">{{head.weight}}kg</span>
+                        <span style="float:right;">
+                            <span *ngIf="head.iscurrentdate">Today </span> {{head.therapydate | date:
+                            'dd-MMM-yyyy'}}
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </td>
+
+</tr>
+
+    <tr class="tr" >
+        <td class="td" [attr.colspan]="appService.therapyNoOfDays">
+          <div style="height: 36rem; width: 100%; overflow-y: auto;">
+            <div *ngFor="let GroupsType of appService.DrugeGroupsType;let indexOfelement=index;">
+                <div [attr.id]="'accordion'+ indexOfelement" *ngIf="groupCountData[indexOfelement]">
+                    <div *ngIf="groupCountData[indexOfelement].count>0">
+                        <div style="cursor: pointer; font-size: 13px; background-color: #eff1f5; border: none; border-bottom: 1px solid #BBB;"
+                            data-toggle="" [attr.data-target]="'#collapse'+indexOfelement" aria-expanded="true"
+                            aria-controls="'collapse'+indexOfelement">
+                            <div class="row">
+                                <div class="col-12">
+                                    <b *ngIf="GroupsType=='Drug Chart'"><span style="padding-right: 10px;float: right;">Therapy Overview</span></b>
+                                    <b *ngIf="GroupsType!='Drug Chart'"><span style="padding-right: 10px;float: right;">{{GroupsType}}</span></b>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div [attr.id]="'collapse'+indexOfelement" class="collapse show"
+                            [attr.data-parent]="'#accordion'+indexOfelement">
+                            <div>
+                                <div [id]="GroupsType">
+                                    <table class="table table-responsive">
+                                        <tr class="tr">
+                                            <td *ngFor="let head of therapyoverview" class="td"
+                                                width="{{head.width}}%">
+                                                <table class="table table-responsive table-bordered">
+                                                    <tr *ngFor="let g of head.group">
+                                                        <td class="td" *ngIf="g.groupname==GroupsType">
+                                                            <table class="table table-responsive">
+                                                                <tr *ngFor="let p of g.prescription">
+
+                                                                    <td class="td" style="height: 150px;" *ngIf="head.iscurrentdate && p.prescription_id" data-id="{{p.prescription_id}}">
+                                                                        <div style="max-height:150px; overflow-x: hidden;">
+                                                                            <app-prescription-template [prescription]=p
+                                                                            componenttype="therapytimeline">
+                                                                        </app-prescription-template>
+                                                                        </div>
+                                                                       
+                                                                    </td>
+                                                                    <td class="td" style="height: 150px;" *ngIf="!head.iscurrentdate  && p.prescription_id" data-id="{{p.prescription_id}}">
+                                                                        <div style="max-height:150px; overflow-x: hidden;">
+                                                                            <app-prescription-template [prescription]=p componenttype="therapyoverview">
+                                                                            </app-prescription-template>
+                                                                        </div>
+                                                                       
+                                                                    </td>
+                                                                    <td class="td" style="height: 150px;" *ngIf="!p.prescription_id">
+
+                                                                    </td>
+                                                                </tr>
+                                                            </table>
+
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+          </div>
+        </td>
+    </tr>
+</table>

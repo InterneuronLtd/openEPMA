@@ -1,0 +1,271 @@
+.Delay_of_confirmation {
+    width: 40px;
+    height: 24px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/Delay_of_confirmation.svg");
+}
+
+.Medication_administration_record {
+    width: 40px;
+    height: 24px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/Medication_administration_record.svg");
+}
+
+.Medication_reconciliation {
+    width: 40px;
+    height: 24px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/Medication_reconciliation.svg");
+}
+
+.empa-thepay-overview {
+    width: 40px;
+    height: 24px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/Therapy_overview.svg");
+}
+
+.Pharmacy_Reviewed_Medrec_Done{
+    width: 40px;
+    height: 24px;
+    margin-left: 10px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/review/Pharmacy_Reviewed_Medrec_Done.svg");
+}
+.Pharmacy_To_Review_Medrec_Done
+{
+    width: 40px;
+    height: 24px;
+    margin-left: 10px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/review/Pharmacy_To_Review_Medrec_Done.svg"); 
+}
+.Pharmacy_Technician_Reviewed_Medrec_Done{
+    width: 40px;
+    height: 24px;
+    margin-left: 10px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/review/Pharmacy_Technician_Reviewed_Medrec_Done.svg"); 
+
+}
+.Pharmacist_Reviewed_Medrec_Done
+{
+    width: 40px;
+    height: 24px;
+    margin-left: 10px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/review/Pharmacist_Reviewed_Medrec_Done.svg");  
+}
+
+.Pharmacy_Technician_Reviewed {
+    width: 40px;
+    height: 24px;
+    margin-left: 10px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/review/Pharmacy_Technician_Reviewed.svg");
+}
+
+.Pharmacy_To_Review{
+    width: 40px;
+    height: 24px;
+    margin-left: 10px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/review/Pharmacy_To_Review.svg");
+}
+
+.Long_delay_of_confirmation {
+    width: 40px;
+    height: 24px;
+    margin-left: 10px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/Long delay of confirmation.svg");
+}
+
+.Show_all_warnings {
+    width: 40px;
+    height: 24px;
+    margin-left: 10px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/Show all warnings.svg");
+}
+
+
+.Non-formulary_medication {
+    width: 40px;
+    height: 24px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/Non-formulary_medication.svg");
+}
+
+.Prescribe_medication {
+    width: 40px;
+    height: 24px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/Prescribe_medication.svg");
+}
+
+.Rx_Prescribe_medication {
+    width: 40px;
+    height: 24px;
+    background-repeat: no-repeat;
+    background-image: url(/assets/images/epma/op/rx_prescription.svg);
+}
+
+.Print_medication_record {
+  width: 320px;
+  height: 24px;
+  background-repeat: no-repeat;
+  background-image: url("/assets/images/epma/Print_Medication_administration_record.svg");
+}
+
+.Reference_weight {
+    width: 40px;
+    height: 24px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/Reference_weight.svg");
+}
+
+.Reference_height {
+    width: 40px;
+    height: 24px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/Reference_height.svg");
+}
+
+.Print_Medication_administration_record {
+    width: 40px;
+    height: 24px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/Print_Medication_administration_record.svg");
+}
+
+.Reference_weight {
+    width: 40px;
+    height: 24px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/Reference_weight.svg");
+}
+
+.Menu {
+    width: 40px;
+    height: 24px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/therapy/Menu.svg");
+}
+
+.Sort_Icon {
+    width: 40px;
+    height: 24px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/menu/Sort_Icon.svg");
+}
+
+.Routes_Icon {
+    width: 40px;
+    height: 24px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/menu/Routes_Icon.svg");
+}
+
+.Group_Icon {
+    width: 40px;
+    height: 24px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/menu/Group_Icon.svg");
+}
+
+.epma-date-control {
+    line-height: 1.5rem;
+    color: #5c6873;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #e4e7ea;
+    border-radius: 0.25rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    padding-left: 5px;
+    margin-right: 5px;
+    outline: 0;
+}
+
+.Therapy_overview {
+    width: 40px;
+    height: 24px;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/Therapy_overview.svg");
+}
+
+#Efilterbuttons .btn:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+
+.header-fixed {
+  position: fixed;
+  width: 100%;
+  background: white;
+  z-index: 10;
+}
+
+.margin-data{
+  margin-top: 50px;
+}
+
+.pdfUseOnly {
+  visibility: hidden;
+  font-size: 15px;
+}
+
+.button-dropdown {
+  background-color: white;
+  border:0;
+  width: 25px;
+}
+
+.dropdown-options {
+  padding-left: 25px;
+}
+
+.options-width {
+  min-width: 300px;
+}
+
+#spinner {
+	-webkit-animation: frames 1s infinite linear;
+	animation: frames 1s infinite linear;
+	background: transparent;
+	border: 0.50vw solid #FFF;
+	border-radius: 100%;
+	border-top-color: black;
+	width: 5vw;
+	height: 5vw;
+	opacity: .6;
+	padding: 0;
+	position: absolute;
+	z-index: 999;
+}
+@keyframes frames {
+  0% {
+	-webkit-transform: rotate(0deg);
+	transform: rotate(0deg);
+  }
+  100% {
+	-webkit-transform: rotate(359deg);
+	transform: rotate(359deg);
+  }
+}
+
+#pause {
+	display: block;
+	background:
+		rgba(0, 0, 0, 0.66)
+		no-repeat
+		0 0;
+	width: 100%;
+	height: 100%;
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	z-index: 1000;
+}

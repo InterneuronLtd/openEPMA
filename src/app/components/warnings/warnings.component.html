@@ -1,0 +1,73 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<!-- <div  [hidden]="!showwarningscreen">
+<div class="modal fade bd-example-modal-lg" [config]="{backdrop: 'static',show: showwarningscreen,  keyboard: false}" bsModal
+    tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+    aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog  modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+          
+            <div>
+                <div  style="max-height: 630px; overflow-y: scroll;">
+                    <div [appWarningsLoader]="componentModuleData"
+                    (moduleUnLoad)="OnWarningsModuleUnLoad($event)" (moduleLoadComplete)="OnWarningsLoadComplete($event)"></div>
+                  
+                </div>
+
+            </div>
+         
+        </div> 
+    </div>
+</div>
+</div> -->
+
+
+<div id="warning" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog  modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-body p-0 pt-0">
+                <div [appWarningsLoader]="componentModuleData" (moduleUnLoad)="OnWarningsModuleUnLoad($event)"
+                    (moduleLoadComplete)="OnWarningsLoadComplete($event)"></div>
+            </div>
+
+            <div class="modal-footer d-flex justify-content-between">
+                <div class="d-flex justify-content-start">
+                    <span *ngIf="appService.warningService && appService.warningServiceIPContext.loader">
+                        <span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>
+                    </span>
+                    <a href="#" class="btn btn-sm btn-secondary" *ngIf="appService.warningService && !appService.warningServiceIPContext.loader"
+                        (click)="RefreshWarningsFromApi()">Refresh warnings</a>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <button type="button"
+                        *ngIf="appService.warningService && !appService.warningServiceIPContext.loader"
+                        (click)="SaveExistingWarnings()" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-secondary ml-2" data-dismiss="modal"
+                        #close_warnings>Close</button>
+                </div>
+                <span *ngIf="saveerror">There was an error saving override reasons</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<button type="button" hidden data-toggle="modal" data-target="#warning" data-backdrop="static" data-keyboard="false"
+    #open_warnings></button>

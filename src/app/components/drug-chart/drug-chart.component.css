@@ -1,0 +1,588 @@
+.contextmenu{
+    position: absolute; 
+}
+
+.hidescrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+#timecomponentid .vis-timeline.vis-bottom.vis-ltr
+{  
+    height: 60px !important;
+  
+}
+
+#drugcomponent .vis-left {
+    width: 30%;
+  
+  }
+  #drugcomponent  .vis-center {
+
+    width: 70%;
+  }
+  #drugcomponent  .vis-content{
+    z-index: 2;
+}
+
+/* added 20px to bring item down */
+/* .vis-item .vis-item-content {
+    white-space: nowrap;
+    box-sizing: border-box;
+    padding: 5px;
+    padding-top: 20px;
+} */
+.vis-timeline .vis-item.vis-point {
+    margin-top: 25px;
+}
+#drugcomponent .vis-time-axis {
+    background-color:#ececec;
+  
+  }
+  .vis-item.vis-background.timelinecurrent {
+    background-color: rgba(255, 255, 255, 0.781);
+    z-index: 1 !important;
+  }
+
+  .vis-time-axis .vis-today.vis-minor{
+    background: #fff;
+    }
+   
+     
+ 
+      /* .vis-time-axis .vis-today.vis-h8-h12, */
+      .vis-time-axis .vis-today.vis-h12-h16,
+      .vis-time-axis .vis-today.vis-h16-h20,
+      .vis-time-axis .vis-today.vis-h20-h24,
+      .vis-time-axis .vis-tomorrow.vis-h0-h4,
+     .vis-time-axis .vis-tomorrow.vis-h4-h8
+    {
+        background: #fff;
+    }
+
+    .vis-time-axis .vis-today.vis-h0,
+    .vis-time-axis .vis-today.vis-h1,
+    .vis-time-axis .vis-today.vis-h2,
+    .vis-time-axis .vis-today.vis-h3,
+    .vis-time-axis .vis-today.vis-h4,
+    .vis-time-axis .vis-today.vis-h5,
+    .vis-time-axis .vis-today.vis-h6    
+  {
+      background:  #ececec !important;
+  }
+  
+  .vis-time-axis .vis-tomorrow.vis-h0,
+  .vis-time-axis .vis-tomorrow.vis-h1,
+  .vis-time-axis .vis-tomorrow.vis-h2,
+  .vis-time-axis .vis-tomorrow.vis-h3,
+  .vis-time-axis .vis-tomorrow.vis-h4,
+  .vis-time-axis .vis-tomorrow.vis-h5,
+  .vis-time-axis .vis-tomorrow.vis-h6 
+ 
+{
+    background:  #fff !important;
+}
+
+  #timecomponentid .vis-time-axis .vis-today.vis-h0,
+  #timecomponentid .vis-time-axis .vis-today.vis-h1,
+  #timecomponentid .vis-time-axis .vis-today.vis-h2,
+  #timecomponentid .vis-time-axis .vis-today.vis-h3,
+  #timecomponentid .vis-time-axis .vis-today.vis-h4,
+  #timecomponentid .vis-time-axis .vis-today.vis-h5,
+  #timecomponentid .vis-time-axis .vis-today.vis-h6    
+{
+    background: #fff !important;
+}
+
+
+   
+  
+    .vis-time-axis .vis-today.vis-h4-h8
+    {
+        background: #ececec;
+    }
+
+    #timecomponentid .vis-time-axis .vis-today.vis-h4-h8,
+    #timecomponentid .vis-time-axis .vis-today.vis-h8-h12
+    {
+        background: #fff !important;
+    } 
+
+  /* #timecomponentid .vis-time-axis .vis-today.vis-h8-h12
+    {
+        background: #ececec !important;
+    } */
+
+    
+
+
+
+  .vis-time-axis.vis-foreground {
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #ffff !important;
+}
+    .vis-item.transparant {
+      background-color: rgba(0, 247, 255, 0)  !important;
+      border-color: rgba(139, 0, 0, 0)  !important;
+   
+      font-family: monospace;
+      box-shadow: 0 0 0px gray;
+      cursor: pointer;
+    }
+    .colfooterBtns {
+        color:#2978CC;;
+        cursor: pointer;
+ }
+    .vis-foreground .vis-group {
+        position: relative;
+        box-sizing: border-box;
+        border-bottom: 1px solid #bfbfbf;
+  
+    }
+    /* .vis-group{
+        margin-top: -4%;
+    } */
+
+    /* -------------------- */
+    /* .vis-group {    
+      display: flex;
+      justify-content: center;
+      align-items: center;
+  } */
+  .Recordadditionaladministration{
+    width: 2.5em;
+    height: 2.5em; background-size : cover; margin-top:-90px; background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/events/infusion/Administer_Fluid_PRN.svg");
+  }
+    .Administer_PRN{
+        width: 2.5em;
+        height: 2.5em;
+        background-size : cover;
+        /* background: #fff; */
+        margin-top:-80px;
+        /* border-radius: 7px; */
+       background-image: url("/assets/images/epma/events/administration/Administer_PRN.svg");
+       background-repeat: no-repeat;
+    }
+    .Cancelled{
+      width: 2.5em;
+      height: 2.5em; background-size : cover;margin-top:-44px;
+     background-image: url("/assets/images/epma/events/administration/Cancelled.svg");
+  }
+    .Administration_Completed_early{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-44px;
+       background-image: url("/assets/images/epma/events/administration/Administration_Completed_Early.svg");
+    }
+    .Administration_Completed_late{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-44px;
+       background-image: url("/assets/images/epma/events/administration/Administration_Completed_Late.svg");
+    }
+    .Administration_Defered{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-44px;
+       background-image: url("/assets/images/epma/events/administration/Administration_Defered.svg");
+    }
+    .Administration_Deferedinfusion{
+      width: 2.5em;
+      height: 2.5em; background-size : cover;margin-top:-60px;
+     background-image: url("/assets/images/epma/events/administration/Administration_Defered.svg"); /* should this be a separate icon? */
+  }
+    .Administration_Failed{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-44px;
+       background-image: url("/assets/images/epma/events/administration/Administration_Failed.svg");
+    }
+    .AdministrationInfution_Failed{
+      width: 2.3em;
+      height: 2.3em; background-size : cover;margin-top:-60px;
+     background-image: url("/assets/images/epma/events/administration/Administration_Failed.svg");
+  }
+    .Administration_requires_doctors_confirmation_Due{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-44px;
+       
+        border-radius: 7px;
+       background-image: url("/assets/images/epma/events/administration/Administration_Requires_Prescribers_Confirmation_Due.svg");
+    }
+    .Administration_requires_doctors_confirmation_Late{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-44px;
+       
+        border-radius: 7px;
+       background-image: url("/assets/images/epma/events/administration/Administration_Requires_Prescribers_Confirmation_Overdue.svg");
+    }
+    .Administration_requires_doctors_confirmation_Planned{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-44px;
+      
+        border-radius: 7px;
+       background-image: url("/assets/images/epma/events/administration/Administration_Requires_Prescribers_Confirmation_Planned.svg");
+    }
+    .Administration_withheld_by_doctor{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-44px;
+       background-image: url("/assets/images/epma/events/administration/Administration_Withheld_By_Prescriber.svg");
+    }
+    .Administration_withheld_by_doctor_Infution{
+      width: 2.3em;
+      height: 2.3em; background-size : cover;margin-top:-60px;
+     background-image: url("/assets/images/epma/events/administration/Administration_Withheld_By_Prescriber.svg");
+  }
+    .Maintain_Infusion_Rate_done{
+      width: 2.5em;
+      height: 2.5em; background-size : cover; margin-top:-60px;
+     background-image: url("/assets/images/epma/events/infusion/Maintain_Infusion_Rate_Done.svg");
+  }
+  .Maintain_Infusion_Rate_Late{
+    width: 2.5em;
+    height: 2.5em; background-size : cover; margin-top:-60px;
+   background-image: url("/assets/images/epma/events/infusion/Maintain_Infusion_Rate_Overdue.svg");
+}
+.Maintain_Infusion_Rate_Planned{
+  width: 2.5em;
+  height: 2.5em; background-size : cover; margin-top:-60px;
+ background-image: url("/assets/images/epma/events/infusion/Maintain_Infusion_Rate_Planned.svg");
+}
+  .Maintain_Infusion_Rate_Due{
+    width: 2.5em;
+    height: 2.5em; background-size : cover; margin-top:-60px;
+   background-image: url("/assets/images/epma/events/infusion/Maintain_Infusion_Rate_Due.svg");
+}
+    .Completed_Administration{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-44px;
+       background-image: url("/assets/images/epma/events/administration/Completed_Administration.svg");
+    }
+    .Dose_administered_early_is_differnt_from_prescribed{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-44px;
+       background-image: url("/assets/images/epma/events/administration/Dose_Administered_Early_Is_Different_From_Prescribed.svg");
+    }
+    .Dose_administered_is_differnt_from_prescribed{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-44px;
+       background-image: url("/assets/images/epma/events/administration/Dose_Administered_Is_Different_From_Prescribed.svg");
+    }
+    .Dose_administered_late_is_differnt_from_prescribed{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-44px;
+       background-image: url("/assets/images/epma/events/administration/Dose_Administered_Late_Is_Different_From_Prescribed.svg");
+    }
+    .Due_Administration{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-44px;
+       background-image: url("/assets/images/epma/events/administration/Due_Administration.svg");
+    }
+    .Late_Administration{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-44px;
+       background-image: url("/assets/images/epma/events/administration/Overdue_Administration.svg");
+    }
+    .Planned_Administration{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-44px;
+       background-image: url("/assets/images/epma/events/administration/Planned_Administration.svg");
+    }
+
+
+    .Infusionplanned{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+       background-image:url('/assets/images/epma/events/infusion/Infusion_Planned.svg') ;
+      
+      }
+      
+    .Infusiondue{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+       background-image:url('/assets/images/epma/events/infusion/Infusion_Due.svg') ;
+      
+      }
+      .InfusionLate{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+       background-image:url('/assets/images/epma/events/infusion/Infusion_Overdue.svg') ;
+       
+      }
+      .Infusioncompletionplanned{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+       background-image:url('/assets/images/epma/events/infusion/Infusion_Completion_Planned.svg') ;
+      
+      }  
+      .InfusionCompletiondue{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+       background-image:url('/assets/images/epma/events/infusion/Infusion_Completion_Due.svg') ;
+      
+      }
+      .InfusionCompleteoverdue{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+       background-image:url('/assets/images/epma/events/infusion/Infusion_Completion_Overdue.svg') ;
+      
+      }
+      .DecreaseInfusionRatePlanned{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+       background-image:url('/assets/images/epma/events/infusion/Decrease_Infusion_Rate_Planned.svg') ;
+      }
+      .DecreaseInfusionRateDue{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+       background-image:url('/assets/images/epma/events/infusion/Decrease_Infusion_Rate_Due.svg') ;
+      }
+      .DecreaseInfusionRateLate{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+       background-image:url('/assets/images/epma/events/infusion/Decrease_Infusion_Rate_Overdue.svg') ;
+      }
+      .IncreaseInfusionRatePlanned{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+       background-image:url('/assets/images/epma/events/infusion/Increase_Infusion_Rate_Planned.svg') ;
+      }
+      .IncreaseInfusionRateLate{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+       background-image:url('/assets/images/epma/events/infusion/Increase_Infusion_Rate_Overdue.svg') ;
+      }
+      .IncreaseInfusionRateDue{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+       background-image:url('/assets/images/epma/events/infusion/Increase_Infusion_Rate_Due.svg') ;
+      }
+      .BolusAdministrationCompleted{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+       background-image:url('/assets/images/epma/events/infusion/Bolus_Administration_Completed.svg') ;
+      }
+
+      .additionaladministration{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+       background-image:url('/assets/images/epma/events/administration/Charted by nurse.svg') ;
+      }
+      .Infusiondone{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Infusion_Done.svg') ;
+      }
+            
+      .InfusionCompletedEarly{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Infusion_Completed_Early.svg') ;
+      }
+
+      .InfusionCompletedLate{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Infusion_Completed_Late.svg') ;
+      }
+      .IncreaseInfusionRatedone{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Increase_Infusion_Rate_Done.svg') ;
+      }
+
+      .IncreaseInfusionRatedonelate{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Increase_Infusion_Rate_Done_Late.svg') ;
+      }
+      .IncreaseInfusionRatedoneearly{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Increase_Infusion_Rate_Done_Early.svg') ;
+      }
+      .DecreaseInfusionRatedone{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Decrease_Infusion_Rate_Done.svg') ;
+      }
+      .DecreaseInfusionRatedonelate{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Decrease_Infusion_Rate_Done_Late.svg') ;
+      }
+      .DecreaseInfusionRatedoneearly{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Decrease_Infusion_Rate_Done_Early.svg') ;
+      }
+
+      .InfusionCompleteddone{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Infusion_Completion_Done.svg') ;
+      }
+
+      .InfusionCompletedEarly2{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Infusion_Completed_Early_2.svg') ;
+      }
+
+      .InfusionCompletedLate2 {
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Infusion_Completed_Late_2.svg') ;
+      }
+
+      .AdjustedDecreaseInfusionRatedoneearly {
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Adjusted_Decrease_Infusion_Rate_Done_Early.svg') ;
+      }
+      
+      .AdjustedDecreaseInfusionRatedonelate {
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Adjusted_Decrease_Infusion_Rate_Done_Late.svg') ;
+      }
+      
+      .AdjustedDecreaseInfusionRatedone {
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Adjusted_Decrease_Infusion_Rate_Done.svg') ;
+      }
+      
+      .AdjustedIncreaseInfusionRatedoneearly {
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Adjusted_Increase_Infusion_Rate_Done_Early.svg') ;
+      }
+      
+      .AdjustedIncreaseInfusionRatedonelate {
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Adjusted_Increase_Infusion_Rate_Done_Late.svg') ;
+      }
+
+      .AdjustedIncreaseInfusionRatedone{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Adjusted_Increase_Infusion_Rate_Done.svg') ;
+      }
+      
+      .MaintainInfusionRatedonelate{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Maintain_Infusion_Rate_Done_Late.svg') ;
+      
+      }
+
+        
+      .MaintainInfusionRatedoneearly{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Maintain_Infusion_Rate_Done_Early.svg') ;
+      
+      }
+
+      .AdjustedsameInfusionRatedone{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Adjusted_Maintain_Infusion_Rate_Done.svg') ;
+      
+      }
+      .FaliedtoAdjustInfusionRatedonelate{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Falied_To_Adjust_Infusion_Rate_Done_Late.svg') ;
+
+      }
+
+      .FaliedtoAdjustInfusionRatedoneearly{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Falied_To_Adjust_Infusion_Rate_Done_Early.svg') ;
+
+      }
+.InfusionRatePaused{
+width: 2.5em;
+height: 2.5em; background-size : cover;margin-top:-60px;
+background-image:url('/assets/images/epma/events/infusion/Infusion_Rate_Paused.svg') ;
+
+}
+.ContinuousInfusionSetChanged{
+  width: 2.5em;
+  height: 2.5em; background-size : cover;margin-top:-60px;
+  background-image:url('/assets/images/epma/events/infusion/Continuous_Infusion_Set_Changed.svg') ;
+  
+  }
+  .Continuousinfusionsyringeorbagchange{
+    width: 2.5em;
+    height: 2.5em; background-size : cover;margin-top:-60px;
+    background-image:url('/assets/images/epma/events/infusion/Continuous_Infusion_Syringe_Or_Bag_Changed.svg') ;
+    
+    }
+      .duration-line {
+        margin-left: 10px;
+        margin-right: 10px;
+        height: 5px;
+        border: none;
+        z-index: 9;
+        background-color: #54b4e7;
+    }
+    .durationFlorate {
+        font-size: 11px;
+        color:darkblue;
+        height: 13px;
+        margin-top: -26px !important;
+        z-index: -20;
+        background-color: #c2e2f5;
+    }
+    .durationFlorateprescriptionform {
+      color: #4d4d4d;
+      padding-top: 1px;
+      margin-top: -26px !important;
+      overflow: hidden;
+      box-sizing: border-box;
+      white-space: nowrap;  
+  }
+   
+
+      .vis-item.vis-range{
+        margin-top: -29px;
+        height: 4px;
+        background-color: #c2e2f5 !important
+      }
+
+      .PRNRange.vis-item.vis-range {
+        margin-top: -45px !important;
+        /* height: 4px;  */
+        /* background-color: #afaaaa !important;
+        border: white */
+        border:none;
+        border-top:3px dotted gray;
+        color:#fff;
+        background-color:#ececec !important;
+       
+        border-radius: 0px;
+      
+
+      }
+      
+
+
+      ::-webkit-scrollbar {
+        -webkit-appearance: none;
+        width: 3px;
+        height: 3px;
+        -webkit-overflow-scrolling: auto;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        border-radius: 3px;
+        background-color: rgba(0, 0, 0, .5);
+        -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .5);
+    }
+   
+   .vis-inner {
+     width: 100%;
+   }

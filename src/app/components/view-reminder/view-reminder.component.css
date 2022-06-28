@@ -1,0 +1,33 @@
+.close-medication {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAYdJREFUeNq0VdFtgzAQNVEH8AZtN+gGhQ2SDZoJyH+kJK3U75YJyAZlg5AJ8AiMwAb0jM7UPnzGNMqTLCQbv2ffvTsnfd+LJElECKePTwmfFzKtTod9F9o3cIcEgPgNPrmHfBSBUYDQeZEAEGvCMkBM0cLYgJCiAivm1JcF5BpPMBrc68C5AZ68Ebchg5vUkxBhIhs8jYFJomTIfOt67lkbgIZo5yHPcHQMuW9dItcAWyAnBNodChNHSToMhVkvyN7cEYDwpJ4wHE3SiMhIbpniSPZKmF/bN0iZGJceEUpeMnsHFz5EuEKLaIGz7fMZco1HmoMQvtBlzlxEbUQJmJhTJ3HuMrjaAu0M+RhzJvFsjRiBOoYcY15GitR/Nj3sW49IEXALFSk8rVw5vQhr4UJ+3BpCJgzcuu6s1aRdg8gPfNY3NrsKyDdcu97iI/JfKOtWk14k0IoZk/Q51D47s08mhGuHPUZG1Mk7EH8vfpMtB71iZabWaVsspop7/EeBe2Il7oxfAQYArevp53qUQ7cAAAAASUVORK5CYII=);
+    width: 24px;
+    height: 24px;
+    margin-top: -3px;
+    cursor: pointer;
+}
+/* --------- reminder ----------*/
+.template-reminder-icon-set {
+    background-image: url(/assets/images/epma/reminder/Reminder.svg);
+}
+.template-reminder-icon-active {
+    background-image: url(/assets/images/epma/reminder/Reminder_With_The_Date.svg);
+}
+.template-reminder-icon-overdue {
+    background-image: url(/assets/images/epma/reminder/Reminder_One_Day_Has_Passed.svg);
+}
+ 
+.template-switch-to-oral-set {
+    background-image: url(/assets/images/epma/reminder/Switch_IV_To_Oral.svg);
+}
+.template-switch-to-oral-acive {
+    background-image: url(/assets/images/epma/reminder/Switch_IV_To_Oral_With_The_Date.svg);
+}
+.template-switch-to-oral-overdue {
+    background-image: url(/assets/images/epma/reminder/Switch_IV_To_Oral_One_Day_Has_Passed.svg);
+}
+.reminder-icon {
+    width: 28px;
+    height: 28px;
+    background-repeat: no-repeat;
+    background-size: 100%;
+}

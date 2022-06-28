@@ -1,0 +1,139 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2022  Interneuron CIC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div class="card" *ngIf="(appService.isCurrentEncouner || appService.isTCI) && !appService.isTCICancelled">
+    <div *ngIf="formContext && formContext !='mod' || (appService.warningService && appService.warningService.encounterId && 
+    appService.warningServiceMODContext && !appService.warningServiceMODContext.loader)" class="pl-3 card-body">
+        <app-search-medication [formContext]="formContext" (medicationselected)="onmedicationselected($event)"></app-search-medication>
+    </div>
+    <div *ngIf="formContext !='mod' || (appService.warningService && appService.warningService.encounterId &&
+         appService.warningServiceMODContext && !appService.warningServiceMODContext.loader)">
+        <button (click)="ordersetlist.getOrderSets()" hidden #reloadorderset></button>
+        <app-orderset-list #ordersetlist (onEditPrescription)='EditOrderSetPrescription($event)'
+            [context]="formContext">
+        </app-orderset-list>
+    </div>
+    <p></p>
+    <div>
+        <button type="button" class="btn btn-primary" (click)="staticModal.show()" hidden #openordersetbtn>Add to Order
+            set</button>
+        <div class="modal fade" bsModal #staticModal="bs-modal" [config]="{backdrop: 'static'}" tabindex="-1"
+            role="dialog" aria-labelledby="dialog-static-name">
+            <div class="modal-dialog modal-dialog-centered modal-top">
+                <div class="modal-content">
+                    <div class="modal-header" style="padding: 0.5rem 1rem; background-color: #E6E6E6">
+                        <h6 id="dialog-static-name" class="modal-title pull-left">Therapy lists</h6>
+                        <button type="button" class="close pull-right" aria-label="Close" (click)="staticModal.hide()"
+                            #closeordersetbtn>
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <!-- <div class="modal-body" *ngIf="!saveToOrderSetFromBasket">
+                        <app-addto-orderset *ngIf="showaddtoorderset" [patientid]="os_personid" [ownerid]="os_ownerid"
+                            [prescriptions]="OrderSetPrescriptions" (Cancelled)="OnOrderSetCancelled()"
+                            (Complete)="OnOrderSetComplete()" (Failed)="OnOrderSetFailed($event)">
+                        </app-addto-orderset>
+                    </div> -->
+                    <div class="modal-body">
+                        <app-addto-orderset *ngIf="showaddtoorderset" [patientid]="os_personid" [ownerid]="os_ownerid"
+                            [prescriptions]="OrderSetPrescriptions" (Cancelled)="OnOrderSetCancelled()"
+                            (Complete)="OnOrderSetComplete()" (Failed)="OnOrderSetFailed($event)">
+                        </app-addto-orderset>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container" style="max-width: 100%;">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-11 mb-n1 h5 font-weight-bold">
+                    {{listTypeTitle}}
+                    <a *ngIf="(formContext =='mod' && appService.warningService && appService.warningService.encounterId && 
+                    appService.warningServiceMODContext && !appService.warningServiceMODContext.loader &&
+                     !appService.warningServiceMODContext.existingWarningsStatus) || (formContext =='op' && ws && 
+                       !ws.loader && !ws.existingWarningsStatus) " href="javascript:void(0)" (click)="ShowWarnings()">
+                        <img src="../../../assets/images/epma/Long delay of confirmation.svg">
+                    </a>
+                    <span
+                        *ngIf="(formContext =='mod' && appService.warningService && appService.warningService.encounterId && 
+                        appService.warningServiceMODContext && appService.warningServiceMODContext.loader) || (formContext =='op' && ws && ws.loader)"
+                        class="form-group mb-2">
+                        <span class="spinner-border spinner-border-sm" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </span>
+                    </span>
+                    <a *ngIf="(formContext =='mod' && appService.warningService && appService.warningService.encounterId 
+                                && appService.warningServiceMODContext && !appService.warningServiceMODContext.loader 
+                                && appService.warningServiceMODContext.existingWarningsStatus) || (formContext =='op' && ws && 
+                                !ws.loader && ws.existingWarningsStatus)" href="javascript:void(0)"
+                        (click)="ShowWarnings()">
+                        <img src="../../../assets/images/epma/Show all warnings.svg">
+                    </a>
+                </div>
+
+                <div class="col text-right"
+                    *ngIf="PrescriptionBasket.length > 0 && appService.AuthoriseAction('epma_create_org_orderset') && formContext =='moa'">
+                    <a href="javascript:void(0)" (click)="saveOrderSet()">
+                        <img alt="Save to order set" src="../../../assets/images/epma/therapy/Save.svg"
+                            title="Save to order set">
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div style="min-height: 11em;">
+            <div *ngFor="let p of PrescriptionBasket">
+                <div *ngIf="p.itemtype !='delete'" class="border mb-1">
+                    <app-prescription-template (basketAction)="BasketAction($event)" [prescription]="p.prescription"
+                        [componenttype]="formContext == 'moa' ? 'medication_rec_moa' : 'medication_rec'">
+                    </app-prescription-template>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container" style="max-width: 100%;">
+        <!-- <div class="card-header">
+            Warnings
+        </div> -->
+        <div style="min-height: 11em;" *ngIf="formContext == 'mod' || formContext == 'op'">
+            <div [appWarningsLoader]="componentModuleData" (moduleUnLoad)="OnWarningsModuleUnLoad($event)"
+                (moduleLoadComplete)="OnWarningsLoadComplete($event)"></div>
+        </div>
+    </div>
+    <div class="modal-footer p-1">
+        <button type="button" style="color:white" class="btn btn-info" (click)="SaveAllPrescriptions()"
+            [disabled]="isFormSaving || PrescriptionBasket.length==0 || (formContext == 'op' && ws && (ws.loader || !ws.newWarningsStatus))">
+            <span class="spinner-border spinner-border-sm" *ngIf="isFormSaving" role="status" aria-hidden="true">
+            </span> Save</button>
+        <button type="button" [disabled]="isFormSaving" (click)="Cancel()" class="btn btn-secondary"
+            data-dismiss="modal">Cancel</button>
+    </div>
+</div>
+
+
+<app-prescribing-form *ngIf="showPrescribingForm" [editingPrescription]="editingPrescription"
+    [medication]="prescibingMedication" [formContext]="formContext" [clonePrescription]="clonePrescription"
+    (PrescriptionCreated)="AddPrescriptionToBasket($event)" (Cancel)="PrescribingCancelled()">
+</app-prescribing-form>
+
+<button type="button" hidden data-toggle="modal" data-target="#pform" data-backdrop="static" data-keyboard="false"
+    #open_pform></button>
+
+<app-warnings-op *ngIf="formContext == 'op' && ws" [warningcontext]="GetOPWarningContext()"></app-warnings-op>
