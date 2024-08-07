@@ -1,0 +1,33 @@
+Baseviews
+---------
+epma_prescriptiondetail
+epma_reviewhistory
+epma_ordersetprescription
+
+Entities
+----------
+posology,
+local_epma_orderset,
+dose
+
+
+List Baseviews
+--------------------------------
+epma_outpatientsupplyrequest
+epma_pharmacyreview
+epma_globalsupplyrequest
+epma_medrecreview
+epma_dischargesupplyrequest
+epma_nonformularysupplyrequest
+
+List Configurations
+-----------------------------
+outpatient supply request:
+    1. Add request status badge to out patientsupply request list - name the column "Supply Request Status"
+global supply request:
+    1. change snapshot view settings line 1 = fullnamewithhospnodob line 2 = medicines 
+    2. remove request status column from selected attributes
+    3. rename requst status badge to "Supply Request Status"
+discharge supply request:
+    1. add location and requeststatusbadge columns to the list (rename the columns to "Location" and "Supply Request Status")
+

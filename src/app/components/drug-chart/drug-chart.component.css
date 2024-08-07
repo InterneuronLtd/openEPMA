@@ -11,7 +11,10 @@
     height: 60px !important;
   
 }
-
+.vis-item.vis-background.transbackground {
+     
+  background-color: transparent;
+}
 #drugcomponent .vis-left {
     width: 30%;
   
@@ -151,16 +154,56 @@
       align-items: center;
   } */
   .Recordadditionaladministration{
-    width: 2.5em;
-    height: 2.5em; background-size : cover; margin-top:-90px; background-repeat: no-repeat;
+    width: 2em;
+    height: 2em; background-size : cover; margin-top:-130px; background-repeat: no-repeat;
     background-image: url("/assets/images/epma/events/infusion/Administer_Fluid_PRN.svg");
   }
+  .Multiple_Reminders_With_The_Date{
+    width: 2em;
+    height: 2em; background-size : cover; margin-top:-90px; background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/reminder/Multiple_Reminders_With_The_Date.svg");
+  }
+  .Multiple_Reminders_One_Day_Has_Passed{
+    width: 2em;
+    height: 2em; background-size : cover; margin-top:-90px; background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/reminder/Multiple_Reminders_One_Day_Has_Passed.svg");
+  }
+  .Multiple_Reminders_Has_Been_Acknowledged{
+    width: 2em;
+    height: 2em; background-size : cover; margin-top:-90px; background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/reminder/Multiple_Reminders_Has_Been_Acknowledged.svg");
+  }
+  .Multiple_Reminders{
+    width: 2em;
+    height: 2em; background-size : cover; margin-top:-90px; background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/reminder/Multiple_Reminders.svg");
+  }
+  .Reminder{
+    width: 2em;
+    height: 2em; background-size : cover; margin-top:-90px; background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/reminder/Reminder.svg");
+  }
+  .Reminderdue{
+    width: 2em;
+    height: 2em; background-size : cover; margin-top:-90px; background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/reminder/Reminder_With_The_Date.svg");
+  }
+  .Reminderoverdue{
+    width: 2em;
+    height: 2em; background-size : cover; margin-top:-90px; background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/reminder/Reminder_One_Day_Has_Passed.svg");
+  }
+  .ReminderAcknowledged{
+    width: 2em;
+    height: 2em; background-size : cover; margin-top:-90px; background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/reminder/Reminder_Has_Been_Acknowledged.svg");
+  }
     .Administer_PRN{
-        width: 2.5em;
-        height: 2.5em;
+        width: 2em;
+        height: 2em;
         background-size : cover;
         /* background: #fff; */
-        margin-top:-80px;
+        margin-top:-130px;
         /* border-radius: 7px; */
        background-image: url("/assets/images/epma/events/administration/Administer_PRN.svg");
        background-repeat: no-repeat;
@@ -250,6 +293,22 @@
     width: 2.5em;
     height: 2.5em; background-size : cover; margin-top:-60px;
    background-image: url("/assets/images/epma/events/infusion/Maintain_Infusion_Rate_Due.svg");
+   
+}
+.Dose_Administered_Early_Is_A_Different_Product_From_Prescribed{
+  width: 2.5em;
+  height: 2.5em; background-size : cover;margin-top:-44px;
+ background-image: url("/assets/images/epma/events/administration/Dose_Administered_Early_Is_A_Different_Product_From_Prescribed.svg");
+}
+.Dose_Administered_Is_A_Different_Product_From_Prescribed{
+  width: 2.5em;
+  height: 2.5em; background-size : cover;margin-top:-44px;
+ background-image: url("/assets/images/epma/events/administration/Dose_Administered_Is_A_Different_Product_From_Prescribed.svg");
+}
+.Dose_Administered_Late_Is_A_Different_Product_From_Prescribed{
+  width: 2.5em;
+  height: 2.5em; background-size : cover;margin-top:-44px;
+ background-image: url("/assets/images/epma/events/administration/Dose_Administered_Late_Is_A_Different_Product_From_Prescribed.svg");
 }
     .Completed_Administration{
         width: 2.5em;
@@ -287,7 +346,18 @@
        background-image: url("/assets/images/epma/events/administration/Planned_Administration.svg");
     }
 
-
+    .vis-item.vis-background.positive {
+      background-color: #fff;
+     
+    }
+    
+    .addopacity{
+      opacity: 30%;
+    }
+    .vis-item.vis-background.negative {
+     
+      background-color: rgba(255, 0, 0, 0.2);
+    }
     .Infusionplanned{
         width: 2.5em;
         height: 2.5em; background-size : cover;margin-top:-60px;
@@ -383,6 +453,23 @@
         height: 2.5em; background-size : cover;margin-top:-60px;
       background-image:url('/assets/images/epma/events/infusion/Infusion_Completed_Late.svg') ;
       }
+      
+      .Adjusted_Decrease_Infusion_Rate_Done_Kit_Change{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Adjusted_Decrease_Infusion_Rate_Done_Kit_Change.svg') ;
+      }
+      .Adjusted_Increase_Infusion_Rate_Done_Kit_Change{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Adjusted_Increase_Infusion_Rate_Done_Kit_Change.svg') ;
+      }
+      .Adjusted_Maintain_Infusion_Rate_Done_Kit_Change{
+        width: 2.5em;
+        height: 2.5em; background-size : cover;margin-top:-60px;
+      background-image:url('/assets/images/epma/events/infusion/Adjusted_Maintain_Infusion_Rate_Done_Kit_Change.svg') ;
+      }
+
       .IncreaseInfusionRatedone{
         width: 2.5em;
         height: 2.5em; background-size : cover;margin-top:-60px;
@@ -529,6 +616,19 @@ background-image:url('/assets/images/epma/events/infusion/Infusion_Rate_Paused.s
         z-index: 9;
         background-color: #54b4e7;
     }
+    .Zoombutton {
+      /* font-size: 11px; */
+      background-size : cover;
+      width:3.7em;
+      height:3.7em;margin-top:-65px;
+      z-index: 80;
+      background-image:url('/assets/images/epma/menu/Zoom_Icon.svg') ;
+ 
+     
+  }
+  .AddZindux{
+    z-index: 80;
+  }
     .durationFlorate {
         font-size: 11px;
         color:darkblue;
@@ -551,6 +651,19 @@ background-image:url('/assets/images/epma/events/infusion/Infusion_Rate_Paused.s
         margin-top: -29px;
         height: 4px;
         background-color: #c2e2f5 !important
+      }
+
+      .PauseDurline.vis-item.vis-range {
+        margin-top: -29px !important;
+        height: 1px;
+        border:none;
+        border-top:4px dashed  #F2CC99 !important;
+        color:#fff;
+        background-color:transparent !important;
+        z-index: 99999;
+        border-radius: 0px;
+      
+
       }
 
       .PRNRange.vis-item.vis-range {
@@ -586,3 +699,18 @@ background-image:url('/assets/images/epma/events/infusion/Infusion_Rate_Paused.s
    .vis-inner {
      width: 100%;
    }
+   .stackMargin{
+    margin-top:-10px !important;
+    z-index: -5;
+   
+   }
+.EnterInErrorbolus{
+  width: 2.5em;
+  height: 2.5em; background-size : cover;margin-top:-60px;
+ background-image: url("/assets/images/epma/events/Entered_In_Error.svg");
+}
+   .EnterInError{
+    width: 2.5em;
+    height: 2.5em; background-size : cover;margin-top:-44px;
+   background-image: url("/assets/images/epma/events/Entered_In_Error.svg");
+}

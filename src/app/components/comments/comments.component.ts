@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -22,13 +22,15 @@ import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { UpsertTransactionManager } from 'src/app/services/upsert-transaction-manager.service';
 import moment from 'moment';
 import { Subscription } from 'rxjs';
-import { InfusionEvents, Prescription, PrescriptionEvent } from 'src/app/models/EPMA';
+import { DoseEvents, InfusionEvents, Prescription, PrescriptionEvent } from 'src/app/models/EPMA';
 import { ApirequestService } from 'src/app/services/apirequest.service';
 import { AppService } from 'src/app/services/app.service';
 import { DataRequest } from 'src/app/services/datarequest';
-import { AdministrationStatus, PrescriptionStatus } from 'src/app/services/enum';
+import { AdministrationStatus, InfusionType, PrescriptionStatus } from 'src/app/services/enum';
 import { SubjectsService } from 'src/app/services/subjects.service';
 import { v4 as uuid } from 'uuid';
+import { AudienceType, NotificationClientContext, publishSenderNotificationWithParams } from 'src/app/notification/lib/notification.observable.util';
+import { TimeerHelper } from '../drug-chart/timer-helper';
 @Component({
   selector: 'app-comments',
   templateUrl: './comments.component.html',
@@ -47,7 +49,7 @@ export class CommentsComponent implements OnInit, OnDestroy {
   message: string;
   @Input('event') event: any
 
-  constructor(public subjects: SubjectsService, public appService: AppService, public apiRequest: ApirequestService, public dr: DataRequest) {
+  constructor(public timeerHelper: TimeerHelper, public subjects: SubjectsService, public appService: AppService, public apiRequest: ApirequestService, public dr: DataRequest) {
 
   }
 
@@ -90,8 +92,13 @@ export class CommentsComponent implements OnInit, OnDestroy {
     Object.keys(data).map((e) => { if (e.startsWith("_")) delete data[e]; });
     data.prescriptionstatus_id = statusId;
     let lastmodifiedon = this.appService.getDateTimeinISOFormat(new Date());
-    data.lastmodifiedon = lastmodifiedon;
-    data.lastmodifiedby = this.appService.loggedInUserName;
+    if (this.reasonStatus == PrescriptionStatus.restarted) {
+      data.createdon = this.appService.getDateTimeinISOFormat(new Date());
+      data.createdby = this.appService.loggedInUserName;
+    } else {
+      data.lastmodifiedon = this.appService.getDateTimeinISOFormat(new Date());
+      // data.lastmodifiedby = this.appService.loggedInUserName;
+    }
 
     this.prescriptionEvent = new PrescriptionEvent();
     this.prescriptionEvent.epma_prescriptionevent_id = uuid();
@@ -103,22 +110,24 @@ export class CommentsComponent implements OnInit, OnDestroy {
     this.prescriptionEvent.prescriptionstatusid = statusId;
     this.prescriptionEvent.person_id = this.appService.personId;
     this.prescriptionEvent.encounter_id = this.appService.encounter.encounter_id;
+    
 
-    if (this.prescription.infusiontype_id == "ci") {
+    this.prescriptionEvent.createdbyrole = JSON.stringify(this.appService.loggedInUserRoles.filter(x => x.toLowerCase().startsWith("epma")));
+    if (this.prescription.infusiontype_id == "ci" || this.prescription.infusiontype_id == InfusionType.pca) {
       this.showSpinner = true;
       var upsertManager = new UpsertTransactionManager();
       upsertManager.beginTran(this.appService.baseURI, this.apiRequest);
-      let isEndEventAdministered =null ;
+      let isEndEventAdministered = null;
       let isNotGiven = null;
       let startTime = this.appService.events.find(e => e.prescription_id == this.prescription.prescription_id && e.dose_id.includes("start_"));
       let endEvent = this.appService.events.find(e => e.prescription_id == this.prescription.prescription_id && e.dose_id.includes("end_"));
-      if(endEvent) {
-        isEndEventAdministered = this.appService.InfusionEvents.find(x => x.logicalid == endEvent.dose_id && x.eventtype=='endinfusion');
+      if (endEvent) {
+        isEndEventAdministered = this.appService.InfusionEvents.find(x => x.logicalid == endEvent.dose_id && x.eventtype == 'endinfusion');
       }
-      if(startTime) {
+      if (startTime) {
         isNotGiven = this.appService.Medicationadministration.find(x => x.logicalid == startTime.dose_id && x.adminstrationstatus == AdministrationStatus.notgiven);
       }
-      if (this.prescription.infusiontype_id == "ci" && startTime && !isNotGiven && !isEndEventAdministered  && moment(startTime.eventStart).isBefore(moment().toDate())) {
+      if ((this.prescription.infusiontype_id == "ci" || this.prescription.infusiontype_id == InfusionType.pca) && startTime && !isNotGiven && !isEndEventAdministered && moment(startTime.eventStart).isBefore(moment().toDate())) {
         let logical_id = "";
         let dose_id = "";
         let plannedtime: any;
@@ -145,6 +154,8 @@ export class CommentsComponent implements OnInit, OnDestroy {
         this.infusionEvents.eventtype = "endinfusion_planned";
         this.infusionEvents.comments = "End infusion from stop prescription";
         this.infusionEvents.administeredby = this.appService.loggedInUserName;
+        this.infusionEvents.createdon = this.appService.getDateTimeinISOFormat(moment().toDate());
+        this.infusionEvents.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
         delete this.infusionEvents._sequenceid;
         upsertManager.addEntity('core', 'infusionevents', JSON.parse(JSON.stringify(this.infusionEvents)));
         this.appService.logToConsole(this.infusionEvents);
@@ -162,7 +173,7 @@ export class CommentsComponent implements OnInit, OnDestroy {
           var diffMinutes = duration.asMinutes();
           startDose.dosestartdatetime = this.appService.getDateTimeinISOFormat(moment(startDose.dosestartdatetime).add(diffMinutes, "minutes").toDate());
           this.appService.GetCurrentPosology(infusion).prescriptionstartdate = startDose.dosestartdatetime;
-          if(startDose.doseenddatatime) {
+          if (startDose.doseenddatatime) {
             startDose.doseenddatatime = this.appService.getDateTimeinISOFormat(moment(startDose.doseenddatatime).add(diffMinutes, "minutes").toDate());
           }
           if (this.appService.GetCurrentPosology(infusion).prescriptionenddate) {
@@ -196,19 +207,32 @@ export class CommentsComponent implements OnInit, OnDestroy {
         if (linkedInfusion.length > 0) {
           this.dr.getAllPrescription(() => {
             this.dr.getInfusionEvents(() => {
+              this.appService.Prescription.forEach(p => this.appService.UpdatePrescriptionCompletedStatus(p));
               this.appService.Prescription.find(x => x.prescription_id == this.prescription.prescription_id).prescriptionstatus_id = statusId;
-              this.appService.RefreshWarningsFromApi(() => {
+              if (this.reasonStatus == PrescriptionStatus.stopped || this.reasonStatus == PrescriptionStatus.cancelled) {
                 this.dr.GetPrescriptionEvent(() => {
                   this.dr.PharmacyReviewReset(this.prescription, this.prescriptionEvent.epma_prescriptionevent_id, () => {
                     this.subjects.refreshDrugChart.next("refresh");
                     this.showSpinner = false;
                     this.subjects.closeAppComponentPopover.next();
-                    this.subjects.showWarnings.next();
                     this.subjects.reloadCurrentModule.next();
                   });
 
                 });
-              });
+              } else {
+                this.appService.RefreshWarningsFromApi(() => {
+                  this.dr.GetPrescriptionEvent(() => {
+                    this.dr.PharmacyReviewReset(this.prescription, this.prescriptionEvent.epma_prescriptionevent_id, () => {
+                      this.subjects.refreshDrugChart.next("refresh");
+                      this.showSpinner = false;
+                      this.subjects.closeAppComponentPopover.next();
+                      this.subjects.showWarnings.next();
+                      this.subjects.reloadCurrentModule.next();
+                    });
+
+                  });
+                });
+              }
             });
           });
         } else {
@@ -216,18 +240,30 @@ export class CommentsComponent implements OnInit, OnDestroy {
             this.appService.Prescription.find(x => x.prescription_id == this.prescription.prescription_id).prescriptionstatus_id = statusId;
             this.appService.Prescription.find(x => x.prescription_id == this.prescription.prescription_id).lastmodifiedon = lastmodifiedon;
             this.appService.Prescription.find(x => x.prescription_id == this.prescription.prescription_id).lastmodifiedby = data.lastmodifiedby;
-            this.appService.RefreshWarningsFromApi(() => {
+            this.appService.Prescription.find(x => x.prescription_id == this.prescription.prescription_id).createdby = data.createdby;
+            if (this.reasonStatus == PrescriptionStatus.stopped || this.reasonStatus == PrescriptionStatus.cancelled) {
               this.dr.GetPrescriptionEvent(() => {
                 this.dr.PharmacyReviewReset(this.prescription, this.prescriptionEvent.epma_prescriptionevent_id, () => {
                   this.subjects.refreshDrugChart.next("refresh");
                   this.showSpinner = false;
                   this.subjects.closeAppComponentPopover.next();
-                  this.subjects.showWarnings.next();
+                  this.subjects.refreshTemplate.next();
+                });
+              });
+            } else {
+              this.appService.RefreshWarningsFromApi(() => {
+                this.dr.GetPrescriptionEvent(() => {
+                  this.dr.PharmacyReviewReset(this.prescription, this.prescriptionEvent.epma_prescriptionevent_id, () => {
+                    this.subjects.refreshDrugChart.next("refresh");
+                    this.showSpinner = false;
+                    this.subjects.closeAppComponentPopover.next();
+                    this.subjects.showWarnings.next();
+                    this.subjects.refreshTemplate.next();
+                  });
 
                 });
-
               });
-            });
+            }
           });
         }
 
@@ -239,11 +275,47 @@ export class CommentsComponent implements OnInit, OnDestroy {
           upsertManager.destroy();
 
           if (this.appService.IsDataVersionStaleError(error)) {
-            this.subjects.ShowRefreshPageMessage.next(error);
+            this.appService.RefreshPageWithStaleError(error);
           }
         }
       );
     }
+  }
+
+  CreateWithheldEvents(prescription: Prescription, upsertManager: UpsertTransactionManager) {
+    let statusid = this.appService.MetaPrescriptionstatus.find(x => x.status == "suspended").prescriptionstatus_id;
+    let events = this.appService.prescriptionEvent.filter(x => x.prescriptionid == prescription.prescription_id && x.prescriptionstatusid == statusid)
+    events.sort((b, a) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime())
+    this.appService.reportData = [];
+    let minEventDate = moment(events[0].datetime);
+    let MaxEventDate = moment().add(8, 'days');
+    // let transferEvents=this.appService.DoseEvents.filter(x => x.prescription_id==prescription.prescription_id && x.eventtype == "Transfer");
+    // transferEvents.sort((b,a) => new Date(a.startdatetime).getTime() - new Date(b.startdatetime).getTime())
+    this.timeerHelper.createEvents(minEventDate, MaxEventDate, true, prescription, true);
+    let cancelevents = this.appService.reportData.filter(x => moment(x.eventStart, "YYYY-MM-DD HH:mm").isBetween(minEventDate, moment(), undefined, '[)'))
+
+    for (let dose of cancelevents) {
+      let doseEvents = new DoseEvents();
+      doseEvents.doseevents_id = uuid();
+      doseEvents.dose_id = dose.dose_id.split('_')[dose.dose_id.split('_').length - 1];
+      doseEvents.posology_id = dose.posology_id;
+      doseEvents.startdatetime = this.appService.getDateTimeinISOFormat(moment(dose.eventStart).toDate());
+      doseEvents.eventtype = 'Cancel';
+      doseEvents.dosedatetime = this.appService.getDateTimeinISOFormat(moment(dose.eventStart).toDate());
+      doseEvents.comments = "Medication suspended";
+      doseEvents.logicalid = dose.dose_id;//this.getLogicalId(this.startDate, this.dose.dose_id.split('_')[1]),
+      doseEvents.iscancelled = true;
+      doseEvents.createdon = events[0].datetime;
+      doseEvents.modifiedon = events[0].datetime;
+      doseEvents.createdby = events[0].createdby;
+      doseEvents.modifiedby = events[0].createdby;
+
+      Object.keys(doseEvents).map((e) => { if (e.startsWith("_")) delete doseEvents[e]; })
+
+
+      upsertManager.addEntity('core', 'doseevents', JSON.parse(JSON.stringify(doseEvents)));
+    }
+
   }
   saveReason() {
     this.message = "";
@@ -253,15 +325,22 @@ export class CommentsComponent implements OnInit, OnDestroy {
         return;
       }
     }
-    if (this.prescription.infusiontype_id == "ci" && !this.isMOAPrescription) {
+    if ((this.prescription.infusiontype_id == "ci" || this.prescription.infusiontype_id == InfusionType.pca) && !this.isMOAPrescription) {
       this.saveContinuosInfusionTherapy();
     } else {
       var statusId = this.appService.MetaPrescriptionstatus.find(x => x.status == this.reasonStatus).prescriptionstatus_id;
       var data = Object.assign({}, this.prescription);
       Object.keys(data).map((e) => { if (e.startsWith("_")) delete data[e]; });
       data.prescriptionstatus_id = statusId;
-      data.lastmodifiedon = this.appService.getDateTimeinISOFormat(new Date());
-      data.lastmodifiedby = this.appService.loggedInUserName;
+      if (this.reasonStatus == PrescriptionStatus.restarted) {
+        data.createdon = this.appService.getDateTimeinISOFormat(new Date());
+        data.createdby = this.appService.loggedInUserName;
+        data.lastmodifiedon = this.appService.getDateTimeinISOFormat(new Date());
+        data.lastmodifiedby = this.appService.loggedInUserName;
+      } else {
+        data.lastmodifiedon = this.appService.getDateTimeinISOFormat(new Date());
+        // data.lastmodifiedby = this.appService.loggedInUserName;
+      }
 
       this.prescriptionEvent = new PrescriptionEvent();
       this.prescriptionEvent.epma_prescriptionevent_id = uuid();
@@ -273,13 +352,31 @@ export class CommentsComponent implements OnInit, OnDestroy {
       this.prescriptionEvent.prescriptionstatusid = statusId;
       this.prescriptionEvent.person_id = this.appService.personId;
       this.prescriptionEvent.encounter_id = this.appService.encounter.encounter_id;
+      this.prescriptionEvent.createdbyrole = JSON.stringify(this.appService.loggedInUserRoles.filter(x => x.toLowerCase().startsWith("epma")));
+
 
       this.showSpinner = true;
       var upsertManager = new UpsertTransactionManager();
       upsertManager.beginTran(this.appService.baseURI, this.apiRequest);
+      if (this.reasonStatus == PrescriptionStatus.restarted) {
+        this.CreateWithheldEvents(data, upsertManager);
+      }
+      if (this.reasonStatus == PrescriptionStatus.stopped || this.reasonStatus == PrescriptionStatus.cancelled) {
+        // check if befor stopping prescription was suspended then create cancle events
+        let statusid = this.appService.MetaPrescriptionstatus.find(x => x.status == "suspended").prescriptionstatus_id;
+        let events = this.appService.prescriptionEvent.filter(x => x.prescriptionid == data.prescription_id)
+        events.sort((b, a) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime())
+        if (events.length > 0 && events[0].prescriptionstatusid == statusid) {
+          this.CreateWithheldEvents(data, upsertManager);
+        }
+      }
+
       upsertManager.addEntity('core', 'prescription', JSON.parse(JSON.stringify(data)));
       upsertManager.addEntity('local', "epma_prescriptionevent", JSON.parse(JSON.stringify(this.prescriptionEvent)));
       upsertManager.save((resp) => {
+
+        this.publishNotificationForStatusChangeEvent();
+
         this.appService.UpdateDataVersionNumber(resp);
 
         this.appService.logToConsole(resp);
@@ -287,34 +384,60 @@ export class CommentsComponent implements OnInit, OnDestroy {
         this.appService.Prescription.find(x => x.prescription_id == this.prescription.prescription_id).prescriptionstatus_id = statusId;
         this.appService.Prescription.find(x => x.prescription_id == this.prescription.prescription_id).lastmodifiedon = data.lastmodifiedon;
         this.appService.Prescription.find(x => x.prescription_id == this.prescription.prescription_id).lastmodifiedby = data.lastmodifiedby;
+        this.appService.Prescription.find(x => x.prescription_id == this.prescription.prescription_id).createdby = data.createdby;
 
-
-
-        this.appService.RefreshWarningsFromApi(() => {
-          this.dr.GetPrescriptionEvent(() => {
-            this.dr.PharmacyReviewReset(this.prescription, this.prescriptionEvent.epma_prescriptionevent_id, () => {
-              this.reasonStatus = "";
-              this.reasonComments = "";
-              this.subjects.refreshDrugChart.next("refresh");
-              this.showSpinner = false;
-              this.subjects.closeAppComponentPopover.next();
-              this.subjects.showWarnings.next();
+        if (this.reasonStatus == PrescriptionStatus.stopped || this.reasonStatus == PrescriptionStatus.cancelled) {
+          this.dr.getDoseEvents(() => {
+            this.dr.GetPrescriptionEvent(() => {
+              this.dr.PharmacyReviewReset(this.prescription, this.prescriptionEvent.epma_prescriptionevent_id, () => {
+                this.reasonStatus = "";
+                this.reasonComments = "";
+                this.subjects.refreshDrugChart.next("refresh");
+                this.showSpinner = false;
+                this.subjects.closeAppComponentPopover.next();
+                this.subjects.refreshTemplate.next();
+              });
             });
           });
-
-        });
-
+        } else {
+          this.appService.RefreshWarningsFromApi(() => {
+            this.dr.getDoseEvents(() => {
+              this.dr.GetPrescriptionEvent(() => {
+                this.dr.PharmacyReviewReset(this.prescription, this.prescriptionEvent.epma_prescriptionevent_id, () => {
+                  this.reasonStatus = "";
+                  this.reasonComments = "";
+                  this.subjects.refreshDrugChart.next("refresh");
+                  this.showSpinner = false;
+                  this.subjects.closeAppComponentPopover.next();
+                  this.subjects.showWarnings.next();
+                  this.subjects.refreshTemplate.next();
+                });
+              });
+            });
+          });
+        }
       },
         (error) => {
           this.appService.logToConsole(error);
           upsertManager.destroy();
 
           if (this.appService.IsDataVersionStaleError(error)) {
-            this.subjects.ShowRefreshPageMessage.next(error);
+            this.appService.RefreshPageWithStaleError(error);
           }
         }
       );
     }
+  }
+
+  publishNotificationForStatusChangeEvent() {
+    if (!this.appService.appConfig.AppSettings.can_send_notification) return;
+    const { prescriptionstatusid, prescriptionid, encounter_id } = this.prescriptionEvent;
+    let contextsForNotification: NotificationClientContext[] = [
+      { name: 'prescriptionstatusid', value: prescriptionstatusid },
+      { name: 'prescriptionid', value: prescriptionid },
+      { name: 'encounter_id', value: encounter_id }];
+
+    publishSenderNotificationWithParams('MED_ADM_STATUS_CHANGED', contextsForNotification, null, AudienceType.ALL_SESSIONS_EXCEPT_CURRENT_SESSION);
   }
 
 }

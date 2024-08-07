@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
         <div class="modal-body" style="max-height: 30rem;overflow: auto;">     
 			<div class="row mt-n2">
 				<div class="col-12">
-					 <table *ngIf="medusaInstruction.length>0">
+					 <table *ngIf="medusaInstruction && medusaInstruction.length>0">
                          <th>
                             Medusa Links
                          </th>
@@ -43,7 +43,7 @@ aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
 			</div> 
             <div class="row mt-2">
 				<div class="col-12">
-					 <table *ngIf="endorsement.length>0">
+					 <table *ngIf="endorsement && endorsement.length>0">
                          <th>
                             Endorsements
                          </th>
@@ -52,7 +52,28 @@ aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
                          </tr>
                      </table>
 				</div>
-			</div>             
+			</div>  
+            <div class="row mt-2" *ngIf="_nursingInstructionsHistory && _nursingInstructionsHistory.length>0">
+				<div class="col-12">
+                    <div class="float-right nursing-history" data-toggle="modal" data-target="#nursingnotes"
+                   
+                    placement="bottom">                    
+                </div>
+					   <!-- #poptemplate="bs-popover" triggers="mouseenter:mouseleave" container="body" [outsideClick]="true" [popover]="nursingHistoryPopover" -->
+				</div>
+			</div> 
+           
+            <div class="row mt-2">
+				<div class="col-12" *ngIf="!nursingInstructionType">
+					 <textarea class="form-control" rows="5" [(ngModel)]="_nursingInstructions.nursinginstructionstext" ></textarea>
+				</div>
+                <div class="col-12" *ngIf="nursingInstructionType">
+                    <pre style="white-space: pre-wrap; word-wrap: break-word;">{{_nursingInstructions.nursinginstructionstext}}</pre>
+               </div>
+                <div *ngIf="notesError.length>0" style="color:#813838" role="alert">
+                    {{notesError}}
+                  </div>
+			</div>    
         </div>
         <div class="modal-footer" style="padding: 0.4rem 0rem;">
             <div class="container">               
@@ -60,12 +81,47 @@ aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
                     <div class="col-6">                         
                     </div>
                     <div class="col-6 text-right">                        
+                        <button *ngIf="!nursingInstructionType"  data-dismiss="modal"  type="button" class="btn btn-sm btn-primary mr-2" (click)="saveNursingInstructions()">Save</button>
                         <button  data-dismiss="modal"  type="button" class="btn btn-sm btn-secondary" (click)="closeNursingInstructionPopup()">Close</button>
                     </div>
                      
                 </div>               
             </div>
-        </div>     
+        </div>    
+        <!-- <ng-template #nursingHistoryPopover> 
+            <div style="width: 60em" class="row" *ngFor="let h of _nursingInstructionsHistory">
+                <div class="col-12 nursing-wrap-text">
+                   {{h.modifiedon | date: 'dd-MM-YYYY HH:mm'}} <b>{{h.modifiedby}}</b> - {{h.nursinginstructionstext}}
+                </div>
+          
+            </div>
+         
+        </ng-template>  -->
+      
     </div>
 </div>
+</div>
+<div class="modal fade" id="nursingnotes" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div  style="max-height: 600px;overflow-y: scroll" class="modal-body">
+               
+                <div class="row" *ngFor="let h of _nursingInstructionsHistory">
+                    <div class="col-12 nursing-wrap-text">
+                        <b>{{h.modifiedon | date: 'dd-MMM-YYYY HH:mm'}} {{h.modifiedby}}</b> - {{h.nursinginstructionstext}}
+                       <hr>
+                    </div>
+              
+                </div>
+            </div>
+
+        </div>
+    </div>
 </div>

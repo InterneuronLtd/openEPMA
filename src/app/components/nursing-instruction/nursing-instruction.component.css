@@ -11,3 +11,19 @@
     max-height: 250px;
     overflow-x: auto;
   }
+  .nursing-history  {
+    width: 1.3em;
+    height: 1.3em;
+    background-repeat: no-repeat;
+    background-image: url("/assets/images/epma/history.svg");
+    cursor: pointer;
+  }
+  .nursing-wrap-text{
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    
+  }
+  .modal {
+    backdrop-filter: brightness(0.8) !important;
+  }
+ 

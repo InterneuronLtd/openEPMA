@@ -32,3 +32,17 @@
   background-color: white;
 
 }
+.modal-body {
+  /* 100% = dialog height, 120px = header + footer */
+  max-height: calc(100% - 60px);
+  overflow-y: auto;
+}
+
+.modal-dialog-centered {
+  min-width: 40%;
+}
+
+.modal-dialog, .modal-content {
+  /* 80% of window height */
+  height: 92%;
+}

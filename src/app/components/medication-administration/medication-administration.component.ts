@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -30,10 +30,12 @@ import { v4 as uuid } from 'uuid';
 import { SearchPostData } from '../search-medication/search-medication.component';
 import { PrescriptionMedicaitonSupply, SupplyRequest } from '../../models/EPMA';
 import { action, filter, filterparam, filterParams, filters, orderbystatement, selectstatement } from '../../models/filter.model';
-import { AdministrationStatus, AdministrationStatusReason, LevelOfSelfAdmin, DoseType, SupplyRequestStatus, RoleAction } from 'src/app/services/enum';
+import { AdministrationStatus, AdministrationStatusReason, LevelOfSelfAdmin, DoseType, SupplyRequestStatus, RoleAction, Common, InfusionType } from 'src/app/services/enum';
 import { DataRequest } from 'src/app/services/datarequest';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { ComponentModuleData } from 'src/app/directives/warnings-loader.directive';
+import { PRNMaxDose } from '../prescribing-form/formhelper';
+import { AudienceType, NotificationClientContext, publishSenderNotificationWithParams } from 'src/app/notification/lib/notification.observable.util';
 
 @Component({
   selector: 'app-medication-administration',
@@ -83,6 +85,7 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
   isInitializing: boolean = true;
   administermedication: AdministerMedication[] = [];
   existingadministermedication: AdministerMedication[] = [];
+  administermultiplemedication: AdministerMedication[] = [];
   administermedication_id: string;
   previuosAdministeredQuantity: number = 0;
   medicationCode: string;
@@ -103,10 +106,12 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
   usedAdminisistraionHistory: any[] = [];
   isShowAdministrationHistory: boolean = false;
   isShowHistory = false;
+  productList: AdministerMedication[] = [];
+  administrationHistory: AdministrationHistory[]=[];
   @ViewChild('administrationform') private myScrollContainer: ElementRef;
   @ViewChild('confirmWardStockTemplate') private modalWardStock: ElementRef;
   @ViewChild('undoAdministrationTemplate') private undoAdministrationAlert: ElementRef;
-
+  encounterId: string;
   public administrationStatus: typeof AdministrationStatus = AdministrationStatus;
   public administrationStatusReason: typeof AdministrationStatusReason = AdministrationStatusReason;
   public levelOfSelfAdmin: typeof LevelOfSelfAdmin = LevelOfSelfAdmin;
@@ -115,8 +120,10 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
   componentModuleData: ComponentModuleData;
   hasAdministrationWarning = false;
   displayStyle = false;
+  medIndexSelected: number = 0;
   undoConflictTime: any;
-
+  correctionId: string;
+  undoAdministrationdisplayStyle: boolean;
   constructor(public subjects: SubjectsService, public appService: AppService, public apiRequest: ApirequestService, public dr: DataRequest, private modalService: BsModalService) {
     this.minDate = new Date();
     this.maxDate = new Date();
@@ -127,11 +134,24 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    if(this.editpopuptypetype == "OpAdministration")
+    {
+      this.encounterId = Common.op_encounter_placeholder;
+    }
+    else 
+    {
+      this.encounterId = this.appService.encounter.encounter_id;
+    }
+    if(this.editpopuptypetype != "Undo Administration") {
+        this.dr.RefreshIfDataVersionChanged(() => { });
+    }
     this.currentposology = this.appService.GetCurrentPosology(this.prescription, this.dose.posology_id);
     this.searchCode = this.prescription.__medications[0].__codes[0].code;
     this.productType = this.prescription.__medications[0].producttype;
     this.isInitializing = true;
-    this.searchProducts(false);
+    this.administermedication = [];
+    this.correctionId = uuid();
+
     this.warningMessage = "";
     this.currentDose = Object.assign({}, this.dose);
     this.medication = Object.assign({}, this.prescription.__medications.find(e => e.isprimary == true));
@@ -152,7 +172,10 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
     }
     if (this.editpopuptypetype == "Administration" || this.editpopuptypetype == "OpAdministration") {
       this.administration.medicationadministration_id = uuid();
+      this.administration.createdon = this.appService.getDateTimeinISOFormat(moment().toDate());
+      this.administration.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
       this.previuosAdministeredQuantity = 0;
+      this.searchProducts(false, false);
       this.productName = this.medication.name;
       if (this.currentDose.dose_id.includes("end")) {
         this.showEndInfusion = true;
@@ -162,6 +185,7 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
         }));
         return;
       } else {
+
         this.administration.planneddatetime = moment(new Date(this.currentDose.eventStart)).format('YYYY-MM-DD HH:mm');
         this.plannedDate = moment(new Date(this.currentDose.eventStart)).format('DD-MMM-YYYY HH:mm');
         if (this.currentDose.prn) {
@@ -182,14 +206,18 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
         this.administration.routename = this.prescription.__routes.find(e => e.isdefault).route;
         this.administration.posology_id = this.currentposology.posology_id;
         this.administration.person_id = this.appService.personId;
-        this.administration.encounter_id = this.appService.encounter.encounter_id;
+        this.administration.encounter_id = this.encounterId;
         this.administration.medication_id = this.medication.medication_id;
         this.administration.requestresupply = false;
         this.administration.administrationstartime = moment(new Date()).format('YYYY-MM-DD HH:mm');
+
         this.setDose(this.dose_id);
         this.setAdministrationDateValidation(this.currentDose.dose_id);
-
+        this.SetNursingInstruction();
       }
+    
+    } else {
+      this.searchProducts(false, true);
     }
     let administrationRecord = this.appService.Medicationadministration.find(e => e.logicalid == this.currentDose.dose_id);
     if (administrationRecord) {
@@ -204,32 +232,12 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
     // View Administration
     if (this.editpopuptypetype == "View Administration" || this.editpopuptypetype == "View History") {
       this.isShowAdministrationHistory = false;
-      this.isShowHistory = false;
-      if (this.editpopuptypetype == "View History") {
-        this.isShowAdministrationHistory = false;
-        this.isShowHistory = true;
-      } else {
-        this.isShowAdministrationHistory = false;
-        this.isShowHistory = false;
-      }
-      this.appService.MedicationadministrationHistory = [];
-      this.appService.DoseEventsHistory = [];
-      this.appService.InfusionEventsHistory = [];
-      if (this.administration.medicationadministration_id && this.administration.logicalid) {
-        this.dr.getMedicationAdministrationHistory(this.administration.medicationadministration_id, this.administration.logicalid, () => {
-
-        });
-      }
-      this.setProduct(this.administration.medicationadministration_id);
+      this.productName = this.medication.name;
       if (this.currentDose.isinfusion) {
         this.dose_id = this.currentDose.dose_id.split('_')[2];
-        this.dr.getInfusionEventsHistory(this.currentDose.dose_id, () => {
-        });
-      } else {
-        this.dose_id = this.currentDose.dose_id.split('_')[1];
-        this.dr.getDoseEventsHistory(this.currentDose.dose_id, () => {
-        });
       }
+      this.LoadHistory();
+
       if (this.currentDose.dose_id.includes("addadjust")) {
         this.administeredDate = moment(this.administration.administrationstartime).format("DD-MM-YYYY HH:mm");
 
@@ -325,13 +333,14 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
           }
 
           this.setAdministrationDateValidation(this.currentDose.dose_id);
-
+          this.SetNursingInstruction();
           // set witness authnication 
           let witness = this.appService.administrationWitness.find(x => x.medicationadministration_id == this.administration.medicationadministration_id);
           if (witness) {
             this.administrationWitness = new AdministrationWitness();
             this.administrationWitness = witness;
             this.witnessDisplayName = this.administrationWitness.displayname;
+            this.administrationWitness.correlationid = this.correctionId;
             this.witnessBtnValue = "Change";
           }
         }
@@ -340,83 +349,99 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
 
     // Undo administration
     if (this.editpopuptypetype == "Undo Administration") {
-      let eventDatetime = null;
-      let isNotUndoAllow = null;
-      if (this.prescription.isinfusion) {
-        eventDatetime = moment(this.currentDose.dose_id.split('_')[1], "YYYYMMDDHHmm").toDate();
-      } else {
-        eventDatetime = moment(this.currentDose.dose_id.split('_')[0], "YYYYMMDDHHmm").toDate();
-      }
-      // find the time from logical id 12
-      // update time if there is transfer
-      let isEventTransfer = this.appService.DoseEvents.find(e => e.logicalid == this.currentDose.dose_id && e.eventtype == "Transfer");
-      if (isEventTransfer) {
-        eventDatetime = isEventTransfer.dosedatetime;
-      }
-
-      isNotUndoAllow = this.appService.events.find(x => x.prescription_id == this.prescription.prescription_id && moment(eventDatetime).isSame(x.eventStart) && x.dose_id != this.currentDose.dose_id);
-      if (isNotUndoAllow && !this.appService.GetCurrentPosology(this.prescription).prn) {
-        this.undoConflictTime = eventDatetime;
-        this.undoAdministrationModal();
-      } else {
-        this.undoAdministration();
-      }
+      this.undoAdministrationdisplayStyle = true;     
     }
     this.GetWarningStatus();
 
   }
   setMaxDoseWarning() {
     let warnings = [];
-    if (this.stardate && this.startime) {
+    if (this.stardate && this.startime && this.currentposology.prnmaxdose) {
       let currentadministrationtime = moment(moment(this.stardate, "DD-MM-YYYY").format("YYYY-MM-DD") + " " + this.startime)
       let totalAministredDoses = this.appService.Medicationadministration.filter(x => x.prescription_id == this.currentposology.prescription_id &&
-        x.medicationadministration_id != this.administration.medicationadministration_id && moment(x.administrationstartime) >= currentadministrationtime.clone().subtract(24, "hours"));
+        x.medicationadministration_id != this.administration.medicationadministration_id && !x.isenterinerror && moment(x.administrationstartime) >= currentadministrationtime.clone().subtract(24, "hours"));
       let totalAministred = 0;
-      if (this.currentposology.dosetype == DoseType.units) {
+      const prnMaxDoseObj = <PRNMaxDose>JSON.parse(this.currentposology.prnmaxdose)
+      if (this.currentposology.dosetype == DoseType.units && +prnMaxDoseObj.maxdenominator > 0) {
         totalAministred = totalAministredDoses.reduce((prev, cur) => prev + parseFloat(cur.administreddosesize), 0);
-        if (this.currentposology.maxnumofdosesperday)
-          if (totalAministred == this.currentposology.maxnumofdosesperday) {
-            warnings.push("Max dose of");
-            warnings.push(this.currentposology.maxnumofdosesperday);
-            warnings.push(this.currentposology.__dose[0].doseunit);
-            warnings.push("per day has been administered already");
-          } else if (totalAministred > this.currentposology.maxnumofdosesperday) {
-            warnings.push("Max dose of");
-            warnings.push(this.currentposology.maxnumofdosesperday);
-            warnings.push(this.currentposology.__dose[0].doseunit);
-            warnings.push("per day has already been exceeded by");
-            warnings.push(totalAministred - this.currentposology.maxnumofdosesperday);
-            warnings.push(this.currentposology.__dose[0].doseunit);
+        if (totalAministred == +prnMaxDoseObj.maxdenominator) {
+          warnings.push("Maximum dose of");
+          if (prnMaxDoseObj.type == "numeratoronlystrength" && +prnMaxDoseObj.maxnumerator > 0) {
+            warnings.push(+prnMaxDoseObj.maxnumerator);
+            warnings.push(prnMaxDoseObj.n_units);
+            warnings.push("/");
           }
-          else if ((totalAministred + (+this.administration.administreddosesize)) > this.currentposology.maxnumofdosesperday) {
-            warnings.push("Max dose of");
-            warnings.push(this.currentposology.maxnumofdosesperday);
-            warnings.push(this.currentposology.__dose[0].doseunit);
-            warnings.push("per day will be exceeded with this administration");
+          warnings.push(+prnMaxDoseObj.maxdenominator);
+          warnings.push(prnMaxDoseObj.d_units);
+          warnings.push("in 24 hours has been administered already.");
+        } else if (totalAministred > +prnMaxDoseObj.maxdenominator) {
+          warnings.push("Maximum dose of");
+          if (prnMaxDoseObj.type == "numeratoronlystrength" && +prnMaxDoseObj.maxnumerator > 0) {
+            warnings.push(+prnMaxDoseObj.maxnumerator);
+            warnings.push(prnMaxDoseObj.n_units);
+            warnings.push("/");
           }
+          warnings.push(+prnMaxDoseObj.maxdenominator);
+          warnings.push(prnMaxDoseObj.d_units);
+          warnings.push("in 24 hours has already been exceeded.");
+        }
+        else if ((totalAministred + (+this.administration.administreddosesize)) > +prnMaxDoseObj.maxdenominator) {
+          warnings.push("Maximum dose of");
+          if (prnMaxDoseObj.type == "numeratoronlystrength" && +prnMaxDoseObj.maxnumerator > 0) {
+            warnings.push(+prnMaxDoseObj.maxnumerator);
+            warnings.push(prnMaxDoseObj.n_units);
+            warnings.push("/");
+          }
+          warnings.push(+prnMaxDoseObj.maxdenominator);
+          warnings.push(prnMaxDoseObj.d_units);
+          warnings.push("in 24 hours will be exceeded with this administration");
+        }
       }
       if (this.currentposology.dosetype == DoseType.strength) {
-        totalAministred = totalAministredDoses.reduce((prev, cur) => prev + cur.administeredstrengthneumerator, 0);
-        if (this.currentposology.maxnumofdosesperday)
-          if (totalAministred == this.currentposology.maxnumofdosesperday) {
-            warnings.push("The maximum dose of");
-            warnings.push(this.currentposology.maxnumofdosesperday);
-            warnings.push(this.currentposology.__dose[0].strengthneumeratorunit);
-            warnings.push("per day has been administered already");
-          } else if (totalAministred > this.currentposology.maxnumofdosesperday) {
-            warnings.push("The maximum dose of");
-            warnings.push(this.currentposology.maxnumofdosesperday);
-            warnings.push(this.currentposology.__dose[0].strengthneumeratorunit);
-            warnings.push("per day has already been exceeded by");
-            warnings.push(totalAministred - this.currentposology.maxnumofdosesperday);
-            warnings.push(this.currentposology.__dose[0].strengthneumeratorunit);
-          }
-          else if ((totalAministred + (+this.administration.administreddosesize)) > this.currentposology.maxnumofdosesperday) {
-            warnings.push("The maximum dose of");
-            warnings.push(this.currentposology.maxnumofdosesperday);
-            warnings.push(this.currentposology.__dose[0].strengthneumeratorunit);
-            warnings.push("per day will be exceeded with this administration");
-          }
+        totalAministred = totalAministredDoses.reduce((prev, cur) => prev + cur.administeredstrengthdenominator, 0);
+        if (totalAministred == +prnMaxDoseObj.maxdenominator) {
+          warnings.push("The maximum dose of");
+          warnings.push(+prnMaxDoseObj.maxnumerator);
+          warnings.push(prnMaxDoseObj.n_units);
+          warnings.push("/");
+          warnings.push(+prnMaxDoseObj.maxdenominator);
+          warnings.push(prnMaxDoseObj.d_units);
+          warnings.push("in 24 hours has been administered already");
+        } else if (totalAministred > +prnMaxDoseObj.maxdenominator) {
+          warnings.push("The maximum dose of");
+          warnings.push(+prnMaxDoseObj.maxnumerator);
+          warnings.push(prnMaxDoseObj.n_units);
+          warnings.push("/");
+          warnings.push(+prnMaxDoseObj.maxdenominator);
+          warnings.push(prnMaxDoseObj.d_units);
+          warnings.push("in 24 hours has already been exceeded.");
+        }
+        else if ((totalAministred + (+this.administration.administeredstrengthdenominator)) > +prnMaxDoseObj.maxdenominator) {
+          warnings.push("The maximum dose of");
+          warnings.push(+prnMaxDoseObj.maxnumerator);
+          warnings.push(prnMaxDoseObj.n_units);
+          warnings.push("/");
+          warnings.push(+prnMaxDoseObj.maxdenominator);
+          warnings.push(prnMaxDoseObj.d_units);
+          warnings.push("in 24 hours will be exceeded with this administration.");
+        }
+      }
+      else {
+        totalAministred = totalAministredDoses.length;
+        if (totalAministred == +prnMaxDoseObj.maxtimes) {
+          warnings.push("The maximum dose of");
+          warnings.push(+prnMaxDoseObj.maxtimes);
+          warnings.push("times in 24 hours has been administered already");
+        } else if (totalAministred > +prnMaxDoseObj.maxtimes) {
+          warnings.push("The maximum dose of");
+          warnings.push(+prnMaxDoseObj.maxtimes);
+          warnings.push("times in 24 hours has already been exceeded.");
+        }
+        else if ((totalAministred + 1) > +prnMaxDoseObj.maxtimes) {
+          warnings.push("The maximum dose of");
+          warnings.push(+prnMaxDoseObj.maxtimes);
+          warnings.push("times in 24 hours will be exceeded with this administration.");
+        }
       }
     }
     if (warnings.length > 0) {
@@ -426,7 +451,12 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
       this.warningMessage = "";
     }
   }
-
+  SetNursingInstruction() {
+    let nursingInstrruction= this.appService.NursingInstructions.find(x=>x.prescription_id==this.prescription.prescription_id);
+    if(this.prescription.__nursinginstructions.length>0 || nursingInstrruction) {
+      this.subjects.nursingInstruction.next( { "prescription_id" : this.prescription.prescription_id, "data": this.prescription.__nursinginstructions , "source" : "administration" } );
+    }
+  }
   saveAdministrationForm() {
     this.administration.administrationstartime = moment(this.stardate, "DD-MM-YYYY").format("YYYY-MM-DD") + " " + this.startime;
     this.administrationValidation();
@@ -435,8 +465,17 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
       return;
     }
     this.administration.administrationstartime = this.appService.getDateTimeinISOFormat(moment(this.administration.administrationstartime, 'YYYY-MM-DD HH:mm').toDate());
+    if (this.editpopuptypetype == "Edit Administration") {
+      this.administration.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
+    }
+    this.administration.isenterinerror =false;
     if (this.currentDose.prn) {
-      this.administration.logicalid = this.createLogicalId(this.administration.administrationstartime, this.dose_id);
+      this.administration.isadhoc =true;
+      if (this.editpopuptypetype != "Edit Administration") {
+        this.administration.logicalid = this.createLogicalId(this.administration.administrationstartime, this.dose_id);
+      } else {
+        this.administration.logicalid = this.dose_id;
+      }
       this.administration.planneddatetime = this.appService.getDateTimeinISOFormat(moment(this.administration.administrationstartime, 'YYYY-MM-DD HH:mm').toDate());
     } else {
       this.administration.planneddatetime = this.appService.getDateTimeinISOFormat(moment(this.administration.planneddatetime, 'YYYY-MM-DD HH:mm').toDate());
@@ -462,6 +501,13 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
     if (this.expirydate) {
       this.administration.expirydate = this.appService.getDateTimeinISOFormat(moment(this.expirydate, "DD-MM-YYYY").toDate());
     }
+    if(this.administration.isdifferentproductadministered) {
+      this.administration.administreddosesize =null;
+      this.administration.administeredstrengthneumerator = null;
+      this.administration.administeredstrengthdenominator = null;
+      this.administration.expirydate = null;
+      this.administration.batchnumber = null;
+    }
     this.appService.logToConsole(this.administration);
     Object.keys(this.administration).map((e) => { if (e.startsWith("_")) delete this.administration[e]; });
 
@@ -476,8 +522,11 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
       let isInfusionExist = this.appService.InfusionEvents.find(e => e.logicalid == this.currentDose.dose_id);
       if (isInfusionExist) {
         this.infusionEvents.infusionevents_id = isInfusionExist.infusionevents_id;
+        this.infusionEvents.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
       } else {
         this.infusionEvents.infusionevents_id = uuid();
+        this.infusionEvents.createdon = this.appService.getDateTimeinISOFormat(moment().toDate());
+        this.infusionEvents.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
       }
       if (this.administration.logicalid.includes("start")) {
         this.infusionEvents.eventtype = "administered";
@@ -494,6 +543,15 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
       this.administrationWitness.dose_id = this.administration.dose_id;
     }
 
+    // if (this.administermedication.length > 0) {
+    //   supplyRequest.selectedproductcode = this.administermedication[0].__codes[0].code;
+    //   supplyRequest.selectproductcodetype = this.administermedication[0].producttype;
+    //   supplyRequest.selectedproductname = this.administermedication[0].name;
+    // } else {
+    //   supplyRequest.selectedproductcode = this.searchCode;
+    //   supplyRequest.selectproductcodetype = this.productType;
+    //   supplyRequest.selectedproductname = this.productName;
+    // }
 
     let supplyRequest: SupplyRequest = new SupplyRequest();
     //Create Update Supply Request   
@@ -520,7 +578,7 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
         supplyRequest.prescription_id = this.administration.prescription_id;
         supplyRequest.medication_id = this.medicationCode;
         supplyRequest.personid = this.appService.personId;
-        supplyRequest.encounterid = this.appService.encounter.encounter_id;
+        supplyRequest.encounterid = this.encounterId;
 
         if (this.administermedication.length > 0) {
           supplyRequest.selectedproductcode = this.administermedication[0].__codes[0].code;
@@ -545,12 +603,12 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
         supplyRequest.daterequired = null;
         supplyRequest.labelinstructiosrequired = false;
         supplyRequest.additionaldirections = '';
-        supplyRequest.isformulary = !this.isFormulary;
+        supplyRequest.isformulary = this.prescription.__medications[0].isformulary;
         supplyRequest.ordermessage = '';
       } else {
         supplyRequest = null;
       }
-      if ((this.currentposology.infusiontypeid == "ci" || this.currentposology.infusiontypeid == "rate") && this.currentDose.dose_id.includes("start") && !moment(this.administration.planneddatetime).isSame(moment(this.administration.administrationstartime))) {
+      if ((this.currentposology.infusiontypeid == "ci" || this.currentposology.infusiontypeid == InfusionType.pca || this.currentposology.infusiontypeid == "rate") && this.currentDose.dose_id.includes("start") ) {
         this.dr.UndoTransfer(this.currentDose, () => {
           this.dr.transferRateInfution(this.currentDose, moment(this.stardate, "DD-MM-YYYY").toDate(), this.startime, true, (message) => {
             if (message == "success") {
@@ -599,13 +657,19 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
 
   saveByUpsertManager(supplyRequest: SupplyRequest) {
     this.appService.logToConsole(this.infusionEvents);
+    this.administration.correlationid = this.correctionId;
     var upsertManager = new UpsertTransactionManager();
     upsertManager.beginTran(this.appService.baseURI, this.apiRequest);
     if (supplyRequest) {
       upsertManager.addEntity('local', "epma_supplyrequest", supplyRequest);
     }
-
-    if (this.administermedication.length > 0) {
+    if(this.administration.adminstrationstatus == "notgiven" && this.currentposology.infusiontypeid == "rate" && this.currentDose.dose_id.includes("start")){
+   
+     let execting= this.appService.InfusionEvents.find(e => e.logicalid.includes("end") && e.logicalid.includes(this.currentDose.dose_id.split("_")[2]));
+     if(execting)
+     upsertManager.addEntity('core', 'infusionevents', execting.infusionevents_id, "del");
+    }
+    if (this.administermedication.length > 0 || this.administermultiplemedication.length>0) {
       this.existingadministermedication.forEach(med => {
         upsertManager.addEntity('core', 'administermedication', med.administermedication_id, "del");
         upsertManager.addEntity('core', "administermedicationingredients", { "administermedicationid": med.administermedication_id }, "del");
@@ -615,24 +679,37 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
     }
 
     if (this.currentDose.isinfusion == true) {
+      this.infusionEvents.correlationid = this.correctionId;
       upsertManager.addEntity('core', 'infusionevents', JSON.parse(JSON.stringify(this.infusionEvents)));
     }
+    Object.keys(this.administration).map((e) => {
+      if (e.startsWith('checked')) delete this.administration[e];
+  });
     upsertManager.addEntity('core', "medicationadministration", JSON.parse(JSON.stringify(this.administration)));
     // add witness authentication
     if (this.administrationWitness && this.administrationWitness.displayname) {
       upsertManager.addEntity('local', 'epma_administrationwitness', JSON.parse(JSON.stringify(this.administrationWitness)));
     }
+    if(this.administration.isdifferentproductadministered) {
+      this.administermedication = this.administermultiplemedication;
+    }
     this.administermedication.forEach(m => {
       m.medicationadministrationid = this.administration.medicationadministration_id;
+      m.correlationid = this.correctionId;
       let administermed = Object.assign({}, m);
       Object.keys(administermed).map((e) => { if (e.startsWith("_")) delete administermed[e]; });
+      if(administermed.expirydate) {
+        administermed.expirydate = this.appService.getDateTimeinISOFormat(moment(administermed.expirydate, "DD-MM-YYYY").toDate());
+      }
       upsertManager.addEntity('core', 'administermedication', JSON.parse(JSON.stringify(administermed)));
       m.__ingredients.forEach(mig => {
         mig.medicationadministrationid = this.administration.medicationadministration_id;
+        mig.correlationid = this.correctionId;
         upsertManager.addEntity('core', 'administermedicationingredients', JSON.parse(JSON.stringify(mig)));
       });
       m.__codes.forEach(mcd => {
         mcd.medicationadministrationid = this.administration.medicationadministration_id;
+        mcd.correlationid = this.correctionId;
         upsertManager.addEntity('core', 'administermedicationcodes', JSON.parse(JSON.stringify(mcd)));
       });
     });
@@ -652,6 +729,8 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
 
         });
       });
+
+      this.publishNotificationForDoseAdministeredEvent();
     },
       (error) => {
         this.appService.logToConsole(error);
@@ -659,10 +738,22 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
         this.hideAdministrationForm.emit(false);
 
         if (this.appService.IsDataVersionStaleError(error)) {
-          this.subjects.ShowRefreshPageMessage.next(error);
+          this.appService.RefreshPageWithStaleError(error);
         }
       }
     );
+  }
+
+  publishNotificationForDoseAdministeredEvent(eventName?: string) {
+    if (!this.appService.appConfig.AppSettings.can_send_notification) return;
+    const { prescription_id, encounter_id } = this.prescription;
+    let contextsForNotification: NotificationClientContext[] = [
+      { name: 'dose_id', value: this.currentDose.dose_id },
+      { name: 'prescription_id', value: prescription_id },
+      { name: 'encounter_id', value: encounter_id }];
+
+    let notifTypeName = eventName ?? 'MED_ADMINISTERED';
+    publishSenderNotificationWithParams(notifTypeName, contextsForNotification, null, AudienceType.ALL_SESSIONS_EXCEPT_CURRENT_SESSION);
   }
 
   undoAdministration() {
@@ -672,13 +763,17 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
     var upsertManager = new UpsertTransactionManager();
     upsertManager.beginTran(this.appService.baseURI, this.apiRequest);
     upsertManager = this.updateLinkedInfusion(upsertManager, deleteInfusionEvent);
-    upsertManager = this.setToDeleteAdministration(upsertManager);
+    if(this.administration.isadhoc) {
+      upsertManager = this.setToUpdateAdHocAdministration(upsertManager);
+    } else {
+      upsertManager = this.setToDeleteAdministration(upsertManager);
+    }
     upsertManager.save((resp) => {
       this.appService.UpdateDataVersionNumber(resp);
 
       this.appService.logToConsole(resp);
       upsertManager.destroy();
-      if (this.currentDose.dose_id.includes("start")) {
+      if (this.currentDose.dose_id.includes("start") && this.currentposology.infusiontypeid != "bolus") {
         this.dr.UndoTransfer(this.currentDose, () => {
           this.dr.getAdminstrations(() => {
             this.showSpinner = false;
@@ -693,33 +788,82 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
           this.subjects.refreshTemplate.next(this.prescription.prescription_id);
         });
       }
+      this.publishNotificationForDoseAdministeredEvent('MED_ADMINISTRATION_UNDONE');
+
     },
       (error) => {
         this.appService.logToConsole(error);
         upsertManager.destroy();
 
         if (this.appService.IsDataVersionStaleError(error)) {
-          this.subjects.ShowRefreshPageMessage.next(error);
+          this.appService.RefreshPageWithStaleError(error);
         }
       }
     );
   }
+  DeleteDoseEventAdministration(upsertManager) {
+   let doseEvents = {
+      doseevents_id: uuid(),
+      dose_id: this.dose.dose_id.split('_')[1],
+      posology_id: this.dose.posology_id,
+      startdatetime: this.appService.getDateTimeinISOFormat(moment(this.dose.eventStart).toDate()),
+      eventtype: 'Undo',
+      dosedatetime: this.appService.getDateTimeinISOFormat(moment(this.dose.eventStart).toDate()),
+      comments: "",
+      logicalid: this.dose.dose_id,
+      iscancelled: false,
+      correlationid: this.administration.correlationid, 
+      createdon :this.appService.getDateTimeinISOFormat(moment().toDate()),
+      modifiedon : this.appService.getDateTimeinISOFormat(moment().toDate()),
+      createdby : this.appService.loggedInUserName,
+      modifiedby : this.appService.loggedInUserName,
+    };
+    upsertManager.addEntity('core', 'doseevents', JSON.parse(JSON.stringify(doseEvents)));
+  }
+  DeleteInfusionEventAdministration(upsertManager) {
+    let infusionEvents : InfusionEvents = new InfusionEvents();
+    infusionEvents.infusionevents_id = uuid();
+    infusionEvents.dose_id = this.administration.dose_id;
+    infusionEvents.eventdatetime = this.administration.administrationstartime;
+    infusionEvents.planneddatetime = this.administration.administrationstartime;
+    infusionEvents.logicalid = this.administration.logicalid;
+    infusionEvents.posology_id = this.currentposology.posology_id;
+    infusionEvents.eventtype = "Undo";
+    infusionEvents.comments = "";
+    infusionEvents.correlationid = this.administration.correlationid;
+    infusionEvents.administeredby = this.appService.loggedInUserName;
+    infusionEvents.createdby = this.appService.loggedInUserName;
+    infusionEvents.modifiedby = this.appService.loggedInUserName;
+    infusionEvents.createdon = this.appService.getDateTimeinISOFormat(moment().toDate());
+    infusionEvents.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
+    upsertManager.addEntity('core', 'infusionevents', JSON.parse(JSON.stringify(infusionEvents)));
+  }
   setToDeleteAdministration(upsertManager) {
-    if (this.currentDose.dose_id.includes("start")) {
-      if (this.currentposology.infusiontypeid == 'ci' || (this.currentposology.infusiontypeid == 'rate' && this.currentposology.frequency == 'variable')) {
+    if (this.currentDose.dose_id.startsWith("start") && this.currentposology.infusiontypeid != "bolus") {
+      if ((this.currentposology.infusiontypeid == 'ci' || this.currentposology.infusiontypeid == InfusionType.pca) || (this.currentposology.infusiontypeid == 'rate' && this.currentposology.frequency == 'variable')) {
         upsertManager.addEntity('core', "medicationadministration", { "prescription_id": this.prescription.prescription_id }, "del");
         upsertManager.addEntity('core', "infusionevents", { "posology_id": this.currentposology.posology_id }, "del");
+        this.DeleteInfusionEventAdministration(upsertManager);
       } else if (this.currentposology.infusiontypeid == 'rate' && this.currentposology.frequency != 'variable') {
         /// find and delete rate and not variable
         let eventRecord = this.appService.events.sort((b, a) => new Date(a.eventStart).getTime() - new Date(b.eventStart).getTime()).filter(e => e.posology_id == this.currentposology.posology_id && !e.dose_id.includes("dur") && !e.dose_id.includes("flowrate") && !e.dose_id.includes("infusionevent"));
         let startEvent = eventRecord.find(e => e.dose_id == this.currentDose.dose_id);
         let endEvent = eventRecord.slice().reverse().find(e => moment(e.eventStart).isAfter(startEvent.eventStart) && e.dose_id.includes("end"));
-        let eventToDelete = eventRecord.slice().filter(x => moment(x.eventStart).isSameOrAfter(startEvent.eventStart) && moment(x.eventStart).isSameOrBefore(endEvent.eventStart));
+        let eventToDelete
+        if(endEvent){
+         eventToDelete = eventRecord.slice().filter(x => moment(x.eventStart).isSameOrAfter(startEvent.eventStart) && moment(x.eventStart).isSameOrBefore(endEvent.eventStart));
+        }
+        else{
+          eventToDelete = eventRecord.slice().filter(x => moment(x.eventStart).isSameOrAfter(startEvent.eventStart));
+        }
+       
         eventToDelete.forEach(item => {
           let admin = this.appService.Medicationadministration.find(x => x.logicalid == item.dose_id);
           let infusion = this.appService.InfusionEvents.find(x => x.logicalid == item.dose_id);
-          if (admin)
+          if (admin) {
             upsertManager.addEntity('core', "medicationadministration", admin.medicationadministration_id, "del");
+            this.DeleteInfusionEventAdministration(upsertManager);
+          }
           if (infusion)
             upsertManager.addEntity('core', "infusionevents", infusion.infusionevents_id, "del");
         });
@@ -727,11 +871,35 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
     } else {
       let deleteAdministration = this.appService.Medicationadministration.find(x => x.logicalid == this.currentDose.dose_id);
       let deleteInfusionEvent = this.appService.InfusionEvents.find(x => x.logicalid == this.currentDose.dose_id);
-      if (deleteAdministration)
+      if (deleteAdministration) {
         upsertManager.addEntity('core', "medicationadministration", deleteAdministration.medicationadministration_id, "del");
+        if(this.prescription.isinfusion)
+        {
+          this.DeleteInfusionEventAdministration(upsertManager);
+        }
+        else 
+        {
+          this.DeleteDoseEventAdministration(upsertManager);
+        }
+      }
       if (deleteInfusionEvent)
         upsertManager.addEntity('core', 'infusionevents', deleteInfusionEvent.infusionevents_id, "del");
     }
+    return upsertManager;
+  }
+  setToUpdateAdHocAdministration(upsertManager) {
+    let updateAdministration = this.appService.Medicationadministration.find(x => x.logicalid == this.currentDose.dose_id);
+    Object.keys(updateAdministration).map((e) => {
+      if (e.startsWith('checked')) delete updateAdministration[e];
+  });
+      if (updateAdministration) {
+        if(updateAdministration.isenterinerror==true) {
+          updateAdministration.isenterinerror =false;
+        } else {
+          updateAdministration.isenterinerror =true;
+        }
+        upsertManager.addEntity('core', "medicationadministration", JSON.parse(JSON.stringify(updateAdministration)));
+      }         
     return upsertManager;
   }
   updateLinkedInfusion(upsertManager, deleteInfusionEvent) {
@@ -781,17 +949,17 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
     this.isWitnessAuthenticate = false;
   }
   GetWarningStatus() {
-    this.appService.warningServiceIPContext.GetExistingWarnings(false, (data) => {  
-      let code = this.prescription.__medications.find(x => x.isprimary).__codes.find(x => x.terminology == "formulary").code; 
-        const hasWarning = data.filter(
-          x =>((x.primaryprescriptionid == this.prescription.prescription_id 
-            || x.secondaryprescriptionid == this.prescription.prescription_id 
-            || x.primarymedicationcode== code
-            || x.secondarymedicationcode == code) && x.severity == 4)
-             )
-          if(hasWarning.length>0) {
-            this.hasAdministrationWarning =true;
-          }
+    this.appService.warningServiceIPContext.GetExistingWarnings(false, (data) => {
+      let code = this.prescription.__medications.find(x => x.isprimary).__codes.find(x => x.terminology == "formulary").code;
+      const hasWarning = data.filter(
+        x => ((x.primaryprescriptionid == this.prescription.prescription_id
+          || x.secondaryprescriptionid == this.prescription.prescription_id
+          || x.primarymedicationcode == code
+          || x.secondarymedicationcode == code) && x.severity == 4)
+      )
+      if (hasWarning.length > 0) {
+        this.hasAdministrationWarning = true;
+      }
     })
   }
   authenticateUser() {
@@ -805,7 +973,7 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
       return;
     }
     this.showSpinnerWitness = true;
-    this.subscriptions.add(this.apiRequest.getRequestWithoutAuth(this.appService.platfromServiceURI + "/Auth/AuthenticateUser?userName=" + encodeURIComponent(this.username)+ "&password=" + encodeURIComponent(this.password))
+    this.subscriptions.add(this.apiRequest.getRequestWithoutAuth(this.appService.platfromServiceURI + "/Auth/AuthenticateUser?userName=" + encodeURIComponent(this.username) + "&password=" + encodeURIComponent(this.password))
       .subscribe((resp) => {
         let groups = this.appService.appConfig.AppSettings.GroupsAuthorisedToWitness;
         let isGroupFound = false;
@@ -834,23 +1002,17 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
           this.administrationWitness.firstname = resp.firstname;
           this.administrationWitness.lastname = resp.lastname;
           this.administrationWitness.email = resp.email;
+          this.administrationWitness.correlationid = this.correctionId;
           this.administrationWitness.administredby = this.appService.loggedInUserName;
           this.administrationWitness.witnessdatetime = this.appService.getDateTimeinISOFormat(moment().toDate());
           this.administrationWitness.person_id = this.appService.personId;
-          this.administrationWitness.encounter_id = this.appService.encounter.encounter_id;
+          this.administrationWitness.encounter_id = this.encounterId;
         } else {
           this.authMessage = "Unable to authenticate";
         }
         this.showSpinnerWitness = false;
 
       }, (error) => { console.log(error); this.authMessage = "There was a problem with authentication"; this.showSpinnerWitness = false; }));
-  }
-
-  getAdministrationHistory(logicalid, i) {
-    let d = this.appService.MedicationadministrationHistory.find(x => x.logicalid == logicalid && x._index == i);
-    if (d) {
-      return d;
-    }
   }
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
@@ -1046,12 +1208,12 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
     //   return;
     // }
     if (this.administration.adminstrationstatus == this.administrationStatus.given || this.administration.adminstrationstatus == this.administrationStatus.selfadminister) {
-      if (this.currentposology.infusiontypeid == "ci" || this.currentposology.infusiontypeid == "rate") {
+      if (this.currentposology.infusiontypeid == "ci" || this.currentposology.infusiontypeid == InfusionType.pca || this.currentposology.infusiontypeid == "rate") {
         if (this.administration.administredinfusionrate == null || this.administration.administredinfusionrate < 0) {
           this.validatiommessage = "Please enter rate";
           return;
         }
-      } else {
+      } else if(!this.administration.isdifferentproductadministered) {
         if (this.currentposology.dosetype == DoseType.units) {
           if (!this.administration.administreddosesize) {
             this.validatiommessage = "Please enter dose";
@@ -1063,6 +1225,22 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
             this.validatiommessage = "Please enter strength";
             return;
           }
+        }
+      } else if(this.administration.isdifferentproductadministered) {
+        this.administermultiplemedication.forEach((item)=> {
+          if(item.dosetype == DoseType.units) {
+            if(!item.administreddosesize) {
+              this.validatiommessage = "Please enter dose";
+            }
+          }
+          if(item.dosetype == DoseType.strength) {
+            if(!item.administeredstrengthneumerator || !item.administeredstrengthdenominator) {
+              this.validatiommessage = "Please enter strength";
+            }
+          }
+        }) 
+        if(this.validatiommessage) {
+          return;
         }
       }
     }
@@ -1120,9 +1298,13 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
     // } else {
     //   this.minDate = moment(this.appService.encounter.admitdatetime, "YYYY-MM-DD HH:mm").toDate();
     // }
-    this.minDate = moment(this.appService.encounter.sortdate, "YYYY-MM-DD HH:mm").toDate();
+    if(this.editpopuptypetype == "OpAdministration") {
+      this.minDate = moment().add(-10, "years").toDate();
+    } else {
+      this.minDate = moment(this.appService.encounter.sortdate, "YYYY-MM-DD HH:mm").toDate();
+    }
     this.maxDate.setDate(new Date().getDate());
-    if (!this.currentDose.dose_id.includes("start") && this.currentposology.infusiontypeid != "rate") {
+    if (this.appService.events && ((!this.currentDose.dose_id.includes("start") && this.currentposology.infusiontypeid != "rate") || this.currentposology.infusiontypeid == "bolus")) {
       var alldose = this.appService.events.sort((a, b) => new Date(a.eventStart).getTime() - new Date(b.eventStart).getTime()).filter(p => p.prescription_id === this.currentposology.prescription_id && !p.dose_id.includes("dur") && !p.dose_id.includes("flowrate") && !p.dose_id.includes("infusionevent"));
       var currectDose = alldose.find(x => x.dose_id === dose_id);
       var index = alldose.indexOf(currectDose);
@@ -1147,33 +1329,48 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
   }
   setProduct(id: string) {
     this.existingadministermedication = [];
+    this.administermedication = [];
     this.expanded = [];
     this.subscriptions.add(this.apiRequest.getRequest(this.appService.baseURI + "/GetListByAttribute?synapsenamespace=core&synapseentityname=administermedication&synapseattributename=medicationadministrationid&attributevalue=" + id).subscribe(
       (response) => {
         let responseArray = JSON.parse(response);
         this.productName = this.medication.name;
+        let administermedication = [];
+        let administermedicationcode = [];
+        let administermedicationingredients = [];
         if (responseArray.length > 0) {
           for (let r of responseArray) {
-            this.existingadministermedication.push(<AdministerMedication>r);
+            administermedication.push(<AdministerMedication>r);
           }
           this.productName = responseArray[0].name;
           this.administermedication_id = responseArray[0].administermedication_id;
           this.subscriptions.add(this.apiRequest.getRequest(this.appService.baseURI + "/GetListByAttribute?synapsenamespace=core&synapseentityname=administermedicationcodes&synapseattributename=medicationadministrationid&attributevalue=" + id).subscribe(
             (response) => {
               let responseArray = JSON.parse(response);
-              this.existingadministermedication[0].__codes = [];
               if (responseArray.length > 0) {
                 for (let r of responseArray) {
-                  this.existingadministermedication[0].__codes.push(<AdministerMedicationcodes>r);
+                  administermedicationcode.push(<AdministerMedicationcodes>r);
                 }
                 this.subscriptions.add(this.apiRequest.getRequest(this.appService.baseURI + "/GetListByAttribute?synapsenamespace=core&synapseentityname=administermedicationingredients&synapseattributename=medicationadministrationid&attributevalue=" + id).subscribe(
                   (response) => {
                     let responseArray = JSON.parse(response);
-                    this.existingadministermedication[0].__ingredients = [];
                     if (responseArray.length > 0) {
                       for (let r of responseArray) {
-                        this.existingadministermedication[0].__ingredients.push(<AdministerMedicationingredients>r);
+                        administermedicationingredients.push(<AdministerMedicationingredients>r);
                       }
+                    }
+                    administermedication.forEach(element => {
+                      element.__codes = administermedicationcode.filter(x => x.administermedicationid == element.administermedication_id);
+                      element.__ingredients = administermedicationingredients.filter(x => x.administermedicationid == element.administermedication_id);
+                      if(element.expirydate) {
+                        element.expirydate = moment(element.expirydate, "YYYY-MM-DD HH:mm").format("DD-MM-YYYY");
+                      }
+                      this.existingadministermedication.push(element)
+                    });
+                    if(this.administration.isdifferentproductadministered) {
+                      this.administermultiplemedication = this.existingadministermedication.slice();
+                    } else {
+                      this.administermedication = this.existingadministermedication.slice();
                     }
                   }));
               }
@@ -1181,15 +1378,19 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
         }
       }));
   }
-  setProductHistory(id: string, i) {
-    let d = this.appService.AdministermedicationHistory.find(x => x.medicationadministrationid == id && x._index == i);
-    if (d)
-      return d.name;
-    else
-      return this.productName;
-  }
+  addMoreMedication() {
+    this.getFormularyDetail(this.searchCode, (data) => {
+      this.administermedication.push(data);
+    });
 
-  searchProducts(shownf: boolean) {
+  }
+  removeMoreMedication(m: AdministerMedication) {
+    const index: number = this.administermedication.indexOf(m);
+    if (index !== -1) {
+      this.administermedication.splice(index, 1);
+    }
+  }
+  searchProducts(shownf: boolean, isInit: boolean) {
     this.results = null;
     this.showloadingmessage = true;
     this.shownoresultsmessage = false;
@@ -1207,25 +1408,53 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
           } else {
             this.shownoresultsmessage = true;
           }
-          this.getFormularyDetail(this.searchCode);
+          if (this.productType != "custom") {
+            this.getFormularyDetail(this.searchCode, (data) => {
+              if (!isInit || this.administration.isdifferentproductadministered)
+                this.administermedication.push(data);
+            });
+          }
         }));
     }
     return false;
   }
-  getFormularyDetail(code) {
+  onmedicationselected(event) {
+    if(event.productType=='VTM') {
+      return false;
+    }
+    let medication = this.appService.GetAdministrationDoseType(event);
+    this.getFormularyDetail(event.code, (data) => {
+        data.dosetype = medication.dose_type;
+        if(medication.dose_type == DoseType.units) {
+          data.administreddoseunit = medication.dose_units;
+        }
+        if(medication.dose_type == DoseType.strength) {
+          data.administeredstrengthneumerator = medication.dose_strength_neumerator;
+          data.administeredstrengthdenominator = medication.dose_strength_denominator;
+          data.administeredstrengthdenominatorunits = medication.dose_strength_denominator_units;
+          data.administeredstrengthneumeratorunits = medication.dose_strength_neumerator_units;
+          data.administeredstrengthdenominatorunits = medication.dose_strength_denominator_units;
+        }
+        if(medication.dose_type == DoseType.descriptive) {
+          data.administereddescriptivedose ="";
+        }
+        this.administermultiplemedication.push(data);
+    });
+  }
+  removeProductAdministered(p) {
+    this.administermultiplemedication = this.administermultiplemedication.filter(x=>x.__codes.find(x=>x.code!= p.__codes[0].code));
+  }
+  getFormularyDetail(code, cb: (data) => any) {
     var endpoint = this.appService.appConfig.uris.terminologybaseuri + "/Formulary/getformularydetailruleboundbycode"
     this.subscriptions.add(this.apiRequest.getRequest(`${endpoint}/${code}?api-version=1.0`)
       .subscribe((response) => {
         this.isLoadingMedication = false;
         if (response && response.length != 0) {
-          console.log(response);
-
-          this.administermedication = [];
+          this.appService.logToConsole(response);
           var m = new AdministerMedication();
-          this.administermedication.push(m);
           m.administermedication_id = uuid();
           m.personid = this.appService.encounter.person_id;
-          m.encounterid = this.appService.encounter.encounter_id;
+          m.encounterid = this.encounterId;
           m.name = response.name;
           m.producttype = response.productType;
           m.roundingfactor = response.detail.roundingFactorDesc;
@@ -1236,29 +1465,13 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
           var fdbc = response.formularyAdditionalCodes ? response.formularyAdditionalCodes.find(x => x.additionalCodeSystem.toString().toLowerCase() == "fdb") : null;
           var cgc = response.formularyAdditionalCodes ? response.formularyAdditionalCodes.find(x => x.additionalCodeSystem.toString().toLowerCase() == "customgroup") : null;
 
-          if (fdbc) {
-            var additionalCodeDesc = fdbc.additionalCodeDesc;
-            if (additionalCodeDesc) {
-              var acs = additionalCodeDesc.split("|");
-              var index = 0;
-              if (acs.length >= 1)
-                index = 1;
-              var lastacs = acs[index];
-              var group = lastacs.split("-")
-              group.splice(group.length - 1, 1);
-              group = group.join('');
-              this.appService.logToConsole(group);
-              m.classification = group;
-
-            }
-            else {
-              m.classification = "Others";
-            }
+          if (fdbc && fdbc.additionalCodeDesc) {
+            m.classification = fdbc.additionalCodeDesc;
+            m.bnf = fdbc.additionalCode;
           }
-          else
+          else {
             m.classification = "Others";
-
-
+          }
           if (cgc) {
             m.customgroup = cgc.additionalCode;
           }
@@ -1312,10 +1525,11 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
           fid.terminology = "formulary";
           fid.administermedicationid = m.administermedication_id;
           m.__codes.push(fid);
-
-          console.log(this.administermedication);
+          cb(m);
         }
-        else { }
+        else {
+          this.appService.logToConsole("Medication not found");
+        }
       }));
   }
   expandtoggle(code) {
@@ -1343,7 +1557,6 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
     if (this.prescription.ismodifiedrelease) {
       p.flags.push("ModifiedRelease");
     }
-
     p.formularyStatusCd = [];
     if (shownf) {
       this.searchtype = "non-formulary results"
@@ -1354,7 +1567,6 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
       p.formularyStatusCd.push("001");
     }
     const postdata = JSON.stringify(p);
-
     return postdata;
   }
 
@@ -1362,7 +1574,9 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
     this.productName = e.name;
     this.isDropdownshow = false;
     this.isLoadingMedication = true;
-    this.getFormularyDetail(e.code);
+    this.getFormularyDetail(e.code, (data) => {
+      this.administermedication[this.medIndexSelected] = data;
+    });
   }
 
   MedicationHasFlag(flag, m?: any) {
@@ -1378,6 +1592,7 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
       const ratio = this.medication.strengthneumerator / this.administration.administeredstrengthneumerator;
       const volume = this.medication.strengthdenominator / ratio;
       this.administration.administeredstrengthdenominator = parseFloat(volume.toFixed(2));
+      this.setMaxDoseWarning();
     }
   }
 
@@ -1389,14 +1604,28 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
     if (this.medication.strengthneumerator > 0 && this.medication.strengthdenominator > 0) {
       const ratio = this.medication.strengthdenominator / this.administration.administeredstrengthdenominator;
       const volume = this.medication.strengthneumerator / ratio;
-      this.administration.administeredstrengthneumerator = parseFloat(volume.toFixed(2));;
+      this.administration.administeredstrengthneumerator = parseFloat(volume.toFixed(2));
+      this.setMaxDoseWarning();
     }
   }
 
+  volumeFordoseAdministerMedication(medication) {     
+    if (medication.strengthneumerator > 0 && medication.strengthdenominator > 0) {
+      const ratio = medication.strengthneumerator / medication.administeredstrengthneumerator;
+      const volume = medication.strengthdenominator / ratio;
+      medication.administeredstrengthdenominator = parseFloat(volume.toFixed(2));
+    }
+  }
+
+  doseForVolumeAdministerMedication(medication) {    
+    if (medication.strengthneumerator > 0 && medication.strengthdenominator > 0) {
+      const ratio = medication.strengthdenominator / medication.administeredstrengthdenominator;
+      const volume = medication.strengthneumerator / ratio;
+      medication.administeredstrengthneumerator = parseFloat(volume.toFixed(2));
+    }
+  }
   onResupply(e, template: TemplateRef<any>): void {
     if (e.target.checked) {
-      console.log(`${this.administration.prescription_id} ${this.administration.medication_id}`);
-
       this.subscriptions.add(
         this.apiRequest.postRequest(this.appService.baseURI +
           "/GetListByPost?synapsenamespace=local&synapseentityname=epma_prescriptionmedicaitonsupply", this.createDrugRecordFilter(this.administration.prescription_id, this.medicationCode))
@@ -1422,15 +1651,12 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
               //     }
               //   }
               // }
-
             } else {
               this.findActiveSuppyRequest();
             }
           }
           )
       )
-
-
     }
   }
   findActiveSuppyRequest() {
@@ -1440,8 +1666,6 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
         this.createSupplyRequestFilter())
         .subscribe((response) => {
           let supReqRespArray: SupplyRequest[] = response;
-          console.log(supReqRespArray);
-
           if (supReqRespArray.length > 0) {
             if (supReqRespArray.filter(s => s.requeststatus == SupplyRequestStatus.Incomplete).length > 0) {
               this.validatiommessage = 'A request has already been made but it is incomplete. Please call pharmacy to expedite if necessary.';
@@ -1450,7 +1674,7 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
               this.validatiommessage = 'A pharmacy request has been made and is pending for approval. Please call pharmacy to expedite if necessary.';
               this.administration.requestresupply = false;
             } else if (supReqRespArray.filter(s => s.requeststatus == SupplyRequestStatus.Approved).length > 0) {
-              this.validatiommessage = 'A pharmacy request has been made and is pending fulfilled. Please call pharmacy to expedite if necessary.';
+              this.validatiommessage = 'A pharmacy request has been made and is waiting to be dispensed. Please call pharmacy to expedite if necessary.';
               this.administration.requestresupply = false;
             }
           }
@@ -1467,7 +1691,7 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
     this.componentModuleData = new ComponentModuleData();
     this.componentModuleData.elementTag = "app-warnings"
     this.componentModuleData.moduleContext.apiService = this.apiRequest;
-    this.componentModuleData.moduleContext.encouterId = this.appService.encounter.encounter_id;
+    this.componentModuleData.moduleContext.encouterId = this.encounterId;
     this.componentModuleData.moduleContext.personId = this.appService.personId;
     this.componentModuleData.moduleContext.refreshonload = false;
     this.componentModuleData.moduleContext.existingwarnings = true;
@@ -1520,6 +1744,80 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
 
     return JSON.stringify(body);
   }
+  LoadHistory() {
+    this.isShowHistory = false;
+    if (this.editpopuptypetype == "View History") {
+      this.isShowAdministrationHistory = false;
+      this.isShowHistory = true;
+    } else {
+      this.isShowAdministrationHistory = false;
+      this.isShowHistory = false;
+    }
+    this.appService.MedicationadministrationHistory = [];
+    this.appService.DoseEventsHistory = [];
+    this.appService.InfusionEventsHistory = [];
+    if (this.currentDose.dose_id) {
+      this.dr.getMedicationAdministrationHistory(this.currentDose.dose_id, (witnessHistory) => {
+        // set product data and witness
+        if (this.administration && this.administration.correlationid) {
+          this.administration.__administerMedication = this.appService.AdministermedicationHistory.filter(x => x.correlationid == this.administration.correlationid);
+        }
+        this.appService.MedicationadministrationHistory.forEach(element => {
+          element.__administerMedication = this.appService.AdministermedicationHistory.filter(x => x.correlationid == element.correlationid);
+          let witness = witnessHistory.find(e => e.correlationid == element.correlationid);
+          if (witness) {
+            element.__witnessName = witness.displayname;             
+            if(element.correlationid==this.administration.correlationid) {
+              this.administration.__witnessName = witness.displayname;
+            }
+          }         
+        });
+
+        if (this.currentDose.isinfusion) {
+          let temp = [];
+          this.dr.getInfusionEventsHistory(this.currentDose.dose_id, () => {
+            this.appService.InfusionEventsHistory.forEach(element => {
+              let admin = null;
+              if (element.correlationid) {
+                admin = this.appService.MedicationadministrationHistory.find(x => x.correlationid == element.correlationid);
+              } else {
+                admin = this.appService.MedicationadministrationHistory.find(x => x.administrationstartime == element.eventdatetime && !temp.includes((<any>x)._row_id));
+              }
+              if (admin) {
+                temp.push((<any>admin)._row_id);
+                element.__administredinfusionrate = admin.administredinfusionrate;
+                element.__administreddosesize = admin.administreddosesize;
+                element.__administeredstrengthneumerator = admin.administeredstrengthneumerator;
+                element.__administeredstrengthneumeratorunits = admin.administeredstrengthneumeratorunits;
+                element.__administeredstrengthdenominator = admin.administeredstrengthdenominator;
+                element.__administeredstrengthdenominatorunits = admin.administeredstrengthdenominatorunits;
+                element.__witnessName = admin.__witnessName;
+              }
+            });
+            this.SortAdministrationHistory();
+          });
+        } else {
+          this.dose_id = this.currentDose.dose_id.split('_')[1];
+          this.dr.getDoseEventsHistory(this.currentDose.dose_id, () => {
+            this.SortAdministrationHistory();
+          });
+        }
+      });
+    }
+  }
+  SortAdministrationHistory() {
+    this.appService.MedicationadministrationHistory.forEach(element => {  
+        this.administrationHistory.push({date : element.modifiedon, recordType: "administration", data : element });
+    });
+    this.appService.DoseEventsHistory.forEach(element => {
+      this.administrationHistory.push({date : element.modifiedon, recordType: "doseevent", data : element });
+    });
+    this.appService.InfusionEventsHistory.forEach(element => {
+      this.administrationHistory.push({date : element.modifiedon, recordType: "infusionevent", data : element });
+    });
+    this.administrationHistory.sort((b, a) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }
+
   openConfirmModal(template: TemplateRef<any>) {
     this.confirmModalRef = this.modalService.show(template, {
       backdrop: true,
@@ -1542,6 +1840,214 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
     this.displayStyle = false;
     this.hideAdministrationForm.emit(false);
   }
+  undoAdministrationConfirm() {
+    let eventDatetime = null;
+    let isNotUndoAllow = null;
+    if (this.prescription.isinfusion) {
+      eventDatetime = moment(this.currentDose.dose_id.split('_')[1], "YYYYMMDDHHmm").toDate();
+    } else {
+      eventDatetime = moment(this.currentDose.dose_id.split('_')[0], "YYYYMMDDHHmm").toDate();
+    }
+    // find the time from logical id 12
+    // update time if there is transfer
+    let isEventTransfer = this.appService.DoseEvents.find(e => e.logicalid == this.currentDose.dose_id && e.eventtype == "Transfer");
+    if (isEventTransfer) {
+      eventDatetime = moment(isEventTransfer.dosedatetime);
+    }
+    if(this.appService.GetCurrentPosology(this.prescription).infusiontypeid == "rate"){
+    let startimedose = moment(eventDatetime, "YYYY-MM-DD HH:mm").format("HH:mm");
+    this.transferRateInfution(this.currentDose, moment(eventDatetime, "DD-MM-YYYY").toDate(), startimedose, true, (message) => {
+      if (message == "success") {
+      
+      } else {
+        isNotUndoAllow = message;
+      }
+    });
+    }
+    else{
+
+    isNotUndoAllow = this.appService.events.find(x => x.prescription_id == this.prescription.prescription_id && moment(eventDatetime).isSame(x.eventStart) && x.dose_id != this.currentDose.dose_id && !x.dose_id.includes("dur") && !x.dose_id.includes("flowrate") && !x.dose_id.includes("infusionevent"));
+    }
+    if (isNotUndoAllow && !this.appService.GetCurrentPosology(this.prescription).prn) {
+      this.undoConflictTime = eventDatetime;
+      this.undoAdministrationdisplayStyle =false;
+      this.undoAdministrationModal();
+    } else {
+      this.undoAdministration();
+    }
+  }
+  undoAdministrationDecline() {
+    this.undoAdministrationdisplayStyle = false;
+    this.hideAdministrationForm.emit(false);
+  }
+  createEndevent(dose: any, pres: any) {
+    let originalDoseStartTime = this.appService.Prescription.find(x => x.prescription_id == pres.prescription_id).__posology.find(y => y.posology_id == dose.posology_id).__dose.find(z => z.dose_id == dose.dose_id.split("_")[2]).dosestartdatetime;
+    let originalDoseEndTime = this.appService.Prescription.find(x => x.prescription_id == pres.prescription_id).__posology.find(y => y.posology_id == dose.posology_id).__dose.find(z => z.dose_id == dose.dose_id.split("_")[2]).doseenddatatime;
+
+    var a = moment(originalDoseEndTime);//now
+    var b = moment(originalDoseStartTime);
+    var convertToMinites = a.diff(b, 'minutes');
+
+    let splitLogicalId = dose.dose_id.split('_');
+    let date = moment();
+    date.set({ 'year': splitLogicalId[1].substring(0, 4), 'month': splitLogicalId[1].substring(4, 6) - 1, 'date': splitLogicalId[1].substring(6, 8), 'hour': splitLogicalId[1].substring(8, 10), 'minute': splitLogicalId[1].substring(10, 12), 'second': 0 })
+    let originalLogicid = moment(date).add(convertToMinites, "minutes");
+    let endtDatetemp = moment(dose.eventStart).add(convertToMinites, "minutes");
+
+    let endaddedtime = 'end_' + moment(originalLogicid).format('YYYYMMDDHHmm') + "_" + dose.dose_id.split("_")[2];
+    return {
+        "prescription_id": dose.prescription_id,
+        "posology_id": dose.posology_id,
+        "dose_id": endaddedtime,
+        "eventStart": endtDatetemp,
+        "eventEnd": null,
+        "prn": false,
+        "iscancel": false,
+        "doctorsorder": false,
+        "isinfusion": true,
+        "content": "<div class='InfusionCompleteoverdue'></div>",
+        "title": "Infusion Complete overdue",
+        "admitdone": false,
+        "opacityclass": "",
+        "diffrence": 0,
+        "stackclass": false
+    }
+    
+}
+transferRateInfution(dose: any, startDate: Date, startTime: string, transferStart: boolean, cb: (message: string) => any ) {
+  let doselist = [];
+
+  doselist = this.appService.events.sort((a, b) => new Date(a.eventStart).getTime() - new Date(b.eventStart).getTime()).filter(e => e.posology_id == dose.posology_id && !e.dose_id.includes("dur") && !e.dose_id.includes("flowrate") && !e.dose_id.includes("infusionevent"));
+  // if (this.appService.Prescription.find(p => p.__posology[0].posology_id == dose.posology_id && p.__posology[0].infusiontypeid == "ci")) {
+
+  let pres = this.appService.Prescription.find(p => p.prescription_id == dose.prescription_id).__posology.find(po => po.posology_id == dose.posology_id);
+
+  if ((pres.infusiontypeid == "ci" || pres.infusiontypeid == InfusionType.pca) ||
+      (pres.infusiontypeid == "rate" && pres.frequency == "variable")
+  ) {
+     
+  }
+  else {
+
+      let newDoseDateTime = moment(new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), +startTime.split(':')[0], +startTime.split(':')[1]));
+
+      // for (let dose of doselist)
+      //  var index = doselist.indexOf(dose);
+      var index = doselist.findIndex(x => x.dose_id == dose.dose_id);
+      let nextstartItem
+      let lastenditem
+      let currentend
+      let nexttime
+      let endtime
+      let currentendtime
+      if (doselist.length == 1 && doselist[0].dose_id.includes("start")) {
+          currentend = this.createEndevent(dose, pres);
+          let dosesrate = [];
+          dosesrate.push(dose);
+
+          dosesrate.push(currentend);
+
+         
+      }
+      if (index >= 0 && index < doselist.length - 1) {
+
+          currentend = doselist[index + 1];
+          nextstartItem = doselist[index + 2];
+
+          if (currentend.dose_id.includes("start")) {
+
+              currentend = this.createEndevent(dose, pres);
+              nextstartItem = doselist[index + 1];
+              let testcurrenttime= moment(currentend.eventStart).clone();
+              testcurrenttime.add(this.appService.administrationTimeDiffInMinute, 'minutes')
+              testcurrenttime = moment(currentend.eventStart).add(moment(newDoseDateTime).diff(dose.eventStart, 'minutes'), 'minutes')
+              if(testcurrenttime.isSameOrAfter(moment(nextstartItem.eventStart))){
+                  cb("The administration event cannot be administered at a time after the next administration event.");
+                  return;
+              }
+              
+          }
+
+
+          lastenditem = doselist[index - 1];
+          if (nextstartItem) {
+              nexttime = moment(nextstartItem.eventStart).clone();
+          }
+          else {
+              // if (this.appService.Prescription.find(p => p.prescription_id == dose.prescription_id).__posology.find(po => po.posology_id == dose.posology_id).prescriptionenddate) {
+              //     nexttime = moment(this.appService.Prescription.find(p => p.prescription_id == dose.prescription_id).__posology.find(po => po.posology_id == dose.posology_id).prescriptionenddate).clone();
+              // }
+              // else {
+              nexttime = moment().add(8, 'days');
+              // }
+          }
+          if (index == 0) {
+              // endtime = moment(this.appService.Prescription.find(x => x.prescription_id == dose.prescription_id).startdatetime)
+              endtime = moment(this.appService.encounter.sortdate);
+          }
+          else {
+              endtime = moment(lastenditem.eventStart).clone();
+          }
+          currentendtime = moment(currentend.eventStart).add(moment(newDoseDateTime).diff(dose.eventStart, 'minutes'), 'minutes')
+          nexttime.add(- this.appService.administrationTimeDiffInMinute, 'minutes')
+          if (index != 0) {
+              endtime.add(this.appService.administrationTimeDiffInMinute, 'minutes')
+          }
+      }
+      let timediffback = moment(newDoseDateTime).diff(dose.eventStart, 'minutes');
+      let timediffForword = moment(newDoseDateTime).diff(nexttime, 'minutes');
+      if (timediffback < 0) {
+          //  let dif=moment(lastenditem.eventStart).diff(moment(newDoseDateTime),'minutes')
+          if (moment(endtime).isSameOrAfter(moment(newDoseDateTime))) {
+              if (index == 0) {
+                  cb("The time of transfer cannot be earlier than the admission date/time");
+              }
+              else {
+                  if (transferStart)
+                      cb("The administration event cannot be administered at a time before the previous administration event.");
+                  else
+                      cb("The administration event cannot be transferred to a time before the previous administration event.");
+              }
+
+          }
+          else {
+              let dosesrate = [];
+              dosesrate.push(dose);
+
+              dosesrate.push(currentend);
+             
+
+         
+          }
+      }
+      else if (timediffback > 0) {
+
+          if (moment(currentendtime).isSameOrAfter(moment(nexttime))) {
+              if (transferStart)
+                  cb("The administration event cannot be administered at a time after the next administration event.");
+              else
+                  cb("The administration event cannot be transferred to a time after the next administration event.");
+          }
+          else {
+              let dosesrate = [];
+              dosesrate.push(dose);
+
+              dosesrate.push(currentend);
+
+
+             
+          }
+      }
+      else {
+          cb("success");
+      }
+  }
+
 }
 
-
+}
+export class  AdministrationHistory {
+  date : any;
+  recordType: any;
+  data: any;
+}

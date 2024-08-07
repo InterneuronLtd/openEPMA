@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -81,7 +81,7 @@ export class PauseInfusionComponent implements OnInit, OnDestroy {
     }
     this.infusionEvents.eventdatetime = this.appService.getDateTimeinISOFormat(moment(this.administrationstartime, "DD-MM-YYYY HH:mm").toDate());
     this.infusionEvents.planneddatetime = this.appService.getDateTimeinISOFormat(moment(this.administrationstartime, "DD-MM-YYYY HH:mm").toDate());
-    this.infusionEvents.logicalid = "pause" + "_" + this.createLogicalId(this.infusionEvents.eventdatetime, this.infusionEvents.dose_id);
+    //this.infusionEvents.logicalid = "pause" + "_" + this.createLogicalId(this.infusionEvents.eventdatetime, this.infusionEvents.dose_id);
     this.infusionEvents.posology_id = this.appService.GetCurrentPosology(this.prescription).posology_id;
     this.infusionEvents.eventtype = "pause";
     this.infusionEvents.comments = this.comments;
@@ -106,7 +106,7 @@ export class PauseInfusionComponent implements OnInit, OnDestroy {
           this.subjects.closeAppComponentPopover.next();
 
           if (this.appService.IsDataVersionStaleError(error)) {
-            this.subjects.ShowRefreshPageMessage.next(error);
+            this.appService.RefreshPageWithStaleError(error);
           }
         }));
   }
@@ -141,6 +141,7 @@ export class PauseInfusionComponent implements OnInit, OnDestroy {
     if (event.infusionEvents) {
       this.infusionEvents = event.infusionEvents;
       this.infusionEvents.modifiedby = this.appService.loggedInUserName;
+      this.infusionEvents.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
       // for update exsiting event
       this.comments = this.infusionEvents.comments;
       this.stardate = moment(this.infusionEvents.eventdatetime, "YYYY-MM-DD HH:mm").format("DD-MM-YYYY");
@@ -161,8 +162,11 @@ export class PauseInfusionComponent implements OnInit, OnDestroy {
     } else {
       this.infusionEvents.infusionevents_id = uuid();
       this.infusionEvents.dose_id = uuid();
+      this.infusionEvents.logicalid = "pause" + "_" + this.createLogicalId(this.infusionEvents.eventdatetime, this.infusionEvents.dose_id);
       this.infusionEvents.modifiedby = this.appService.loggedInUserName;
       this.infusionEvents.administeredby = this.appService.loggedInUserName;
+      this.infusionEvents.createdon = this.appService.getDateTimeinISOFormat(moment().toDate());
+      this.infusionEvents.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
       let eventRecord = this.appService.events.sort((b, a) => new Date(a.eventStart).getTime() - new Date(b.eventStart).getTime()).filter(e => e.posology_id == this.appService.GetCurrentPosology(this.prescription).posology_id && !e.dose_id.includes("dur") && !e.dose_id.includes("flowrate") && !e.dose_id.includes("infusionevent"));
       let doneInfusion = eventRecord.find(e => e.admitdone);
       let notDoneInfusion = eventRecord.slice().filter(x => moment(x.eventStart).isAfter(doneInfusion.eventStart)).reverse().find(e => !e.admitdone)

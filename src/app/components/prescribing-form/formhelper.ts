@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ import { AppService } from 'src/app/services/app.service';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { PrescribingFormComponent } from './prescribing-form.component';
 import { Injectable, OnDestroy } from '@angular/core';
-import { DoseType, InfusionType, FrequencyType, IntervalType, DoseForm, DaysOfWeek, FormContext, ReconciliationListActions, PrescriptionContext } from 'src/app/services/enum';
+import { DoseType, InfusionType, FrequencyType, IntervalType, DoseForm, DaysOfWeek, FormContext, ReconciliationListActions, PrescriptionContext, Common } from 'src/app/services/enum';
 import { FormGroup } from '@angular/forms';
 import { SubjectsService } from 'src/app/services/subjects.service';
 
@@ -86,6 +86,9 @@ export class FormSettings implements OnDestroy {
   vtmstyleVolumeUnits: string;
   vtmstyleDoseToVolumeRatio = 1;
   originalcreatedon: any;
+  prnMaxDose_TimeSlot: Timeslot;
+  formContext: FormContext;
+
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
   }
@@ -121,6 +124,9 @@ export class FormSettings implements OnDestroy {
       this.dose_units = "L/min";
       this.infusionrateunits = "L/min";
       this.isOxygen = true;
+    }
+    else if (!this.medication.formularyIngredients || (this.medication.formularyIngredients && this.medication.formularyIngredients.length == 0)) {
+      this.dose_type = DoseType.descriptive;
     }
     else
       if (this.medication.productType.toLowerCase() == "vtm" || this.vtmstyle) {
@@ -618,8 +624,16 @@ export class FormSettings implements OnDestroy {
       if (checkedcount == 0) {
         rt.isPrimary = true;
       }
-      else if (checkedcount >= 1) {
-        rt.isPrimary = false;
+      else if (checkedcount >= 1) {//fix: EPMA-3103
+        //if a primary route is added again, it should not change it to non primary in case of array based route lookup and add. 
+        if (this.medication.productType.toLowerCase() == "custom") {
+          if (!rt.isPrimary) {
+            rt.isPrimary = false;
+          }
+        }
+        else {
+          rt.isPrimary = false;
+        }
       }
     }
     else {
@@ -821,6 +835,7 @@ export class FormSettings implements OnDestroy {
       p.hasbeenmodified = true;
       p.createdon = p.__editingprescription.createdon;
       p.createdby = p.__editingprescription.createdby;
+      p.createdbyrole = p.__editingprescription.createdbyrole;
     }
     else {
       if (this.originalcreatedon)
@@ -830,14 +845,20 @@ export class FormSettings implements OnDestroy {
 
       p.createdby = this.appService.loggedInUserName;
       p.hasbeenmodified = false;
+      p.createdbyrole = JSON.stringify(this.appService.loggedInUserRoles.filter(x => x.toLowerCase().startsWith("epma")));
+
     }
     p.allowsubstitution = false;
     p.comments = this.GetFormKeyValuesItem(formkeyvalues, "comments") ?? null;
-    p.encounter_id = this.appService.encounter.encounter_id;
+    if (this.formContext == FormContext.op)
+      p.encounter_id = Common.op_encounter_placeholder;
+    else
+      p.encounter_id = this.appService.encounter.encounter_id;
     p.epma_prescriptionevent_id = "";
     p.otherindications = this.GetFormKeyValuesItem(formkeyvalues, "otherindications") ?? null;
     p.infusiontype_id = this.GetFormKeyValuesItem(formkeyvalues, "infusiontype") ?? null;
     p.lastmodifiedby = this.appService.loggedInUserName; //"dev";
+    p.lastmodifiedbyrole = JSON.stringify(this.appService.loggedInUserRoles.filter(x => x.toLowerCase().startsWith("epma")));
     p.lastmodifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
     p.orderformtype = "";
     p.person_id = this.appService.personId;
@@ -915,10 +936,12 @@ export class FormSettings implements OnDestroy {
     p.ismodifiedrelease = this.GetFormKeyValuesItem(formkeyvalues, "ismodifiedrelease") ?? null;
     p.isgastroresistant = this.GetFormKeyValuesItem(formkeyvalues, "isgastroresistant") ?? null;
     p.moatoip = this.moatoip;
+    p.printingrequired = this.medication.detail.isPrescriptionPrintingRequired;
+
     p.__medications = [];
 
     p.__drugcodes = this.medication.formularyAdditionalCodes;
-
+    p.__ignoreDuplicateWarnings = this.medication.detail.ignoreDuplicateWarnings;
     var m = new Medication();
     p.__medications.push(m);
     m.person_id = p.person_id
@@ -938,29 +961,36 @@ export class FormSettings implements OnDestroy {
     var fdbc = this.medication.formularyAdditionalCodes ? this.medication.formularyAdditionalCodes.find(x => x.additionalCodeSystem.toString().toLowerCase() == "fdb") : null;
     var cgc = this.medication.formularyAdditionalCodes ? this.medication.formularyAdditionalCodes.find(x => x.additionalCodeSystem.toString().toLowerCase() == "customgroup") : null;
 
-    if (fdbc) {
-      var additionalCodeDesc = fdbc.additionalCodeDesc;
-      if (additionalCodeDesc) {
-        var acs = additionalCodeDesc.split("|");
-        var index = 0;
-        if (acs.length > 1)
-          index = 1;
-        var lastacs = acs[index];
-        var group = lastacs.split("-")
-        group.splice(group.length - 1, 1);
-        group = group.join('');
-        this.appService.logToConsole(group);
-        if (group) {
-          m.classification = group.trim();
-          m.bnf = group[0];
-        }
-      }
-      else {
-        m.classification = "Others";
-      }
+    if (fdbc && fdbc.additionalCodeDesc) {
+      m.classification = fdbc.additionalCodeDesc;
+      m.bnf = fdbc.additionalCode;
     }
-    else
+    else {
       m.classification = "Others";
+    }
+    // if (fdbc) {
+    //   var additionalCodeDesc = fdbc.additionalCodeDesc;
+    //   if (additionalCodeDesc) {
+    //     var acs = additionalCodeDesc.split("|");
+    //     var index = 0;
+    //     if (acs.length > 1)
+    //       index = 1;
+    //     var lastacs = acs[index];
+    //     var group = lastacs.split("-")
+    //     group.splice(group.length - 1, 1);
+    //     group = group.join('');
+    //     this.appService.logToConsole(group);
+    //     if (group) {
+    //       m.classification = group.trim();
+    //       m.bnf = group[0];
+    //     }
+    //   }
+    //   else {
+    //     m.classification = "Others";
+    //   }
+    // }
+    // else
+    //   m.classification = "Others";
 
     m.isantimicrobial = this.isAntiviral || this.isAntibiotic;
 
@@ -1106,7 +1136,7 @@ export class FormSettings implements OnDestroy {
     //as part of the change to enable multiple posology on a prescription  
     let inpatientcontextid = this.appService.MetaPrescriptioncontext.find(x => x.context == PrescriptionContext.Inpatient).prescriptioncontext_id;
 
-    if (editingprescription && (this.infusionType == InfusionType.ci || editingprescription.prescriptioncontext_id != inpatientcontextid))
+    if (editingprescription && (this.infusionType == InfusionType.ci || this.infusionType == InfusionType.pca || editingprescription.prescriptioncontext_id != inpatientcontextid))
       p.__posology[0].posology_id = editingprescription.__posology[0].posology_id;
     else
       p.__posology[0].posology_id = uuid();
@@ -1192,6 +1222,25 @@ export class FormSettings implements OnDestroy {
     p.__posology[0].infusionrate = +this.GetFormKeyValuesItem(formkeyvalues, "infusionrate") ?? null;
     p.__posology[0].infusionrateunits = this.infusionrateunits;
     p.__posology[0].infusiontypeid = this.infusionType;
+    p.__posology[0].infusiondoserate = +this.GetFormKeyValuesItem(formkeyvalues, "infusiondoserate") == 0 ? null : +this.GetFormKeyValuesItem(formkeyvalues, "infusiondoserate");
+    p.__posology[0].infusiondoserateunits = +this.GetFormKeyValuesItem(formkeyvalues, "infusiondoserate") == 0 ? null : this.GetFormKeyValuesItem(formkeyvalues, "infusiondoserateunits");
+    p.__posology[0].concentration = this.GetFormKeyValuesItem(formkeyvalues, "concentration") ?? null;
+
+    let doseperkgrange = (this.GetFormKeyValuesItem(formkeyvalues, "calculatortype") == "kg" || this.GetFormKeyValuesItem(formkeyvalues, "calculatortype") == "ikg") ? this.GetFormKeyValuesItem(formkeyvalues, "calculatorinput") : null;
+    doseperkgrange = this.GetDoseSizeRange(doseperkgrange);
+    p.__posology[0].doseperkg = +doseperkgrange[0] ? +doseperkgrange[0] : null;
+    p.__posology[0].doseperkgrangemax = +doseperkgrange[1] ? +doseperkgrange[1] : null;
+
+    p.__posology[0].referenceweighttype = (this.GetFormKeyValuesItem(formkeyvalues, "calculatortype") == "kg" ||
+      this.GetFormKeyValuesItem(formkeyvalues, "calculatortype") == "ikg") ? this.GetFormKeyValuesItem(formkeyvalues, "calculatortype") : null;
+
+    let dosepersarange = (this.GetFormKeyValuesItem(formkeyvalues, "calculatortype") == "m2") ? this.GetFormKeyValuesItem(formkeyvalues, "calculatorinput") : null;
+    dosepersarange = this.GetDoseSizeRange(dosepersarange);
+    p.__posology[0].dosepersa = +dosepersarange[0] ? +dosepersarange[0] : null;
+    p.__posology[0].dosepersarangemax = +dosepersarange[1] ? +dosepersarange[1] : null;
+
+
+
     if (this.dose_type != DoseType.descriptive && this.medication.productType.toLowerCase() != "vtm") {
       p.__posology[0].totalquantity = +this.GetFormKeyValuesItem(formkeyvalues, "totalquantity") ?? null;
       p.__posology[0].totalquantitytext = "";
@@ -1201,11 +1250,10 @@ export class FormSettings implements OnDestroy {
       p.__posology[0].totalquantitytext = this.GetFormKeyValuesItem(formkeyvalues, "totalquantitytext") ?? null;
     }
     if (p.__posology[0].prn) {
-      p.__posology[0].maxnumofdosesperday = +this.GetFormKeyValuesItem(formkeyvalues, "maxnumofdosesperday") ?? null;
+      p.__posology[0].prnmaxdose = JSON.stringify(new PRNMaxDose().GetObject(this));
     }
     else {
-      p.__posology[0].maxnumofdosesperday = null;
-
+      p.__posology[0].prnmaxdose = null;
     }
     var enddate = this.GetFormKeyValuesItem(formkeyvalues, "enddate");
     var endtime = this.GetFormKeyValuesItem(formkeyvalues, "endtime");
@@ -1286,6 +1334,21 @@ export class FormSettings implements OnDestroy {
             if (isNaN(sn) || sn > 0)
               d.strengthneumerator = sn;
             d.descriptivedose = this.GetFormKeyValuesItem(formkeyvalues, "dose_description") ?? null;
+
+            let doseperkgrange = (this.GetFormKeyValuesItem(formkeyvalues, "calculatortype") == "kg" ||
+              this.GetFormKeyValuesItem(formkeyvalues, "calculatortype") == "ikg") ? this.GetFormKeyValuesItem(formkeyvalues, "calculatorinput") : null;
+            doseperkgrange = this.GetDoseSizeRange(doseperkgrange);
+            d.doseperkg = +doseperkgrange[0] ? +doseperkgrange[0] : null;
+            d.doseperkgrangemax = +doseperkgrange[1] ? +doseperkgrange[1] : null;
+
+            d.referenceweighttype = (this.GetFormKeyValuesItem(formkeyvalues, "calculatortype") == "kg" ||
+              this.GetFormKeyValuesItem(formkeyvalues, "calculatortype") == "ikg") ? this.GetFormKeyValuesItem(formkeyvalues, "calculatortype") : null;
+
+            let dosepersarange = (this.GetFormKeyValuesItem(formkeyvalues, "calculatortype") == "m2") ? this.GetFormKeyValuesItem(formkeyvalues, "calculatorinput") : null;
+            dosepersarange = this.GetDoseSizeRange(dosepersarange);
+            d.dosepersa = +dosepersarange[0] ? +dosepersarange[0] : null;
+            d.dosepersarangemax = +dosepersarange[1] ? +dosepersarange[1] : null;
+
           }
           else {
             let doserange = this.GetDoseSizeRange(i.dose_size);
@@ -1300,6 +1363,20 @@ export class FormSettings implements OnDestroy {
             d.strengthdenominator = +i.dose_strength_denominator ?? null;
             d.strengthneumerator = +i.dose_strength_neumerator ?? null;
             d.descriptivedose = i.dose_description ?? null;
+
+            let doseperkgrange = (this.GetFormKeyValuesItem(formkeyvalues, "calculatortype") == "kg" ||
+              this.GetFormKeyValuesItem(formkeyvalues, "calculatortype") == "ikg") ? i.calculatorinput : null;
+            doseperkgrange = this.GetDoseSizeRange(doseperkgrange);
+            d.doseperkg = +doseperkgrange[0] ? +doseperkgrange[0] : null;
+            d.doseperkgrangemax = +doseperkgrange[1] ? +doseperkgrange[1] : null;
+
+            d.referenceweighttype = (this.GetFormKeyValuesItem(formkeyvalues, "calculatortype") == "kg" ||
+              this.GetFormKeyValuesItem(formkeyvalues, "calculatortype") == "ikg") ? this.GetFormKeyValuesItem(formkeyvalues, "calculatortype") : null;
+
+            let dosepersarange = (this.GetFormKeyValuesItem(formkeyvalues, "calculatortype") == "m2") ? i.calculatorinput : null;
+            dosepersarange = this.GetDoseSizeRange(dosepersarange);
+            d.dosepersa = +dosepersarange[0] ? +dosepersarange[0] : null;
+            d.dosepersarangemax = +dosepersarange[1] ? +dosepersarange[1] : null;
           }
           d.doseunit = this.dose_units;
           d.strengthdenominatorunit = this.dose_strength_denominator_units
@@ -1317,7 +1394,7 @@ export class FormSettings implements OnDestroy {
     else {//infusion
 
       //set linkedinfusion id if present else reset to null
-      if (this.infusionType == InfusionType.ci && this.linkedinfusionid) {
+      if ((this.infusionType == InfusionType.ci || this.infusionType == InfusionType.pca) && this.linkedinfusionid) {
         p.linkedinfusionid = this.linkedinfusionid;
       }
       else {
@@ -1325,7 +1402,7 @@ export class FormSettings implements OnDestroy {
       }
 
       //ci and variable ci/rate  has no dosing pattern, create a new dosing pattern for these
-      if (this.infusionType == InfusionType.ci || this.interval_type == IntervalType.variable) {
+      if (this.infusionType == InfusionType.ci || this.infusionType == InfusionType.pca || this.interval_type == IntervalType.variable) {
         this.dosing_pattern = [];
         var ts = new Timeslot();
         var starttimestring = this.GetFormKeyValuesItem(formkeyvalues, "starttime");
@@ -1366,13 +1443,15 @@ export class FormSettings implements OnDestroy {
           d.person_id = p.person_id;
           d.infusionduration = +this.GetFormKeyValuesItem(formkeyvalues, "infusionduration") ?? null;
           d.infusionrate = +this.GetFormKeyValuesItem(formkeyvalues, "infusionrate") ?? null;
+          d.infusiondoserate = +this.GetFormKeyValuesItem(formkeyvalues, "infusiondoserate") == 0 ? null : +this.GetFormKeyValuesItem(formkeyvalues, "infusiondoserate");
+          d.infusiondoserateunits = +this.GetFormKeyValuesItem(formkeyvalues, "infusiondoserate") == 0 ? null : this.GetFormKeyValuesItem(formkeyvalues, "infusiondoserateunits");
 
           var startdate = this.GetFormKeyValuesItem(formkeyvalues, "startdate");
           d.dosestartdatetime = this.appService.getDateTimeinISOFormat(FormSettings.GetMomentForDateAndTimeslot(moment(startdate), pt).toDate());
           d.doseenddatatime = this.appService.getDateTimeinISOFormat(FormSettings.GetMomentForDateAndTimeslot(moment(startdate), pt).toDate());
 
           //calculate end datetime based on infustion duration for rate, prescription end date time for CI
-          if (this.infusionType == InfusionType.ci) {
+          if (this.infusionType == InfusionType.ci || this.infusionType == InfusionType.pca) {
             var enddate = this.GetFormKeyValuesItem(formkeyvalues, "enddate") ?? null;
             var endtime = this.GetFormKeyValuesItem(formkeyvalues, "endtime") ?? null;
 
@@ -1432,6 +1511,9 @@ export class FormSettings implements OnDestroy {
             if (i > 0)
               d.continuityid = p.__posology[0].__dose[0].dose_id;
 
+            d.infusiondoserate = +ir[i].starttime.infusiondoserate == 0 ? null : +ir[i].starttime.infusiondoserate;
+            d.infusiondoserateunits = +ir[i].starttime.infusiondoserate == 0 ? null : this.GetFormKeyValuesItem(formkeyvalues, "infusiondoserateunits");
+
             d.correlationid = p.correlationid;
             p.__posology[0].__dose.push(d);
           }
@@ -1454,12 +1536,17 @@ export class FormSettings implements OnDestroy {
     //     this.appService.MetaReviewstatus.find(x => x.status.toLowerCase() == "amber").reviewstatus_id;
     // }
     p.__editingreviewstatus.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
+    p.__editingreviewstatus.modifieddatetime = this.appService.getDateTimeinISOFormat(moment().toDate());
     p.__editingreviewstatus.newcorrelationid = correlationid;
     p.__editingreviewstatus.person_id = p.person_id;
     p.__editingreviewstatus.prescription_id = p.prescription_id;
     if (editingprescription) {
-      p.__editingreviewstatus.oldcorrelationid = editingprescription.correlationid;
-      p.__editingreviewstatus.precriptionedited = true;
+      const existingPrescription = this.appService.Prescription.find(p => p.prescription_id == editingprescription.prescription_id)
+      if (existingPrescription) {
+        //p.__editingreviewstatus.oldcorrelationid = editingprescription.correlationid; 
+        p.__editingreviewstatus.oldcorrelationid = existingPrescription.correlationid;
+        p.__editingreviewstatus.precriptionedited = true;
+      }
     }
 
     //reminder object
@@ -1542,7 +1629,22 @@ export class FormSettings implements OnDestroy {
       });
     }
 
+    //if editing prescription, and editing posology start date time is in the future, this posolgy will be deleted and additionally scheduled adminstrations 
+    //that are before the current date time will be deleted too. these need to be retaied as missed doses in the new posology. 
+    //add additionally scheduled doses that are scheduled before the end date of editing posology (current timestamp) to current posology 
+    if (editingprescription) {
+      const editing_posology = this.appService.GetCurrentPosology(editingprescription);
+      if (moment(editing_posology.prescriptionstartdate).isAfter(moment())) {
+        const additionalDoses = editing_posology.__dose.filter(d => d.isadditionaladministration && moment(d.dosestartdatetime).isBefore(moment()));
+        additionalDoses.forEach(d => {
+          d.posology_id = p.__posology[0].posology_id;
+          p.__posology[0].__dose.push(d);
+        });
+      }
+    }
+
     FormSettings.CleanAndCloneObject(p);
+    //console.log(p);
     return p;
   }
 
@@ -1579,7 +1681,7 @@ export class FormSettings implements OnDestroy {
       if (this.dose_strength_neumerator > 0 && this.dose_strength_denominator > 0) {
         const ratio = this.dose_strength_neumerator / dose;
         const volume = this.dose_strength_denominator / ratio;
-        return volume.toFixed(this.precision).replace(/\.0+$/g, '');
+        return volume; //return volume.toFixed(this.precision).replace(/\.0+$/g, '');
       }
     }
     return null;
@@ -1594,7 +1696,7 @@ export class FormSettings implements OnDestroy {
       if (this.dose_strength_neumerator > 0 && this.dose_strength_denominator > 0) {
         const ratio = this.dose_strength_denominator / volume;
         const dose = this.dose_strength_neumerator / ratio;
-        return dose.toFixed(this.precision).replace(/\.0+$/g, '');
+        return dose;// return dose.toFixed(this.precision).replace(/\.0+$/g, '');
       }
     }
     return null;
@@ -1685,7 +1787,7 @@ export class FormSettings implements OnDestroy {
           sub.complete();
 
           if (this.appService.IsDataVersionStaleError(error)) {
-            this.subjects.ShowRefreshPageMessage.next(error);
+            this.appService.RefreshPageWithStaleError(error);
           }
 
         }
@@ -1735,7 +1837,7 @@ export class FormSettings implements OnDestroy {
         // 3. Update posology end date time of previous posology to current date time
 
 
-        if (prescriptionscontexttype == FormContext.ip && p.infusiontype_id != InfusionType.ci) {
+        if (prescriptionscontexttype == FormContext.ip && p.infusiontype_id != InfusionType.ci && p.infusiontype_id != InfusionType.pca) {
           p.__editingprescription.__posology.sort(function compare(a, b) {
             return moment(a.prescriptionstartdate).toDate().getTime() - moment(b.prescriptionstartdate).toDate().getTime();
           });
@@ -1800,6 +1902,13 @@ export class FormSettings implements OnDestroy {
         upsertManager.addEntity('local', "epma_prescriptionreminders", JSON.parse(JSON.stringify(p.__initialreminder)));
       }
 
+      //if there is a supply request object add it too
+      if (!p.__editingprescription && p.__SupplyRequests) {
+        p.__SupplyRequests.forEach(sp => {
+          upsertManager.addEntity('local', "epma_supplyrequest", JSON.parse(JSON.stringify(sp)));
+        });
+      }
+
       //for new addtions to MOA or MOD or OP insert into moaprescriptions and modprescriptions mapping tables
       if (prescriptionscontexttype && !p.__editingprescription) {
         if (prescriptionscontexttype == FormContext.moa) {
@@ -1862,6 +1971,11 @@ export class FormSettings implements OnDestroy {
       }
     }
 
+    let synchronousPost = true;
+    if (prescriptionscontexttype == FormContext.moa) {
+      synchronousPost = false;
+    }
+
     upsertManager.save((resp) => {
       this.appService.UpdateDataVersionNumber(resp);
 
@@ -1878,11 +1992,12 @@ export class FormSettings implements OnDestroy {
         sub.complete();
 
         if (this.appService.IsDataVersionStaleError(error)) {
-          this.subjects.ShowRefreshPageMessage.next(error);
+          this.appService.RefreshPageWithStaleError(error);
         }
 
-      }
+      }, synchronousPost
     );
+    //console.warn(upsertManager.entities)
     return sub.asObservable();
   }
 
@@ -2177,8 +2292,8 @@ export class Timeslot {
 
   public date: moment.Moment
   public dose_totalstrength: any;
-  public calculatorinput: number;
-  public calculatorinput_doserate: number;
+  public calculatorinput: any;
+  public calculatorinput_doserate: any;
 
   GetFormatString(): string {
     var formatstring = (this.hour < 10 ? "0" + this.hour : this.hour) + ':' + (this.minute < 10 ? "0" + this.minute : this.minute);
@@ -2223,3 +2338,64 @@ export class ProtocolInterval {
   }
 }
 
+export class PRNMaxDose {
+  constructor(public maxnumerator?, public maxdenominator?, public maxtimes?,
+    public n_units?, public d_units?, public type?) {
+  }
+
+  GetObject(fs: FormSettings) {
+    if (fs.dose_type == DoseType.units) {
+      if (fs.isNeumeratorOnlyStrength) {
+        this.maxnumerator = fs.prnMaxDose_TimeSlot.dose_totalstrength;
+        this.maxdenominator = fs.prnMaxDose_TimeSlot.dose_size;
+        this.d_units = fs.dose_units;
+        this.n_units = fs.singleIngredientStrength;
+        this.type = "numeratoronlystrength";
+      }
+      else {
+        this.maxdenominator = fs.prnMaxDose_TimeSlot.dose_size;
+        this.d_units = fs.dose_units;
+        this.type = "units";
+      }
+    }
+    if (fs.dose_type == DoseType.strength) {
+      this.maxnumerator = fs.prnMaxDose_TimeSlot.dose_strength_neumerator;
+      this.maxdenominator = fs.prnMaxDose_TimeSlot.dose_strength_denominator;
+      this.d_units = fs.dose_strength_denominator_units;
+      this.n_units = fs.dose_strength_neumerator_units;
+      this.type = "strength";
+    }
+    if (fs.dose_type == DoseType.descriptive) {
+      this.maxtimes = fs.prnMaxDose_TimeSlot.dose_description;
+      this.type = "na";
+    }
+
+    if (this.type)
+      return this;
+    else
+      return null;
+  }
+
+  SetFSObject(prnmaxdose: string, fs: FormSettings) {
+    if (prnmaxdose) {
+      const obj = <PRNMaxDose>JSON.parse(prnmaxdose);
+      fs.prnMaxDose_TimeSlot = new Timeslot();
+      if (fs.dose_type == DoseType.units) {
+        if (fs.isNeumeratorOnlyStrength) {
+          fs.prnMaxDose_TimeSlot.dose_totalstrength = obj.maxnumerator;
+          fs.prnMaxDose_TimeSlot.dose_size = obj.maxdenominator;
+        }
+        else {
+          fs.prnMaxDose_TimeSlot.dose_size = obj.maxdenominator;
+        }
+      }
+      if (fs.dose_type == DoseType.strength) {
+        fs.prnMaxDose_TimeSlot.dose_strength_neumerator = obj.maxnumerator;
+        fs.prnMaxDose_TimeSlot.dose_strength_denominator = obj.maxdenominator;
+      }
+      if (fs.dose_type == DoseType.descriptive) {
+        fs.prnMaxDose_TimeSlot.dose_description = obj.maxtimes;
+      }
+    }
+  }
+}

@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -190,7 +190,7 @@ export class SearchMedicationComponent implements OnInit, OnDestroy {
   }
 
   public selectmedication(e) {
-    if (e.productType == "VTM" && (this.formContext == FormContext.op || this.formContext == FormContext.mod)) {
+    if (e.productType == "VTM" && (this.formContext == FormContext.op || this.formContext == FormContext.mod || (this.formContext == FormContext.moa && !this.appService.AuthoriseAction("epma_create_org_orderset")))) {
       return;
     }
     else
@@ -374,11 +374,23 @@ export class SearchMedicationComponent implements OnInit, OnDestroy {
       this.expanded.push(code);
   }
 
-  HasPrescribableChildren(e: product) {
-    if (e.children)
-      return e.children.filter(f => f.prescribable && (f.recStatusCode == "003" || f.recStatusCode == null)).length > 0;
-    else
+  HasPrescribableChildren(l1: product) {
+    if (l1.children) {
+      for (let i = 0; i < l1.children.length; i++) {
+        let l2 = l1.children[i];
+        if (l2.children) {
+          if ((l2.prescribable && (l2.recStatusCode == "003" || l2.recStatusCode == null)) || this.HasPrescribableChildren(l2) == true)
+            return true;
+        }
+        else
+          return l2.prescribable && (l2.recStatusCode == "003" || l2.recStatusCode == null);
+      }
+    }
+    else {
       return false;
+    }
+    
+    return false;
   }
 
 }

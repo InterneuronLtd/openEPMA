@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@ import { TimelineServiceService } from 'src/app/services/timeline-service.servic
 import { UpsertTransactionManager } from 'src/app/services/upsert-transaction-manager.service';
 import { DataRequest } from 'src/app/services/datarequest';
 import { SubjectsService } from 'src/app/services/subjects.service';
+import { InfusionType } from 'src/app/services/enum';
 
 @Component({
   selector: 'app-timelineinfo',
@@ -129,7 +130,10 @@ export class TimelineinfoComponent implements OnInit, OnDestroy {
   unDoCancel() {
     var currectDose = this.appService.DoseEvents.find(x => x.logicalid === this.dose.dose_id);
     var index = this.appService.DoseEvents.indexOf(currectDose);
-
+    currectDose.createdon = this.appService.getDateTimeinISOFormat(moment().toDate());
+    currectDose.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());;
+    currectDose.createdby = this.appService.loggedInUserName;
+    currectDose.modifiedby = this.appService.loggedInUserName;
 
     Object.keys(currectDose).map((e) => { if (e.startsWith("_")) delete currectDose[e]; })
     var upsertManager = new UpsertTransactionManager();
@@ -151,7 +155,7 @@ export class TimelineinfoComponent implements OnInit, OnDestroy {
         this.hideAdministrationForm.emit(true);
 
         if (this.appService.IsDataVersionStaleError(error)) {
-          this.subjects.ShowRefreshPageMessage.next(error);
+          this.appService.RefreshPageWithStaleError(error);
         }
       }
     );
@@ -170,6 +174,10 @@ export class TimelineinfoComponent implements OnInit, OnDestroy {
     doseEvents.comments = this.cancelEventComments;
     doseEvents.logicalid = this.dose.dose_id;//this.getLogicalId(this.startDate, this.dose.dose_id.split('_')[1]),
     doseEvents.iscancelled = true;
+    doseEvents.createdon = this.appService.getDateTimeinISOFormat(moment().toDate());
+    doseEvents.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());;
+    doseEvents.createdby = this.appService.loggedInUserName;
+    doseEvents.modifiedby = this.appService.loggedInUserName;
     this.isSaving = true;
     Object.keys(doseEvents).map((e) => { if (e.startsWith("_")) delete doseEvents[e]; })
     var upsertManager = new UpsertTransactionManager();
@@ -195,7 +203,7 @@ export class TimelineinfoComponent implements OnInit, OnDestroy {
         this.hideAdministrationForm.emit(true);
 
         if (this.appService.IsDataVersionStaleError(error)) {
-          this.subjects.ShowRefreshPageMessage.next(error);
+          this.appService.RefreshPageWithStaleError(error);
         }
       }
     );
@@ -249,7 +257,11 @@ export class TimelineinfoComponent implements OnInit, OnDestroy {
         dosedatetime: this.appService.getDateTimeinISOFormat(moment(this.dose.eventStart).toDate()),
         comments: this.doctorComments,
         logicalid: this.dose.dose_id,
-        iscancelled: false
+        iscancelled: false,
+        createdon :this.appService.getDateTimeinISOFormat(moment().toDate()),
+        modifiedon : this.appService.getDateTimeinISOFormat(moment().toDate()),
+        createdby : this.appService.loggedInUserName,
+        modifiedby : this.appService.loggedInUserName,
       };
       this.isSaving = true;
       this.subscriptions.add(this.apiRequest.postRequest(this.appService.baseURI + "/PostObject?synapsenamespace=core&synapseentityname=doseevents", doseEvents).subscribe(
@@ -265,7 +277,7 @@ export class TimelineinfoComponent implements OnInit, OnDestroy {
           this.isSaving = false;
           this.hideAdministrationForm.emit(true);
           if (this.appService.IsDataVersionStaleError(error)) {
-            this.subjects.ShowRefreshPageMessage.next(error);
+            this.appService.RefreshPageWithStaleError(error);
           }
         }));
     } else if (this.editpopuptypetype == 'Transfer') {
@@ -291,7 +303,8 @@ export class TimelineinfoComponent implements OnInit, OnDestroy {
 
       if (this.dose.isinfusion && this.appService.Prescription.find(p => p.prescription_id == this.dose.prescription_id).__posology.find(po => po.posology_id == this.dose.posology_id).infusiontypeid != "bolus") {
         if (this.appService.Prescription.find(p => p.prescription_id == this.dose.prescription_id).__posology.find(po => po.posology_id == this.dose.posology_id).infusiontypeid == "ci" ||
-          this.appService.Prescription.find(p => p.prescription_id == this.dose.prescription_id).__posology.find(po => po.posology_id == this.dose.posology_id).infusiontypeid == "rate") {
+          this.appService.Prescription.find(p => p.prescription_id == this.dose.prescription_id).__posology.find(po => po.posology_id == this.dose.posology_id).infusiontypeid == "rate" ||
+          this.appService.Prescription.find(p => p.prescription_id == this.dose.prescription_id).__posology.find(po => po.posology_id == this.dose.posology_id).infusiontypeid == InfusionType.pca) {
           isTransferPermitted = false;
           this.isSaving = true;
           this.dr.transferRateInfution(this.dose, this.startDate, this.startTime, false, (message) => {
@@ -431,16 +444,20 @@ export class TimelineinfoComponent implements OnInit, OnDestroy {
         } else {
           newDoseId = this.dose.dose_id.split('_')[1];
         }
-
+         let fromDate = moment(startDateTime.slice(0, 4) + "-" + startDateTime.slice(4, 6) + "-" + startDateTime.slice(6, 8) + "T" + startDateTime.slice(8, 10) + ":" + startDateTime.slice(10, 12), "YYYY-MM-DDTHH:mm").toDate();
         doseEvents = {
           doseevents_id: newDoseEventId,
           dose_id: newDoseId,
           posology_id: this.dose.posology_id,
-          startdatetime: startDateTime.slice(0, 4) + "-" + startDateTime.slice(4, 6) + "-" + startDateTime.slice(6, 8) + "T" + startDateTime.slice(8, 10) + ":" + startDateTime.slice(10, 12) + ":00.000Z",
+          startdatetime:this.appService.getDateTimeinISOFormat(fromDate),
           eventtype: 'Transfer',
           dosedatetime: this.appService.getDateTimeinISOFormat(newDoseDateTime),
           iscancelled: false,
           logicalid: this.dose.dose_id,
+          createdon :this.appService.getDateTimeinISOFormat(moment().toDate()),
+          modifiedon : this.appService.getDateTimeinISOFormat(moment().toDate()),
+          createdby : this.appService.loggedInUserName,
+          modifiedby : this.appService.loggedInUserName,
         };
       }
 
@@ -463,7 +480,7 @@ export class TimelineinfoComponent implements OnInit, OnDestroy {
           }, (error) => {
             this.hideAdministrationForm.emit(true);
             if (this.appService.IsDataVersionStaleError(error)) {
-              this.subjects.ShowRefreshPageMessage.next(error);
+              this.appService.RefreshPageWithStaleError(error);
             }
           }));
       }

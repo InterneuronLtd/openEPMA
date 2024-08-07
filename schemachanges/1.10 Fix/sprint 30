@@ -1,0 +1,22 @@
+RBAC
+----------------------------
+epma_update_weight
+epma_update_height
+epma_manage_away_period
+
+Entity
+----------------------------
+epma_prescriptionevent
+
+
+sql
+--------------------------------------
+update "AspNetRoles" set "Name" = 'EPMA Non Medical Prescriber', "NormalizedName"  = 'EPMA NON MEDICAL PRESCRIBER'  where "Name" ='EPMA AIT Non Medical Prescriber'
+update local_epma_orderset set groupsauthorizedtoview = replace (groupsauthorizedtoview,'EPMA AIT Non','EPMA Non')  
+update rbac.roleprevilages  set rolename  = 'EPMA Non Medical Prescriber' where rolename  ='EPMA AIT Non Medical Prescriber'
+
+Baseview
+------------------------------
+epma_medicationadministrationhistory
+
+epma_prescriptionadministrationhistory

@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -39,6 +39,10 @@ import { v4 as uuid } from 'uuid';
 import { DatePickerComponent } from './components/date-picker/date-picker.component';
 import { TemplateNumberComponent } from './components/template-number/template-number.component';
 import { PatientInfo } from './models/WarningServiceModal';
+import { RTNoificationUtilService, RTNotificationsHandlerParams, subscribeToReceivedNotification } from './notification/lib/notification.observable.util';
+import { ToastrService } from 'ngx-toastr';
+import { SessionStorageService } from 'angular-web-storage';
+
 
 
 @Component({
@@ -61,6 +65,9 @@ export class AppComponent implements OnDestroy {
   browserVersion: any;
   browserVersionSupported: any;
   browserVersionError = false;
+  conflictuserid = "";
+  showPopOverPatientDrug: popovers;
+  showAdustInfusion: popovers = popovers.none;
 
 
 
@@ -73,7 +80,12 @@ export class AppComponent implements OnDestroy {
     if (value.moduleAction)
       this.subscriptions.add(value.moduleAction.subscribe((e) => {
         this.ModuleAction(e);
-      }))
+      }));
+    if (value.additionalInfo) {
+      let terminusmodule = value.additionalInfo.find(x => x.key == "currentmodule");
+      if (terminusmodule)
+        this.appService.currentTerminusModle = terminusmodule.value;
+    }
   }
 
   @Output() frameworkAction = new EventEmitter<string>();
@@ -90,7 +102,6 @@ export class AppComponent implements OnDestroy {
   showdrugChart: boolean = false;
   showPrescribingForm = false;
   totalmetadatarequests = 15;
-  Choosenfilterdate: any;
   Showtherapies = "Active";
   Sorttherapie = "DESCRIPTION-ASC";
   FilterRoutesby = "All routes";
@@ -110,7 +121,7 @@ export class AppComponent implements OnDestroy {
 
   ModuleAction(e) {
     console.log(e)
-    if (e == "RELOAD_BANNER_WARNINGS") {
+    if (e == "SECONDARY_MODULE_CLOSED") {
       this.subjects.showBannerWarnings.next(true);
       this.TriggerWarningUpdateCheck(() => {
         this.subjects.recheckBasketWarnings.next();
@@ -122,12 +133,14 @@ export class AppComponent implements OnDestroy {
   }
 
   LoadModule(module) {
+    // this.dr.RefreshIfDataVersionChanged(() => { });
+
     switch (module) {
       case "app-inpatient-prescribing": this.currentmodule = modules["app-inpatient-prescribing"];
         break;
       case "app-reconciliation-lists": this.currentmodule = modules["app-reconciliation-lists"];
         break;
-        case "app-oplist": this.currentmodule = modules["app-oplist"];
+      case "app-oplist": this.currentmodule = modules["app-oplist"];
         break;
       case "app-drug-chart": {
         this.changeGroupType(this.groupFilterType);
@@ -182,6 +195,7 @@ export class AppComponent implements OnDestroy {
   }
 
   PrescribingFinished() {
+    this.appService.Prescription.forEach(p => this.appService.UpdatePrescriptionCompletedStatus(p));
     this.isCalledOnce = false;
     this.LoadModule(modules["app-drug-chart"]);
     this.changeGroupType(this.groupFilterType);
@@ -262,12 +276,10 @@ export class AppComponent implements OnDestroy {
     return +matchTest[1]
   }
 
-  constructor(private subjects: SubjectsService, public appService: AppService, private apiRequest: ApirequestService, private modalService: BsModalService, private cd: ChangeDetectorRef, private dr: DataRequest) {
-
-
+  constructor(private subjects: SubjectsService, public appService: AppService, private apiRequest: ApirequestService, private modalService: BsModalService, private cd: ChangeDetectorRef, private dr: DataRequest, private toastrService: ToastrService, private sessionStorageService: SessionStorageService) {
 
     this.isCalledOnce = false;
-    this.Choosenfilterdate = new Date();
+    this.appService.Choosenfilterdate = new Date();
 
     if (!environment.production)
       this.initDevMode();
@@ -295,7 +307,7 @@ export class AppComponent implements OnDestroy {
     this.subscriptions.add(this.subjects.encounterChange.subscribe(() => {
       this.appService.isAppDataReady = false;
       this.GetMetaData();
-      if (this.currentmodule != modules['app-drug-chart'])
+      if (this.currentmodule != modules['app-drug-chart'] && !this.appService.outpatientPrescribingMode)
         this.LoadModule(modules['app-drug-chart']);
     }));
 
@@ -310,6 +322,15 @@ export class AppComponent implements OnDestroy {
         this.appService.isTitrationPopOverOpen = false;
 
       }));
+
+    this.subscriptions.add(
+      this.subjects.prescriptionHistory.subscribe((prescription: Prescription) => {
+        this.popover_prescriptioncontext = prescription;
+        this.showTitrationChart = this.showPopOver = popovers['app-prescription-history'];
+        this.appService.isTitrationPopOverOpen = false;
+
+      }));
+
     this.subscriptions.add(this.subjects.additionalAdministration.subscribe
       ((event: any) => {
         this.popover_prescriptioncontext = event;
@@ -335,7 +356,7 @@ export class AppComponent implements OnDestroy {
     this.subscriptions.add(this.subjects.adjustInfusion.subscribe
       ((event: any) => {
         this.popover_prescriptioncontext = event;
-        this.showTitrationChart = this.showPopOver = popovers['app-adjust-infusion'];
+        this.showTitrationChart = this.showAdustInfusion = popovers['app-adjust-infusion'];
         this.appService.isTitrationPopOverOpen = false;
 
       }));
@@ -390,8 +411,9 @@ export class AppComponent implements OnDestroy {
     this.subscriptions.add(this.subjects.patientDrug.subscribe
       ((event: any) => {
         this.popover_prescriptioncontext = event;
-        this.showTitrationChart = this.showPopOver = popovers['app-record-patientdrug']
-        this.appService.isTitrationPopOverOpen = false;
+        // this.showTitrationChart = 
+        this.showPopOverPatientDrug = popovers['app-record-patientdrug']
+        //this.appService.isTitrationPopOverOpen = false;
 
       }));
 
@@ -409,16 +431,27 @@ export class AppComponent implements OnDestroy {
         this.appService.isTitrationPopOverOpen = false;
         this.cd.detectChanges();
       }));
+    this.subscriptions.add(this.subjects.showAwayPeriod.subscribe
+      ((event: any) => {
+        this.popover_prescriptioncontext = event;
+        this.showPopOver = popovers['app-away-period']
+      }));
 
-    this.subscriptions.add(this.subjects.closeAppComponentPopover.subscribe(() => {
-      if (this.appService.isTitrationPopOverOpen) {
-        this.showTitrationChart = this.showPopOver;
-      }
-      else {
-        this.showTitrationChart = this.showPopOver = popovers.none;
-      }
-      this.appService.isTitrationPopOverOpen = false;
 
+    this.subscriptions.add(this.subjects.closeAppComponentPopover.subscribe((source) => {
+      if (source == popovers["app-adjust-infusion"]) {
+        this.showAdustInfusion = popovers.none;
+      } else {
+        if (this.appService.isTitrationPopOverOpen) {
+          this.showTitrationChart = this.showPopOver;
+        }
+        else if (this.showPopOverPatientDrug == popovers['app-record-patientdrug']) {
+          this.showPopOverPatientDrug = popovers.none
+        } else {
+          this.showTitrationChart = this.showPopOver = popovers.none;
+        }
+        this.appService.isTitrationPopOverOpen = false;
+      }
     }));
 
     this.subscriptions.add(this.subjects.captureWeight.subscribe(() => {
@@ -437,9 +470,12 @@ export class AppComponent implements OnDestroy {
       this.ReloadCurrentLoadModule();
     }));
 
-    this.subscriptions.add(this.subjects.ShowRefreshPageMessage.subscribe(() => {
+    this.subscriptions.add(this.subjects.ShowRefreshPageMessage.subscribe((conflictuserid: string) => {
+      this.conflictuserid = "Another user";
+
       if (this.open_refreshmessage.nativeElement) {
         this.showPopOver = popovers.none;
+        this.conflictuserid = conflictuserid;
         this.open_refreshmessage.nativeElement.click();
       }
       else
@@ -448,7 +484,42 @@ export class AppComponent implements OnDestroy {
 
     this.EmitFrameworkEvent("COLLAPSE_PATIENT_LIST");
 
+    this.subscribeForRTNotifications();
+
+
   }
+
+  subscribeForRTNotifications() {
+
+    const notificationTypes = [
+      /*For reference only:
+      1) No need to pass anything except name if registered in config
+      {name: 'MED_ADM_STATUS_CHANGED', msgPropNameOrMsg: 'notif_med_admin_status_change_msg', currentModuleName: 'app-epma'},
+      {name: 'MED_PRESCRIBE_DRAFT', msgPropNameOrMsg: 'notif_med_admin_draft_msg', currentModuleName: 'app-epma'},
+      {name: 'MED_PRESCRIBED', msgPropNameOrMsg: 'notif_med_prescribed_msg',  currentModuleName: 'app-epma'},
+      {name: 'MED_ADMINISTERED', msgPropNameOrMsg: 'notif_med_administered_msg', currentModuleName: 'app-epma'},
+      {name: 'MED_ADMINISTRATION_UNDONE', msgPropNameOrMsg: 'notif_med_administered_undone_msg', currentModuleName: 'app-epma'}
+      */
+      { name: 'MED_ADM_STATUS_CHANGED', msgPropNameOrMsg: 'notif_med_admin_status_change_msg' },
+      { name: 'MED_PRESCRIBE_DRAFT', msgPropNameOrMsg: 'notif_med_admin_draft_msg' },
+      { name: 'MED_PRESCRIBED', msgPropNameOrMsg: 'notif_med_prescribed_msg' },
+      { name: 'MED_ADMINISTERED', msgPropNameOrMsg: 'notif_med_administered_msg' },
+      { name: 'MED_ADMINISTRATION_UNDONE', msgPropNameOrMsg: 'notif_med_administered_undone_msg' }
+    ];
+
+    subscribeToReceivedNotification('EPMA_NOTIFICATION_APP_COMP', (res) => {
+      const paramData: RTNotificationsHandlerParams = {
+        getAppSettings: () => {
+          console.log('calling alert for appsettings session',
+            this.sessionStorageService.get('epma:appSettings'));
+          return this.sessionStorageService.get('epma:appSettings');
+        },
+        notificationTypes
+      };
+      new RTNoificationUtilService().rtNotificationsHandler(paramData, res);
+    });
+  }
+
 
   ShowRefreshPageMessage() {
     window.location.reload();
@@ -469,7 +540,9 @@ export class AppComponent implements OnDestroy {
   ShowWarnings() {
     this.subjects.showWarnings.next();
   }
-
+  ShowAwayPeriod() {
+    this.subjects.showAwayPeriod.next();
+  }
   EncountersLoaded(e: boolean) {
 
     if (!e)
@@ -516,7 +589,7 @@ export class AppComponent implements OnDestroy {
 
   initDevMode() {
     //commment out to push to framework - 3lines  
-    this.appService.personId ="bc49b01c-2444-43d5-b51b-6628bd2473de" //"c8c654c5-9272-4324-b3f0-2cf8be9a9576" //"e71e474c-7740-45ed-be41-78705f4b16bb";//"bef282e7-f182-4ad7-a221-f5f3c61e7919"//07898b5e-0471-4eae-8190-e0322bc04ae8"// "3abf8a1b-1f94-407e-a37b-9d7481a3bd2a"// "ef45c1b8-d4cd-4c2f-afbc-fd9dda1b83ab";// "925d2652-0250-4b34-954e-7c53c7ceb5c6" //"a5092198-0843-4336-89a1-c288fbca9528"// "b2ec9a03-885a-4125-8c4c-220c78c9234d" //"40a6ed41-349d-4225-8058-ec16c4d6af00"; // "c6e089d5-21b3-4bdb-ba39-80ed6173db4a"; // '774c605e-c2c6-478d-90e6-0c1230b3b223'// "40a6ed41-349d-4225-8058-ec16c4d6af00" // "c6e089d5-21b3-4bdb-ba39-80ed6173db4a"//  "774c605e-c2c6-478d-90e6-0c1230b3b223"//"96ebefbe-a2e0-4e76-8802-e577e28fcc23";// "fe8a22fa-203d-4563-abe3-8818f37945d9";// "96ebefbe-a2e0-4e76-8802-e577e28fcc23" // //"774c605e-c2c6-478d-90e6-0c1230b3b223";//"4d05aff8-123f-4ca9-be06-f9734905c02f"//"d91ef1fa-e9c0-45ba-9e92-1e1c4fd468a2"// "027c3400-24cd-45c1-9e3d-0f4475336394" ;//  "6b187a8b-1835-42c2-9cd5-91aa0e39f0f7";//"6b187a8b-1835-42c2-9cd5-91aa0e39f0f7"//"774c605e-c2c6-478d-90e6-0c1230b3b223";//"0422d1d0-a9d2-426a-b0b2-d21441e2f045";//"6b187a8b-1835-42c2-9cd5-91aa0e39f0f7"; //"17775da9-8e71-4a3f-9042-4cdcbf97efec";// "429904ca-19c1-4a3a-b453-617c7db513a3";//"027c3400-24cd-45c1-9e3d-0f4475336394";//"429904ca-19c1-4a3a-b453-617c7db513a3";
+    this.appService.personId = "d315445f-08b1-43dd-a82b-6bbd187c1457"// "441b520a-56e8-4c32-9eed-8c0c2e4b6377"//"fdd3c592-51f1-4aca-8acc-16ee966bebb8" //"68dfe39d-4ee4-407f-824b-4b57a1f131ae"  //"862fc611-a0a4-43f2-8dc4-4134fb7129ad"//"5bd254ac-5eb9-4a58-9b75-b3312d779fcc"//"e7955e6f-3384-4065-a425-0717018a9d2b"//"bef282e7-f182-4ad7-a221-f5f3c61e7919"//"68dfe39d-4ee4-407f-824b-4b57a1f131ae"  //"41f23bf6-8c4d-4aab-b0bd-a0871b324b5f"// "b0d70586-3206-4bd2-93f8-86a9947a8659"  //"c8c654c5-9272-4324-b3f0-2cf8be9a9576" //"e71e474c-7740-45ed-be41-78705f4b16bb";//"bef282e7-f182-4ad7-a221-f5f3c61e7919"//"3abf8a1b-1f94-407e-a37b-9d7481a3bd2a"// "ef45c1b8-d4cd-4c2f-afbc-fd9dda1b83ab";// "925d2652-0250-4b34-954e-7c53c7ceb5c6" //"a5092198-0843-4336-89a1-c288fbca9528"// "b2ec9a03-885a-4125-8c4c-220c78c9234d" //"40a6ed41-349d-4225-8058-ec16c4d6af00"; // "c6e089d5-21b3-4bdb-ba39-80ed6173db4a"; // '774c605e-c2c6-478d-90e6-0c1230b3b223'// "40a6ed41-349d-4225-8058-ec16c4d6af00" // "c6e089d5-21b3-4bdb-ba39-80ed6173db4a"//  "774c605e-c2c6-478d-90e6-0c1230b3b223"//"96ebefbe-a2e0-4e76-8802-e577e28fcc23";// "fe8a22fa-203d-4563-abe3-8818f37945d9";// "96ebefbe-a2e0-4e76-8802-e577e28fcc23" // //"774c605e-c2c6-478d-90e6-0c1230b3b223";//"4d05aff8-123f-4ca9-be06-f9734905c02f"//"d91ef1fa-e9c0-45ba-9e92-1e1c4fd468a2"// "027c3400-24cd-45c1-9e3d-0f4475336394" ;//  "6b187a8b-1835-42c2-9cd5-91aa0e39f0f7";//"6b187a8b-1835-42c2-9cd5-91aa0e39f0f7"//"774c605e-c2c6-478d-90e6-0c1230b3b223";//"0422d1d0-a9d2-426a-b0b2-d21441e2f045";//"6b187a8b-1835-42c2-9cd5-91aa0e39f0f7"; //"17775da9-8e71-4a3f-9042-4cdcbf97efec";// "429904ca-19c1-4a3a-b453-617c7db513a3";//"027c3400-24cd-45c1-9e3d-0f4475336394";//"429904ca-19c1-4a3a-b453-617c7db513a3";
     let value: any = {};
     value.authService = {};
     value.authService.user = {};
@@ -525,6 +598,8 @@ export class AppComponent implements OnDestroy {
       value.authService.user.access_token = token;
       this.initConfigAndGetMeta(value);
     });
+    //this.appService.currentTerminusModle = "outpatient epma";
+
   }
 
   initConfigAndGetMeta(value: any) {
@@ -557,6 +632,12 @@ export class AppComponent implements OnDestroy {
 
         }
 
+        this.appService.outpatientPrescribingMode = false;
+        if (this.appService.currentTerminusModle.toLowerCase() == this.appService.appConfig.AppSettings.opModeAppName.toLowerCase()) {
+          this.appService.outpatientPrescribingMode = true;
+          this.currentmodule = modules['app-oplist'];
+        }
+
         this.subscriptions.add(this.apiRequest.getRequest(`${this.appService.baseURI}/GetObject?synapsenamespace=core&synapseentityname=person&id=${this.appService.personId}`).subscribe(
           (person) => {
             person = JSON.parse(person);
@@ -579,10 +660,19 @@ export class AppComponent implements OnDestroy {
 
           }));
 
+        //Adding AppSettings to the session
+        const appConfigFromParam = this.appService?.appConfig;
+        const appSettingsFromParam = { ...appConfigFromParam?.AppSettings };
+        this.sessionStorageService.set('epma:appSettings', appSettingsFromParam);
+
       }));
   }
   completeReconcilliation() {
     this.subjects.CompleteReconciliation.next();
+    // this.dr.RefreshIfDataVersionChanged((result) => {
+    //   if (result == false)
+    //     this.subjects.CompleteReconciliation.next();
+    // })
   }
 
   GetMetaData() {
@@ -624,6 +714,7 @@ export class AppComponent implements OnDestroy {
                       this.appService.patientInfo = new PatientInfo();
                       this.appService.patientInfo.age = this.appService.personAgeInDays;
                       this.appService.patientInfo.allergens = null;
+                      this.appService.patientInfo.conditions = null;
                       this.appService.patientInfo.height = this.appService.refHeightValue;
                       this.appService.patientInfo.bsa = this.appService.bodySurfaceArea;
                       this.appService.patientInfo.gender = this.appService.gender == 'M' ? 1 : 2;
@@ -639,7 +730,7 @@ export class AppComponent implements OnDestroy {
                       this.dr.GetMedicationSupply(() => { });
                       this.dr.GetWitnesAuthentication(() => { });
                       this.dr.GetPrescriptionEvent(() => { });
-
+                      this.dr.GetNursingInstruction(() => { });
                     }));
               })
 
@@ -720,6 +811,7 @@ export class AppComponent implements OnDestroy {
     // let dataRequest = new DataRequest(this.apiRequest, this.appService);
     this.dr.getAllPrescription(() => {
       this.dr.getAdminstrations(() => {
+        this.appService.Prescription.forEach(p => this.appService.UpdatePrescriptionCompletedStatus(p));
         this.dr.getReminders(() => {
           this.dr.getPharmacyReviewStatus(() => {
             this.appService.isAppDataReady = true;
@@ -755,7 +847,7 @@ export class AppComponent implements OnDestroy {
 
     let prescriptionroutes = [].concat(...this.appService.Prescription.map(p => p.__routes));
     // let prescriptionroutes = this.appService.Prescriptionroutes.filter(x => x.isdefault == true);
-
+    this.appService.Choosenfilterdate = new Date();
     this.AllRoutes = prescriptionroutes.map(item => item.route)
       .filter((value, index, self) => self.indexOf(value) === index);
 
@@ -773,9 +865,28 @@ export class AppComponent implements OnDestroy {
 
     // }
     else if (option == "Base") {
-      let primaryMedications = [].concat(...this.appService.Prescription.map(p => p.__medications)).filter(x => x.isprimary == true);
-      this.appService.DrugeGroupsType = primaryMedications.map(item => item.classification)
-        .filter((value, index, self) => self.indexOf(value) === index);
+      if (this.appService.appConfig.AppSettings.UseStoredClassification) {
+        let primaryMedications = [].concat(...this.appService.Prescription.map(p => p.__medications)).filter(x => x.isprimary == true);
+        this.appService.DrugeGroupsType = primaryMedications.map(item => item.classification)
+          .filter((value, index, self) => self.indexOf(value) === index);
+      }
+      else {
+        let allprescriptionsfdbgroups = [].concat(...this.appService.Prescription.map(
+          (p) => {
+            if (!p.__drugcodes) {
+              return [{ "additionalCodeSystem": "FDB", "additionalCodeDesc": null }]
+            }
+            else if (!p.__drugcodes.find(dc => dc.additionalCodeSystem == "FDB")) {
+              return [{ "additionalCodeSystem": "FDB", "additionalCodeDesc": null }]
+            }
+            else {
+              return p.__drugcodes;
+            }
+          })).filter(x => x.additionalCodeSystem == "FDB");
+        this.appService.DrugeGroupsType = allprescriptionsfdbgroups.map(item => item.additionalCodeDesc)
+          .filter((value, index, self) => self.indexOf(value) === index);
+      }
+
       this.appService.DrugeGroupsType.sort();
     }
     else if (option == "Route") {
@@ -807,21 +918,32 @@ export class AppComponent implements OnDestroy {
     this.appService.FilteredPrescription = [];
     this.showChoosedate = parameter;
     if (!this.showChoosedate) {
+      this.appService.Choosenfilterdate = new Date();
       this.filterDateAndRought(this.Showtherapies, this.FilterRoutesby);
     }
     else if (this.showChoosedate) {
-      let selectedDate = moment(this.Choosenfilterdate);
+      let selectedDate = moment(this.appService.Choosenfilterdate);
       selectedDate.set({
         hour: 0,
         minute: 0,
         second: 0,
         millisecond: 0,
       });
+      
+    
+
       this.appService.changechoosenFilterDate = moment(selectedDate);
       for (let prescription of this.appService.Prescription) {
         let enddate = moment(this.appService.GetCurrentPosology(prescription).prescriptionenddate);
-        let preStart = moment(null ? prescription.startdatetime : this.appService.encounter.sortdate);
+        //let preStart = moment(null ? prescription.startdatetime : this.appService.encounter.sortdate);
+        let preStart = prescription.startdatetime == null ? moment(this.appService.encounter.sortdate) : moment(prescription.startdatetime)
+        for( let poso of prescription.__posology ){
 
+          if(moment(preStart).isSameOrAfter(moment(poso.prescriptionstartdate))){
+            preStart=moment(poso.prescriptionstartdate)
+          }
+      
+        }
         if (prescription.prescriptionstatus_id == "f1e191f1-3985-4d2f-b96b-0b1b48fa7714" || prescription.prescriptionstatus_id == "5d78c6a6-2962-4dcd-8fd0-9824ef09135f") // if prestion is stop
         {
           if (moment(prescription.lastmodifiedon, "YYYY-MM-DD").isSameOrAfter(moment(selectedDate)))// and stop date is selected or greate
@@ -835,12 +957,17 @@ export class AppComponent implements OnDestroy {
         if (!enddate.isValid()) { // if enddate is null and not spot so end date is selected
           enddate = selectedDate;
         }
-
-        if (moment(preStart, "YYYY-MM-DD").isSameOrBefore(selectedDate, 'day')) {
+        if (moment(preStart, "YYYY-MM-DD").isSameOrBefore(selectedDate, 'day') ||  moment(selectedDate, "YYYY-MM-DD").isSame(moment(), 'day')) {      
           if (this.Showtherapies == "Active") {
             var curTime = moment(moment(new Date()).toDate()).add(-5, "minutes").format("YYYYMMDDHHmm");
             if (!((prescription.prescriptionstatus_id == "f1e191f1-3985-4d2f-b96b-0b1b48fa7714" || prescription.prescriptionstatus_id == "5d78c6a6-2962-4dcd-8fd0-9824ef09135f") && moment(new Date(prescription.lastmodifiedon)).format("YYYYMMDDHHmm") < curTime)) {
-              this.appService.FilteredPrescription.push(<Prescription>prescription);
+
+              if (prescription.__completed != true) {
+                this.appService.FilteredPrescription.push(<Prescription>prescription);
+              }
+              else if (moment(new Date(prescription.__completedOn)).format("YYYYMMDDHHmm") > curTime) {
+                this.appService.FilteredPrescription.push(<Prescription>prescription);
+              }
             }
           }
           else if (this.Showtherapies == "stoped") {
@@ -849,7 +976,10 @@ export class AppComponent implements OnDestroy {
             if (!enddate.isValid()) {
               enddate = moment();
             }
-            if (prescription.prescriptionstatus_id != "fe406230-be68-4ad6-a979-ef15c42365cf" && prescription.prescriptionstatus_id != "fd8833de-213b-4570-8cc7-67babfa31393" && prescription.prescriptionstatus_id != "63e946cd-b4a4-4f60-9c18-a384c49486ea") {
+            if (prescription.__completed == true) {
+              this.appService.FilteredPrescription.push(<Prescription>prescription);
+            }
+            else if (prescription.prescriptionstatus_id != "5750c99f-75ec-4b33-b10c-782a000cc360" && prescription.prescriptionstatus_id != "fe406230-be68-4ad6-a979-ef15c42365cf" && prescription.prescriptionstatus_id != "fd8833de-213b-4570-8cc7-67babfa31393" && prescription.prescriptionstatus_id != "63e946cd-b4a4-4f60-9c18-a384c49486ea") {
 
               this.appService.FilteredPrescription.push(<Prescription>prescription);
 
@@ -883,7 +1013,12 @@ export class AppComponent implements OnDestroy {
 
         var curTime = moment(moment(new Date()).toDate()).add(-5, "minutes").format("YYYYMMDDHHmm");
         if (!((prescription.prescriptionstatus_id == "f1e191f1-3985-4d2f-b96b-0b1b48fa7714" || prescription.prescriptionstatus_id == "5d78c6a6-2962-4dcd-8fd0-9824ef09135f") && moment(new Date(prescription.lastmodifiedon)).format("YYYYMMDDHHmm") < curTime)) {
-          this.appService.FilteredPrescription.push(<Prescription>prescription);
+          if (prescription.__completed != true) {
+            this.appService.FilteredPrescription.push(<Prescription>prescription);
+          }
+          else if (moment(new Date(prescription.__completedOn)).format("YYYYMMDDHHmm") > curTime) {
+            this.appService.FilteredPrescription.push(<Prescription>prescription);
+          }
         }
       }
     }
@@ -897,7 +1032,10 @@ export class AppComponent implements OnDestroy {
         if (!enddate.isValid()) {
           enddate = moment();
         }
-        if (prescription.prescriptionstatus_id != "fe406230-be68-4ad6-a979-ef15c42365cf" && prescription.prescriptionstatus_id != "fd8833de-213b-4570-8cc7-67babfa31393" && prescription.prescriptionstatus_id != "63e946cd-b4a4-4f60-9c18-a384c49486ea") {
+        if (prescription.__completed == true) {
+          this.appService.FilteredPrescription.push(<Prescription>prescription);
+        }
+        else if ((prescription.prescriptionstatus_id != "5750c99f-75ec-4b33-b10c-782a000cc360" && prescription.prescriptionstatus_id != "fe406230-be68-4ad6-a979-ef15c42365cf" && prescription.prescriptionstatus_id != "fd8833de-213b-4570-8cc7-67babfa31393" && prescription.prescriptionstatus_id != "63e946cd-b4a4-4f60-9c18-a384c49486ea")) {
 
           this.appService.FilteredPrescription.push(<Prescription>prescription);
 
@@ -913,7 +1051,7 @@ export class AppComponent implements OnDestroy {
     }
 
     else if (this.Showtherapies == "Choose date") {
-      let selectedDate = moment(this.Choosenfilterdate);
+      let selectedDate = moment(this.appService.Choosenfilterdate);
       selectedDate.set({
         hour: 0,
         minute: 0,
@@ -984,9 +1122,9 @@ export class AppComponent implements OnDestroy {
   }
 
   changechoosendate(daynumber: any) {
-    if (this.Choosenfilterdate != null) {
+    if (this.appService.Choosenfilterdate != null) {
       this.isCalledOnce = false;
-      this.Choosenfilterdate = new Date(Date.UTC(this.Choosenfilterdate.getFullYear(), this.Choosenfilterdate.getMonth(), this.Choosenfilterdate.getDate() + daynumber));
+      this.appService.Choosenfilterdate = new Date(Date.UTC(this.appService.Choosenfilterdate.getFullYear(), this.appService.Choosenfilterdate.getMonth(), this.appService.Choosenfilterdate.getDate() + daynumber));
       this.chooseDateclick(true)
     }
 
@@ -994,10 +1132,12 @@ export class AppComponent implements OnDestroy {
 
   }
   ChoosenfilterdateChange(value: Date): void {
-    //  this.Choosenfilterdate = moment(value,"DD/MM/YYYY");
+    //  this.appService.Choosenfilterdate = moment(value,"DD/MM/YYYY");
     if (this.isCalledOnce && value != null) {
       this.isCalledOnce = true;
-      this.chooseDateclick(true)
+      !this.appService.chartScrolled && this.chooseDateclick(true)
+      this.appService.chartScrolled = false;
+
     }
   }
   // Begin Therpay overview code
@@ -1068,50 +1208,58 @@ export class AppComponent implements OnDestroy {
   }
 
   openRecordWeightModal(context: string) {
-    const config = {
-      backdrop: true,
-      ignoreBackdropClick: true,
-      class: 'modal-dialog-centered modal-sm',
-      initialState: {
-        errorMessage: ""
-      }
-    };
+    this.dr.RefreshIfDataVersionChanged((result: boolean) => {
+      if (result == false) {
+        const config = {
+          backdrop: true,
+          ignoreBackdropClick: true,
+          class: 'modal-dialog-centered modal-sm',
+          initialState: {
+            errorMessage: ""
+          }
+        };
 
-    this.bsModalRef = this.modalService.show(RefWeightHeightComponent, config);
-    this.bsModalRef.content = {
-      saveDone: (isDone) => {
-        if (isDone) {
-          if (context == 'D') {
-            if (!this.appService.isHeightCaptured) {
-              //this.openRecordHeightModal('D');
-            } else {
-              //this.LoadModule('app-inpatient-prescribing');
+        this.bsModalRef = this.modalService.show(RefWeightHeightComponent, config);
+        this.bsModalRef.content = {
+          saveDone: (isDone) => {
+            if (isDone) {
+              if (context == 'D') {
+                if (!this.appService.isHeightCaptured) {
+                  //this.openRecordHeightModal('D');
+                } else {
+                  //this.LoadModule('app-inpatient-prescribing');
+                }
+              }
             }
           }
-        }
+        };
       }
-    };
+    });
   }
 
 
   openRecordHeightModal(context: string) {
-    const config = {
-      backdrop: true,
-      ignoreBackdropClick: true,
-      class: 'modal-dialog-centered modal-sm',
-      initialState: {
-        errorMessage: ""
-      }
-    };
+    this.dr.RefreshIfDataVersionChanged((result: boolean) => {
+      if (result == false) {
+        const config = {
+          backdrop: true,
+          ignoreBackdropClick: true,
+          class: 'modal-dialog-centered modal-sm',
+          initialState: {
+            errorMessage: ""
+          }
+        };
 
-    this.bsModalRef = this.modalService.show(RecRefHeightComponent, config);
-    this.bsModalRef.content = {
-      saveDone: (isDone) => {
-        // if (isDone && context == 'D' && this.appService.isWeightCapturedForToday) {
-        //   //this.LoadModule('app-inpatient-prescribing');
-        // }
+        this.bsModalRef = this.modalService.show(RecRefHeightComponent, config);
+        this.bsModalRef.content = {
+          saveDone: (isDone) => {
+            // if (isDone && context == 'D' && this.appService.isWeightCapturedForToday) {
+            //   //this.LoadModule('app-inpatient-prescribing');
+            // }
+          }
+        };
       }
-    };
+    });
   }
 
 
@@ -1171,11 +1319,21 @@ export class AppComponent implements OnDestroy {
                             patientDrugs.resupplyfrom = responseArray[0].resupplyfrom;
                             patientDrugs.lastmodifiedby = responseArray[0].lastmodifiedby;
                             patientDrugs.updatesouce = responseArray[0].updatesouce;
+                            patientDrugs.prescribedmedicationid = responseArray[0].prescribedmedicationid;
+                            patientDrugs.person_id = responseArray[0].person_id;
+                            patientDrugs.encounter_id = responseArray[0].encounter_id;
+                            patientDrugs.quantityentrydate = responseArray[0].quantityentrydate;
+                            patientDrugs.createdby = responseArray[0].createdby;
+                            patientDrugs.createdon = responseArray[0].createdon;
+                            patientDrugs.modifiedon = responseArray[0].modifiedon;
 
                             //marked for syncpost
                             this.subscriptions.add(this.apiRequest.postRequest(this.appService.baseURI +
                               "/PostObject?synapsenamespace=local&synapseentityname=epma_prescriptionmedicaitonsupply", JSON.stringify(patientDrugs), false)
                               .subscribe((saveResponse) => {
+                                this.dr.GetMedicationSupply(() => {
+                                  this.subjects.refreshTemplate.next();
+                                });
                               }
                               ))
                           }
@@ -1219,9 +1377,12 @@ export class AppComponent implements OnDestroy {
           const [startDate, endDate] = date.split("--");
           this.startDate = startDate;
           this.endDate = endDate;
-          this.medicationAdministrationEmptyTemplate = 'report';
           this.isLoading = true;
-          // setTimeout( () => this.isLoading = false, 2000 );
+          this.dr.getHeightWeight(() => {
+          setTimeout(() => {
+            this.medicationAdministrationEmptyTemplate = 'report';
+          }, 100);
+        });
         }
       },
       cancel: () => {
@@ -1232,12 +1393,21 @@ export class AppComponent implements OnDestroy {
 
   openActivePrintingTemplate() {
     this.isLoading = true;
-    this.medicationAdministrationEmptyTemplate = 'active'
+    this.dr.getHeightWeight(() => {
+    setTimeout(() => {
+      this.medicationAdministrationEmptyTemplate = 'active'
+    }, 100);
+  });
+
   }
 
   openCurrentPrintingTemplate() {
     this.isLoading = true;
-    this.medicationAdministrationEmptyTemplate = 'current'
+    this.dr.getHeightWeight(() => {
+    setTimeout(() => {
+      this.medicationAdministrationEmptyTemplate = 'current'
+    }, 100);
+  });
   }
 
   getPrescriptionNumber() {
@@ -1245,7 +1415,7 @@ export class AppComponent implements OnDestroy {
       backdrop: true,
       ignoreBackdropClick: true,
       class: 'modal-dialog-centered modal-sm',
-      
+
     };
 
     this.bsModalRef = this.modalService.show(TemplateNumberComponent, config);
@@ -1254,7 +1424,12 @@ export class AppComponent implements OnDestroy {
         if (templateNumber) {
           this.isLoading = true;
           this.numberOfEmptyTemplates = templateNumber;
-          this.medicationAdministrationEmptyTemplate = 'empty';
+          this.dr.getHeightWeight(() => {
+          setTimeout(() => {
+            this.medicationAdministrationEmptyTemplate = 'empty';
+          }, 100);
+        });
+
         }
       },
       cancel: () => {

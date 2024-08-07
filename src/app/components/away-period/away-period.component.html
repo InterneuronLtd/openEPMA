@@ -1,0 +1,201 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2024  Interneuron Holdings Ltd
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<div class="modal fade" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1"
+    data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+    aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg  modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <h3 class="popover-title popover-header">
+                Manage Away Periods
+                <div *ngIf="!showSpinner" class="close close-away-period" (click)="closePopup()"></div>
+            </h3>
+
+            <div class="modal-body">
+                <div class="row border-bottom">
+                    <div class="col"><b>Add Away Period</b></div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-2 required-field">From</div>
+                    <div class="col">
+                        <span style="width: 22rem;display: flex;">
+                        <input onkeydown="event.preventDefault()" type="text" name="startdate" [(ngModel)]="startdate"
+                            class="form-control" bsDatepicker
+                            [bsConfig]="{ showWeekNumbers:false, dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'alert-info' }" />
+                        <input type="text" name="starttime" [(ngModel)]="starttime" style="width:80px;"
+                            class="form-control ml-1" placeholder="HH:mm" [appTimepicker]="timepicker1">
+                        <app-time-picker #timepicker1 (onTimeSelected)="onStartTimeSelected($event)"></app-time-picker>
+                    </span>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-2 required-field">To</div>
+                    <div class="col">
+                        <span style="width: 22rem;display: flex;">
+                        <input onkeydown="event.preventDefault()" type="text" name="enddate" [(ngModel)]="enddate"
+                            class="form-control"  bsDatepicker
+                            [bsConfig]="{ showWeekNumbers:false, dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'alert-info' }" />
+                        <input type="text" name="endtime" [(ngModel)]="endtime" style="width:80px;" class="form-control ml-1"
+                            placeholder="HH:mm" [appTimepicker]="timepicker2">
+                        <app-time-picker #timepicker2 (onTimeSelected)="onEndTimeSelected($event)"></app-time-picker>
+                        </span>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col required-field">Reason</div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <textarea class="form-control" [(ngModel)]="awayPeriod.awayreason" rows="3">
+
+                    </textarea>
+                    </div>
+                </div>
+                <!-- <div class="row mt-2">
+                    <div class="col">
+                        <input type="checkbox" [(ngModel)]="awayPeriod.isenabled" id="enabledid">
+                        <label class="ml-1" for="enabledid">Enable</label>
+                    </div>
+                </div> -->
+                <div class="row">
+                    <div class="col">
+                        <span class="text-danger">{{validationMessage}}</span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col text-right">
+                        <button class="btn btn-secondary mr-2" (click)="clearAwayPeriod()">Clear</button>
+                        <button *ngIf="!showSpinner" class="btn btn-primary" (click)="saveAwayPeriod()">Save</button>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col"> <b>Away Periods</b></div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <table class="table" style="max-height:5vh">
+                            <thead>
+                                <th>
+                                    From
+                                </th>
+                                <th>
+                                    To
+                                </th>
+                                <th>
+                                    Reason
+                                </th>
+                                <th style="width: 5%">
+                                    Enable
+                                </th>
+                                <th style="width: 5%"></th>
+                                <th style="width: 5%"></th>
+                                <th style="width: 5%"></th>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let a of appService.PersonAwayPeriod">
+                                    <td>{{a.awayfrom | date : 'dd-MM-YYYY HH:mm'}}</td>
+                                    <td>{{a.awayto | date : 'dd-MM-YYYY HH:mm'}}</td>
+                                    <td class="away-reason-break-all">{{a.awayreason}}</td>
+                                    <td style="width: 5%"><input type="checkbox" (change)="toggoleEnabled(a)" [(ngModel)]="a.isenabled"> </td>
+                                    <td style="width: 5%"> <div class="edit-away-period" (click)="editPeriod(a)"></div> </td>
+                                    <td style="width: 5%"> <div class="remove-away-period" (click)="removePeriod(a,confirmDeletionModal)"></div> </td>
+                                    <td style="width: 5%"> <div class="away-period-history" (click)="viewAwayPeriodHistory(a)"></div> </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="padding: 0.4rem 0rem;">
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div *ngIf="showAwayPeriodHistory">
+    <div class="modal fade" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1"
+    data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+    aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg  modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <h3 class="popover-title popover-header">
+                Away Period History
+                <div *ngIf="!showSpinner" class="close close-away-period" (click)="closeAwayPeriodPopup()"></div>
+            </h3>
+
+            <div class="modal-body">              
+                <div class="row">
+                    <div class="col">
+                        <table class="table" style="max-height:5vh">
+                            <thead>
+                                <th>
+                                    From
+                                </th>
+                                <th>
+                                    To
+                                </th>
+                                <th>
+                                    Reason
+                                </th>
+                                <th>
+                                    Enable
+                                </th>
+                                <th>User Name</th>
+                                <th>Created/Edited</th>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let a of awayPeriodHistory">
+                                    <td>{{a.awayfrom | date : 'dd-MM-YYYY HH:mm'}}</td>
+                                    <td>{{a.awayto | date : 'dd-MM-YYYY HH:mm'}}</td>
+                                    <td class="away-reason-break-all">{{a.awayreason}}</td>
+                                    <td>{{a.isenabled? 'Yes' : 'No'}}</td>
+                                    <td > {{a.modifiedby}} </td>
+                                    <td >{{a.modifiedon  | date : 'dd-MM-YYYY HH:mm'}}</td>
+                                 </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="padding: 0.4rem 0rem;">
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+</div>
+<ng-template #confirmDeletionModal>
+    <div class="modal-body">
+        <h5>
+            Are you sure you want to delete this record?
+        </h5>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-primary" (click)="confirmDeletion()">Yes</button>
+        <button type="button" class="btn btn-danger" (click)="declineDeletion()">No</button>
+    </div>
+</ng-template>

@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -96,7 +96,7 @@ export class RestartInfusionComponent implements OnInit,OnDestroy {
     this.administration.dose_id = this.infusionEvents.dose_id;
     this.administration.administrationstartime= this.appService.getDateTimeinISOFormat(moment(this.administration.administrationstartime,"DD-MM-YYYY HH:mm").toDate()); 
     this.administration.planneddatetime= this.administration.administrationstartime;
-    this.administration.logicalid = "restart_" + this.createLogicalId(this.administration.administrationstartime, this.infusionEvents.dose_id);
+    //this.administration.logicalid = "restart_" + this.createLogicalId(this.administration.administrationstartime, this.infusionEvents.dose_id);
     this.administration.administredinfusionrate = this.infusionrate;
     this.administration.plannedinfustionrate = this.infusionrate;
     this.administration.prescription_id = this.prescription.prescription_id;
@@ -105,7 +105,8 @@ export class RestartInfusionComponent implements OnInit,OnDestroy {
     this.administration.encounter_id= this.appService.encounter.encounter_id;
     this.administration.medication_id = this.medication.medication_id;
     this.administration.comments = this.comments;
-
+    this.administration.administredby = this.appService.loggedInUserName;
+    
     this.infusionEvents.dose_id = this.administration.dose_id;
     this.infusionEvents.eventdatetime = this.administration.administrationstartime;
     this.infusionEvents.planneddatetime= this.administration.administrationstartime;
@@ -116,6 +117,10 @@ export class RestartInfusionComponent implements OnInit,OnDestroy {
     }
     this.infusionEvents.eventtype = "restart";
     this.infusionEvents.comments = this.comments;
+    let correctionId = uuid();
+    this.infusionEvents.correlationid = correctionId;
+    this.administration.correlationid = correctionId;
+
     delete this.infusionEvents._sequenceid;
     this.appService.logToConsole(this.administration);
     this.appService.logToConsole(this.infusionEvents);
@@ -143,7 +148,7 @@ export class RestartInfusionComponent implements OnInit,OnDestroy {
         this.subjects.closeAppComponentPopover.next();
 
         if (this.appService.IsDataVersionStaleError(error)) {
-          this.subjects.ShowRefreshPageMessage.next(error);
+          this.appService.RefreshPageWithStaleError(error);
         }
       }
     );  
@@ -181,12 +186,7 @@ export class RestartInfusionComponent implements OnInit,OnDestroy {
     this.minDate =  new Date(this.currentposology.__dose[0].dosestartdatetime);
     // check for exssting administration
     let administer = this.appService.Medicationadministration.sort((b, a) => new Date(a.administrationstartime).getTime() - new Date(b.administrationstartime).getTime()).find(e => e.prescription_id == this.prescription.prescription_id);
-    if(event.administration) {
-      this.administration = event.administration;
-      this.infusionrate = this.administration.administredinfusionrate;
-    } else {
-      this.administration.medicationadministration_id = uuid();
-    }
+   
     this.doseunit = this.currentposology.__dose[0].doseunit;
     // check for exisiting event
     if(event.infusionEvents) {
@@ -195,6 +195,7 @@ export class RestartInfusionComponent implements OnInit,OnDestroy {
       if (event.infusionEvents.expirydate) {
         this.expirydate = moment(event.infusionEvents.expirydate, "YYYY-MM-DD HH:mm").format("DD-MM-YYYY");
       }
+      this.infusionEvents.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
       this.comments= this.infusionEvents.comments;
       this.infusionEvents.modifiedby = this.appService.loggedInUserName;
       this.stardate = moment(this.infusionEvents.eventdatetime, "YYYY-MM-DD HH:mm").format("DD-MM-YYYY");
@@ -217,6 +218,8 @@ export class RestartInfusionComponent implements OnInit,OnDestroy {
         this.infusionEvents.dose_id =  uuid();
         this.infusionEvents.administeredby = this.appService.loggedInUserName;
         this.infusionEvents.modifiedby = this.appService.loggedInUserName;
+        this.infusionEvents.createdon = this.appService.getDateTimeinISOFormat(moment().toDate());
+        this.infusionEvents.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
         this.infusionrate = null;
         if(administer) {
           this.infusionrate = administer.administredinfusionrate;
@@ -235,6 +238,16 @@ export class RestartInfusionComponent implements OnInit,OnDestroy {
             this.maxDate = moment(this.maxDate, 'DD-MM-YYYY HH:mm').add(-this.appService.administrationTimeDiffInMinute, 'minutes').toDate(); 
           } 
       }         
+    }
+    if(event.administration) {
+      this.administration = event.administration;
+      this.infusionrate = this.administration.administredinfusionrate;
+      this.administration.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
+    } else {
+      this.administration.medicationadministration_id = uuid();
+      this.administration.createdon = this.appService.getDateTimeinISOFormat(moment().toDate());
+      this.administration.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
+      this.administration.logicalid = "restart_" + this.createLogicalId(this.administration.administrationstartime, this.infusionEvents.dose_id);
     }
     this.minDate = moment(this.minDate, 'DD-MM-YYYY HH:mm').add(this.appService.administrationTimeDiffInMinute, 'minutes').toDate();   
     this.appService.logToConsole(this.minDate);

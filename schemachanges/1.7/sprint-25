@@ -1,0 +1,43 @@
+List and Baseview in bracket
+------------------------------------
+Current Inpatients (allinpatients)
+pharmacy daily Review (pharmacydailyReview)
+Discharge Supply Request (dischargesupplyrequest)
+out patient suppy request (outpatientsupplyrequest)
+new medicines to review (newmedicinestoreview)
+prescriber to review(epma_prescribertoreview)
+ Pharmacist to Review (epma_pharmacyreview)
+ Supply Request  (epma_supplyrequest)
+ Non-formulary Supply Request(epma_nonformularysupplyrequest)
+New Medicines to Review ( newmedicinetoreview)
+
+
+
+list Baseview
+-----------------------------------
+allinpatients
+
+
+ACTIONS (user action are same (Registered Nurse,AIT / Non Medical Prescriber , Doctor,Pharmacist,Super User))
+-----------------------------
+epma_access_org_ordersets
+epma_access_search_medicines
+epma_access_favourites_list
+epma_access_patient_list
+
+epma_access_addprescription_op(AIT / Non Medical Prescriber,Doctor,Super User)
+epma_access_administer_op(Registered Nurse,Student Nurse,AIT / Non Medical Prescriber,Doctor,Pharmacist,Pharmacy tech,DTC approver,Super User)
+epma_access_notes_op(Pharmacist,Pharmacy tech ,DTC approver,Super User)
+epma_access_print_op(Registered Nurse,Student Nurse,AIT / Non Medical Prescriber,Doctor,Pharmacist,Pharmacy tech,DTC approver,Super User)
+epma_access_supplyrequest_op(Registered Nurse,Student Nurse,AIT / Non Medical Prescriber,Doctor,Pharmacist,Pharmacy tech,DTC approver,Super User)
+epma_add_newscript_op(AIT / Non Medical Prescriber,Doctor,Super User)
+
+Baseviews
+------------------------------------------------------
+epma_encounters (op clinic location name update)
+
+
+entities
+---------------------------
+local_epma_nursinginstructions
+

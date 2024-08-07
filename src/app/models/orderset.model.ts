@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -26,9 +26,12 @@ export class OrderSet {
     newOrderSetName: string;
     addToExistingOrderSet: boolean;
     existingOrderSetName: string;
-    definedCriteria: string;
-    inclusiveValue: number;
-    exclusiveValue: number;
+    agedefinedCriteria: string;
+    ageinclusiveValue: number;
+    ageexclusiveValue: number;
+    weightdefinedCriteria: string;
+    weightinclusiveValue: number;
+    weightexclusiveValue: number;
     patient_id: string;
     owner: string;
 }

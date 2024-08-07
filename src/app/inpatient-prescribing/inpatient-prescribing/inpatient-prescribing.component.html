@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <div class="card" *ngIf="appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled)">
     <div *ngIf="canSelectNewMedication" class="pl-3 card-body">
         <!-- <label>Search Medication</label> -->
-        <app-search-medication (medicationselected)="onmedicationselected($event)"></app-search-medication>
+        <app-search-medication *ngIf="appService.AuthoriseAction('epma_access_search_medicines')" (medicationselected)="onmedicationselected($event)"></app-search-medication>
     </div>
     <div *ngIf="canSelectNewMedication">
         <button (click)="ordersetlist.getOrderSets()" hidden #reloadorderset></button>
@@ -102,7 +102,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
     <div class="modal-footer">
         <label *ngIf="warningsError" class="alert-danger">{{warningsError}}</label>
         <button type="button" style="color:white" class="btn btn-info" (click)="SaveAllPrescriptions()" [disabled]="isFormSaving || PrescriptionBasket.length==0 
-          || !this.appService.bannerWarningStatus"
+          || !this.appService.bannerWarningStatus || appService.warningServiceIPContext.loader"
             *ngIf="(appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled)) && appService.AuthoriseAction('epma_access_inpatientprescribing')">
             <span class="spinner-border spinner-border-sm" *ngIf="isFormSaving" role="status" aria-hidden="true">
             </span> Prescribe</button>

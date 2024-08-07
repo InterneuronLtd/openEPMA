@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -364,7 +364,7 @@ export class TherapyOverviewComponent implements OnInit, OnDestroy {
             }
           }
         }
-        if (prescription.__posology.find(x => x.iscurrent == true).infusiontypeid == 'ci') {
+        if (prescription.__posology.find(x => x.iscurrent == true).infusiontypeid == 'ci' || prescription.__posology.find(x => x.iscurrent == true).infusiontypeid == 'pca') {
           prescrptionGroup = "Variable/Continuous infusion";     
         }
         else if (prescription.__posology.find(x => x.iscurrent == true).prn == true) {

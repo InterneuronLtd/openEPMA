@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -23,15 +23,17 @@ import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { Subscription } from 'rxjs';
 import { ApirequestService } from 'src/app/services/apirequest.service';
 import { AppService } from 'src/app/services/app.service';
-import { AdministerMedication, Dose, DoseEvents, Medication, Medicationcodes, Medicationingredients, Posology, Prescription, Prescriptionroutes } from '../../models/EPMA';
+import { AdministerMedication, Dose, DoseEvents, Epma_Medsonadmission, Medication, Medicationcodes, Medicationingredients, Posology, Prescription, Prescriptionroutes } from '../../models/EPMA';
 import { filter, filterparam, filterParams, filters, orderbystatement, selectstatement } from '../../models/filter.model';
 import { OrderSetList } from '../../models/ordersetlist.model';
 import { UpsertTransactionManager } from 'src/app/services/upsert-transaction-manager.service';
 import { FormContext, PrescriptionContext, PrescriptionStatus, RoleAction } from 'src/app/services/enum';
 import * as moment from 'moment';
-import { FormSettings } from '../prescribing-form/formhelper';
+import { FormSettings, Route } from '../prescribing-form/formhelper';
 import { DataRequest } from 'src/app/services/datarequest';
 import { SubjectsService } from 'src/app/services/subjects.service';
+import { v4 as uuid } from 'uuid';
+import { SearchMedicationComponent } from '../search-medication/search-medication.component';
 
 @Component({
   selector: 'app-orderset-list',
@@ -74,6 +76,7 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
   displayMODOS: boolean = false
   displayCMOS: boolean = false
   displaySTOS: boolean = false
+  displayGPC: boolean = false
   nullprescription: Prescription = null;
 
   organizationalOrderSetsPrescriptions = [];
@@ -86,6 +89,7 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
   CurrentInpatientPrescriptions = [];
   POAPrescriptions = [];
   StoppedMOAPrescriptions = [];
+  GPConnectPrescriptions = [];
 
   prescriptionList: Prescription[] = new Array<Prescription>();
   contextualprescriptionList: Prescription[] = new Array<Prescription>();
@@ -116,9 +120,14 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
   showPOAOrderSet: boolean = false;
   showCMOrderSet: boolean = false;
   showSTOrderSet: boolean = false;
+  showGPConnectOrderSet: boolean = false;
   allowView: boolean = false;
   showaddtoorderset = false;
   orderset_id = "";
+  showNotespopup = false;
+  arrreconcilation: any[] = [];
+  latestNotes: string = "";
+  gpconnectheading: string = "GP Connect";
   constructor(
     private apiRequest: ApirequestService,
     public appService: AppService,
@@ -128,10 +137,17 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnDestroy(): void {
+    if (this.context != FormContext.mod && this.context != FormContext.op) {
+      this.appService.currentBasket = [];
+    }
     this.subscriptions.unsubscribe();
   }
 
   ngOnInit(): void {
+    if (this.context != FormContext.moa && this.context != FormContext.mod && this.context != FormContext.op) {
+      this.appService.currentBasket = [];
+    }
+
     if (this.appService.AuthoriseAction(RoleAction.epma_view_ordersetlists) ||
       this.appService.AuthoriseAction(RoleAction.epma_create_org_orderset) ||
       this.appService.AuthoriseAction(RoleAction.epma_edit_org_orderset) ||
@@ -175,7 +191,7 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
                   let orderSetPrescriptionIds = JSON.parse(orderSetPrescriptionResponse);
                   //this.appService.logToConsole(orderSetPrescriptions);
 
-                  if ( this.appService.AuthoriseAction("epma_create_org_orderset")) {
+                  if (this.appService.AuthoriseAction("epma_create_org_orderset")) {
 
                   }
                   else {
@@ -183,15 +199,15 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
                     for (let r of presecriptionOrderSets) {
                       let removeorderset = true;
                       let selectedgroups = JSON.parse(r.groupsauthorizedtoview)
-                    
-                      for (let group of (selectedgroups??[])) {
+
+                      for (let group of (selectedgroups ?? [])) {
                         if (this.appService.loggedInUserRoles.includes(group.groupname)) {
                           removeorderset = false;
                         }
                       }
                       if (removeorderset) {
-                        if(this.organizationalOrderSetsId==r.prescriptionordersettype_id){
-                        presecriptionOrderSets = presecriptionOrderSets.filter(o => o.prescriptionorderset_id != r.prescriptionorderset_id);
+                        if (this.organizationalOrderSetsId == r.prescriptionordersettype_id) {
+                          presecriptionOrderSets = presecriptionOrderSets.filter(o => o.prescriptionorderset_id != r.prescriptionorderset_id);
                         }
                       }
 
@@ -199,30 +215,64 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
 
 
                     for (let r of presecriptionOrderSets) {
-
-                      if (r.criteria == 'Age in years') {
-                        if (!(Math.floor(this.appService.personAgeInDays / 365) >= r.inclusive_value && Math.floor(this.appService.personAgeInDays / 365) <= r.exclusive_value)) {
-                          presecriptionOrderSets = presecriptionOrderSets.filter(o => o.prescriptionorderset_id != r.prescriptionorderset_id);
+                      if (r.criteria) {
+                        if (r.criteria == 'Age in years') {
+                          if (!(Math.floor(this.appService.personAgeInDays / 365) >= r.inclusive_value && Math.floor(this.appService.personAgeInDays / 365) <= r.exclusive_value)) {
+                            presecriptionOrderSets = presecriptionOrderSets.filter(o => o.prescriptionorderset_id != r.prescriptionorderset_id);
+                          }
                         }
-                      }
-                      else if (r.criteria == 'Age in months') {
-                        if (!(Math.floor(this.appService.personAgeInDays / 30) >= r.inclusive_value && Math.floor(this.appService.personAgeInDays / 30) <= r.exclusive_value)) {
-                          presecriptionOrderSets = presecriptionOrderSets.filter(o => o.prescriptionorderset_id != r.prescriptionorderset_id);
+                        else if (r.criteria == 'Age in months') {
+                          if (!(Math.floor(this.appService.personAgeInDays / 30) >= r.inclusive_value && Math.floor(this.appService.personAgeInDays / 30) <= r.exclusive_value)) {
+                            presecriptionOrderSets = presecriptionOrderSets.filter(o => o.prescriptionorderset_id != r.prescriptionorderset_id);
+                          }
                         }
-                      }
-                      else if (r.criteria == 'Weight') {
-                        if (!(this.appService.refWeightValue >= r.inclusive_value && this.appService.refWeightValue <= r.exclusive_value)) {
-                          presecriptionOrderSets = presecriptionOrderSets.filter(o => o.prescriptionorderset_id != r.prescriptionorderset_id);
+                        else if (r.criteria == 'Weight') {
+                          if (!(this.appService.refWeightValue >= r.inclusive_value && this.appService.refWeightValue <= r.exclusive_value)) {
+                            presecriptionOrderSets = presecriptionOrderSets.filter(o => o.prescriptionorderset_id != r.prescriptionorderset_id);
+                          }
                         }
-                      }
-                      else if (r.criteria == 'Body Surface') {
-                        if (!(this.appService.bodySurfaceArea >= r.inclusive_value && this.appService.bodySurfaceArea <= r.exclusive_value)) {
-                          presecriptionOrderSets = presecriptionOrderSets.filter(o => o.prescriptionorderset_id != r.prescriptionorderset_id);
+                        else if (r.criteria == 'Body Surface') {
+                          if (!(this.appService.bodySurfaceArea >= r.inclusive_value && this.appService.bodySurfaceArea <= r.exclusive_value)) {
+                            presecriptionOrderSets = presecriptionOrderSets.filter(o => o.prescriptionorderset_id != r.prescriptionorderset_id);
+                          }
+                        }
+                        else {
+                          if ((r.inclusive_value == 'undefined' && r.exclusive_value == 'undefined')) {
+                            presecriptionOrderSets = presecriptionOrderSets.filter(o => o.prescriptionorderset_id != r.prescriptionorderset_id);
+                          }
                         }
                       }
                       else {
-                        if ((r.inclusive_value == 'undefined' && r.exclusive_value == 'undefined')) {
-                          presecriptionOrderSets = presecriptionOrderSets.filter(o => o.prescriptionorderset_id != r.prescriptionorderset_id);
+                        let criteria_Arr = []
+                        if (r.criteriajson) {
+                          criteria_Arr = JSON.parse(r.criteriajson)
+                        }
+                        for (let c of criteria_Arr) {
+                          if (c.criteria == 'Age in years') {
+                            if (!(Math.floor(this.appService.personAgeInDays / 365) >= c.min && Math.floor(this.appService.personAgeInDays / 365) <= c.max)) {
+                              presecriptionOrderSets = presecriptionOrderSets.filter(o => o.prescriptionorderset_id != r.prescriptionorderset_id);
+                            }
+                          }
+                          else if (c.criteria == 'Age in months') {
+                            if (!(Math.floor(this.appService.personAgeInDays / 30) >= c.min && Math.floor(this.appService.personAgeInDays / 30) <= c.max)) {
+                              presecriptionOrderSets = presecriptionOrderSets.filter(o => o.prescriptionorderset_id != r.prescriptionorderset_id);
+                            }
+                          }
+                          else if (c.criteria == 'Weight') {
+                            if (!(this.appService.refWeightValue >= c.min && this.appService.refWeightValue <= c.max)) {
+                              presecriptionOrderSets = presecriptionOrderSets.filter(o => o.prescriptionorderset_id != r.prescriptionorderset_id);
+                            }
+                          }
+                          else if (c.criteria == 'Body Surface') {
+                            if (!(this.appService.bodySurfaceArea >= c.min && this.appService.bodySurfaceArea <= c.max)) {
+                              presecriptionOrderSets = presecriptionOrderSets.filter(o => o.prescriptionorderset_id != r.prescriptionorderset_id);
+                            }
+                          }
+                          else {
+                            if ((c.min == 'undefined' && c.max == 'undefined')) {
+                              presecriptionOrderSets = presecriptionOrderSets.filter(o => o.prescriptionorderset_id != r.prescriptionorderset_id);
+                            }
+                          }
                         }
                       }
                     }
@@ -252,7 +302,8 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
                       defined_criteria: preOrd.defined_criteria,
                       showPrescriptions: false,
                       prescriptions: orderSetPrescriptions,
-                      visible: true
+                      visible: true,
+                      notes: null
                     };
 
                     switch (preOrd.prescriptionordersettype_id) {
@@ -290,6 +341,45 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
     );
   }
 
+  GetCurrentContextId() {
+    if (this.context == FormContext.moa) {
+      return this.appService.MetaPrescriptioncontext.find(x => x.context == PrescriptionContext.Admission).prescriptioncontext_id;
+    }
+    else
+      if (this.context == FormContext.mod) {
+        return this.appService.MetaPrescriptioncontext.find(x => x.context == PrescriptionContext.Discharge).prescriptioncontext_id;
+      }
+      else if (this.context == FormContext.op) {
+        return this.appService.MetaPrescriptioncontext.find(x => x.context == PrescriptionContext.Outpatient).prescriptioncontext_id;
+      }
+      else
+        if (this.context == FormContext.ip) {
+          return this.appService.MetaPrescriptioncontext.find(x => x.context == PrescriptionContext.Inpatient).prescriptioncontext_id;
+        }
+  }
+
+  AddMedicationClass(prescription: Prescription) {
+    let currentcontextid = this.GetCurrentContextId();
+
+    let formularycode = prescription.__medications.find(x => x.isprimary).__codes.find(y => y.terminology == "formulary").code;
+    // let codeobject = this.appService.Prescription.filter(x => x.prescription_id != prescription.prescription_id && x.prescriptioncontext_id == currentcontextid &&
+    //   (x.__medications.find(y => y.isprimary == true).__codes.filter(z => z.terminology == "formulary" && z.code == formularycode).length != 0))
+    // if (codeobject.length > 0) {
+    //   //return "medicationexist";
+    //   "";
+    // }
+    // else {
+    let exitinbasket = this.appService.currentBasket.filter(x =>
+      (x.__medications.find(y => y.isprimary == true).__codes.filter(z => z.terminology == "formulary" && z.code == formularycode).length != 0))
+    if (exitinbasket.length > 0) {
+      return "medicationadded";
+    }
+    else {
+      return ""
+    }
+
+    // }
+  }
   FilterOrderSets(ordersetlist: Array<OrderSetList>, searchterm) {
     for (let os of ordersetlist) {
       let osnamematch = false;
@@ -341,6 +431,9 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
         break;
       case 'ST':
         this.showSTOrderSet = !this.showSTOrderSet;
+        break;
+      case 'GPC':
+        this.showGPConnectOrderSet = !this.showGPConnectOrderSet;
         break;
     }
 
@@ -472,7 +565,7 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
                 upsertManager.destroy();
 
                 if (this.appService.IsDataVersionStaleError(error)) {
-                  this.subjects.ShowRefreshPageMessage.next(error);
+                  this.appService.RefreshPageWithStaleError(error);
                 }
               }
             )
@@ -684,49 +777,94 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
   }
 
   GetContextualOrdersets() {
-    if (this.context == FormContext.moa || this.context == FormContext.op) {
+    if (this.context == FormContext.moa) {
       this.getAllPrescriptions(PrescriptionContext.Discharge, this.GetMODcallback);
+      this.getAllPrescriptions(PrescriptionContext.Admission, this.GetMOAcallback);
 
       this.getPOAPrescriptions(this.GetPOAcallback);
 
+      if (this.appService.appConfig.AppSettings.gpConnectListDisplayContexts && Array.isArray(this.appService.appConfig.AppSettings.gpConnectListDisplayContexts)) {
+        if (this.appService.appConfig.AppSettings.gpConnectListDisplayContexts.find(x => x == PrescriptionContext.Admission)) {
+          this.getGPConnectPrescriptions();
+          this.displayGPC = true
+        }
+      }
       this.displayOrgOS = true;
       this.displayMyOS = true;
       this.displayPOAOS = true;
       this.displayMODOS = true;
-      this.displayMOAOS = false;
+      this.displayMOAOS = true;
       this.displayCMOS = false;
       this.displaySTOS = false;
       this.displayPatientOS = true;
-    }
-    if (this.context == FormContext.mod) {
-      this.getAllPrescriptions(PrescriptionContext.Admission, this.GetMOAcallback);
-      this.getAllInpatientPrescriptions();
-      this.getPOAPrescriptions(this.GetPOAcallback);
+    } else
+      if (this.context == FormContext.mod) {
+        this.getAllPrescriptions(PrescriptionContext.Admission, this.GetMOAcallback);
+        this.getAllInpatientPrescriptions();
+        this.getPOAPrescriptions(this.GetPOAcallback);
 
-      this.displayOrgOS = true;
-      this.displayMyOS = true;
-      this.displayPOAOS = true;
-      this.displayMODOS = false;
-      this.displayMOAOS = true;
-      this.displayCMOS = true;
-      this.displaySTOS = true;
-      this.displayPatientOS = true;
+        if (this.appService.appConfig.AppSettings.gpConnectListDisplayContexts && Array.isArray(this.appService.appConfig.AppSettings.gpConnectListDisplayContexts)) {
+          if (this.appService.appConfig.AppSettings.gpConnectListDisplayContexts.find(x => x == PrescriptionContext.Discharge)) {
+            this.getGPConnectPrescriptions();
+            this.displayGPC = true
+          }
+        }
 
-    }
-    if (this.context == FormContext.ip) {
-      this.getAllPrescriptions(PrescriptionContext.Admission, this.GetMOAcallback);
-      this.getAllPrescriptions(PrescriptionContext.Discharge, this.GetMODcallback);
+        this.displayOrgOS = true;
+        this.displayMyOS = true;
+        this.displayPOAOS = true;
+        this.displayMODOS = false;
+        this.displayMOAOS = true;
+        this.displayCMOS = true;
+        this.displaySTOS = true;
+        this.displayPatientOS = true;
 
-      this.displayOrgOS = true;
-      this.displayMyOS = true;
-      this.displayPOAOS = false;
-      this.displayMODOS = true;
-      this.displayMOAOS = true;
-      this.displayCMOS = false;
-      this.displaySTOS = true;
-      this.displayPatientOS = true;
+      } else
+        if (this.context == FormContext.ip) {
+          this.getAllPrescriptions(PrescriptionContext.Admission, this.GetMOAcallback);
+          this.getAllPrescriptions(PrescriptionContext.Discharge, this.GetMODcallback);
 
-    }
+          if (this.appService.appConfig.AppSettings.gpConnectListDisplayContexts && Array.isArray(this.appService.appConfig.AppSettings.gpConnectListDisplayContexts)) {
+            if (this.appService.appConfig.AppSettings.gpConnectListDisplayContexts.find(x => x == PrescriptionContext.Inpatient)) {
+              this.getGPConnectPrescriptions();
+              this.displayGPC = true
+            }
+          }
+
+          this.displayOrgOS = true;
+          this.displayMyOS = true;
+          this.displayPOAOS = false;
+          this.displayMODOS = true;
+          this.displayMOAOS = true;
+          this.displayCMOS = false;
+          this.displaySTOS = true;
+          this.displayPatientOS = true;
+
+        } else
+          if (this.context == FormContext.op) {
+            this.getAllPrescriptions(PrescriptionContext.Discharge, this.GetMODcallback);
+
+            this.getPOAPrescriptions(this.GetPOAcallback);
+            this.GetCurrentInpatientPrescriptionsForOP();
+
+            if (this.appService.appConfig.AppSettings.gpConnectListDisplayContexts && Array.isArray(this.appService.appConfig.AppSettings.gpConnectListDisplayContexts)) {
+              if (this.appService.appConfig.AppSettings.gpConnectListDisplayContexts.find(x => x == PrescriptionContext.Outpatient)) {
+                this.getGPConnectPrescriptions();
+                this.displayGPC = true
+              }
+            }
+
+            this.displayOrgOS = true;
+            this.displayMyOS = true;
+            this.displayPOAOS = true;
+            this.displayMODOS = true;
+            this.displayMOAOS = false;
+            this.displayCMOS = true;
+            this.displaySTOS = false;
+            this.displayPatientOS = true;
+
+          }
+
 
     // this.getPOAPrescriptions(this.GetPOAcallback);
     // this.getAllPrescriptions(PrescriptionContext.Admission, this.GetMOAcallback);
@@ -737,10 +875,12 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
 
   getAllInpatientPrescriptions() {
     let orderSetPrescriptions: Prescription[] = [];
+    let stoppedid = this.appService.MetaPrescriptionstatus.find(x => x.status.toLowerCase() == PrescriptionStatus.stopped.toLowerCase()).prescriptionstatus_id;
+    let cancelledid = this.appService.MetaPrescriptionstatus.find(x => x.status.toLowerCase() == PrescriptionStatus.cancelled.toLowerCase()).prescriptionstatus_id;
 
-    for (let p of this.appService.Prescription.filter(x => x.prescriptioncontext_id == (this.appService.MetaPrescriptioncontext.find(c => c.context.toLowerCase() == "inpatient").prescriptioncontext_id))) {
+    for (let p of this.appService.Prescription.filter(x => x.prescriptionstatus_id != stoppedid && x.prescriptionstatus_id != cancelledid && x.__completed != true && x.prescriptioncontext_id == (this.appService.MetaPrescriptioncontext.find(c => c.context.toLowerCase() == "inpatient").prescriptioncontext_id))) {
 
-      orderSetPrescriptions.push(p);
+      orderSetPrescriptions.push(this.ClonePrescription(p, true));
     }
     let orderSetList: OrderSetList = {
       prescriptionorderset_id: "",
@@ -748,10 +888,240 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
       defined_criteria: "",
       showPrescriptions: false,
       prescriptions: orderSetPrescriptions,
-      visible: true
+      visible: true,
+      notes: null
     };
     this.CurrentInpatientPrescriptions.push(orderSetList);
     this.showCMOrderSet = true;
+  }
+
+  getGPConnectPrescriptions() {
+    if (this.appService.appConfig.AppSettings.enableGPConnectList) {
+      let postdata = new GPConnectDataContract()
+
+      postdata.includeAllergies = false;
+      if (this.appService.patientDetails && this.appService.patientDetails.nhsnumber) {
+
+        let nhsnumber = this.appService.patientDetails.nhsnumber.replaceAll(" ", "").toString();
+        let gpConnectRepeatMedsInMonths = +this.appService.appConfig.AppSettings.gpConnectRepeatMedsInMonths;
+        let gpConnectAcuteMedsInMonths = +this.appService.appConfig.AppSettings.gpConnectAcuteMedsInMonths;
+        postdata.nhsNumber = nhsnumber//  "9690937286" //"9690937294";
+        postdata.repeatMedicationsSinceInMonths = gpConnectRepeatMedsInMonths;
+        postdata.acuteMedicationsSinceInMonths = gpConnectAcuteMedsInMonths;
+
+        if (nhsnumber) {
+          this.subscriptions.add(
+            this.apiRequest.postRequest(this.appService.appConfig.uris.gpconnectbaseuri + "/GetStructuredRecordByAttributes?api-version=1.0",
+              postdata, false)
+              .subscribe((gpconnectdata) => {
+                if (gpconnectdata && gpconnectdata.data) {
+
+                  //assign gp connect last sync date to heading 
+                  let lastSyncDate = gpconnectdata.data.lastSyncDate;
+                  if (lastSyncDate)
+                    this.gpconnectheading = "GP Connect (" + moment(lastSyncDate).format("DD-MMM-yyyy") + ")";
+
+                  //get the medication data for all the snomed codes from terminology
+                  //generate current repeat medications orderset object
+                  if (gpconnectdata.data.currentRepeatMedications && gpconnectdata.data.currentRepeatMedications.length != 0) {
+                    this.ConstructGPConnectPrescriptions(gpconnectdata, "currentRepeatMedications")
+                  }
+
+                  //generate current actute medications orderset object
+                  if (gpconnectdata.data.currentAcuteMedications && gpconnectdata.data.currentAcuteMedications.length != 0) {
+                    this.ConstructGPConnectPrescriptions(gpconnectdata, "currentAcuteMedications")
+                  }
+                }
+              }))
+        }
+      }
+      else {
+        this.appService.logToConsole("no nhs number - orderset lists");
+      }
+    }
+  }
+
+  ConstructGPConnectPrescriptions(gpconnectdata, medtype) {
+    const terminologyEndpoint = this.appService.appConfig.uris.terminologybaseuri + "/Formulary/getformularydetailruleboundbycode";
+    let formsettings = new FormSettings();
+    formsettings.appService = this.appService;
+    formsettings.apiRequest = this.apiRequest;
+    formsettings.subjects = this.subjects;
+    formsettings.formContext = FormContext.ip;
+    let orderSetPrescriptions: Prescription[] = [];
+
+    if (gpconnectdata.data[medtype] && gpconnectdata.data[medtype].length != 0) {
+      let i = 0;
+      gpconnectdata.data[medtype].forEach((med) => {
+        let snomedCode = med.medicationItem.find(x => x.system == "http://snomed.info/sct");
+        let gpConnectAcuteMedsInMonths = this.appService.appConfig.AppSettings.gpConnectAcuteMedsInMonths;
+        let ordersetname = "";
+        if (medtype == "currentRepeatMedications")
+          ordersetname = "Current Repeat Medication"
+        else
+          if (medtype == "currentAcuteMedications")
+            ordersetname = "Acute Medication (Last " + gpConnectAcuteMedsInMonths + " Months)"
+        let snomedcode = "na"
+        if (snomedCode)
+          snomedcode = snomedCode.code;
+        this.subscriptions.add(this.apiRequest.getRequest(`${terminologyEndpoint}/${snomedcode}?api-version=1.0`)
+          .subscribe((terminologyMedication) => {
+            if (terminologyMedication) {
+              //generate prescription template meta data
+              let p = this.GenerateGPCPrescriptionObject(med, formsettings, terminologyMedication);
+              // push to ordersetPrescriptions
+              orderSetPrescriptions.push(p);
+            }
+            if (i == gpconnectdata.data[medtype].length - 1) {
+              let orderSetList: OrderSetList = {
+                prescriptionorderset_id: "",
+                orderSetName: ordersetname,
+                defined_criteria: "",
+                showPrescriptions: false,
+                prescriptions: orderSetPrescriptions,
+                visible: true,
+                notes: null
+              };
+              this.GPConnectPrescriptions.push(orderSetList);
+            }
+            i++;
+          }, (error) => {
+
+            // medication not found in termiology, create custom product 
+
+            let searchMed = new SearchMedicationComponent(this.subjects, this.appService, this.apiRequest);
+            searchMed.clearSearchText();
+            searchMed.u_name = med.medicationItem[0].text;
+            searchMed.u_form = "Not applicable";
+            let customMedication = searchMed.GenerateCustomProduct();
+
+            //generate prescription template meta data
+            let p = this.GenerateGPCPrescriptionObject(med, formsettings, customMedication);
+            // push to ordersetPrescriptions
+            orderSetPrescriptions.push(p);
+
+            if (i == gpconnectdata.data[medtype].length - 1) {
+              let orderSetList: OrderSetList = {
+                prescriptionorderset_id: "",
+                orderSetName: ordersetname,
+                defined_criteria: "",
+                showPrescriptions: false,
+                prescriptions: orderSetPrescriptions,
+                visible: true,
+                notes: null
+              };
+              this.GPConnectPrescriptions.push(orderSetList);
+            }
+            i++;
+
+          }));
+      })
+    }
+  }
+
+
+  GenerateGPCPrescriptionObject(med, formsettings, terminologyMedication) {
+    let startDate = med.medicationStartDate;
+    let lastIssueDate = med.lastIssuedDate;
+    let reviewDate = med.reviewDate;
+    let dosageInst = med.dosageInstruction;
+    let additionalInfo = med.additonalInformation;
+    let daysDuration = med.daysDuration;
+    let scheduledEndDate = med.scheduledEndDate;
+
+    let arr = [];
+    if (startDate) {
+      arr.push("<span class='text-info font-weight-bold'>Start Date: </span>")
+      arr.push(moment(startDate).format("DD-MMM-yyyy HH:mm"))
+      arr.push("<br>")
+      if (!scheduledEndDate && daysDuration) {
+        scheduledEndDate = moment(startDate).add(+daysDuration, 'days');
+      }
+    }
+    if (daysDuration) {
+      arr.push("<span class='text-info font-weight-bold'>Duration: </span>")
+      arr.push(+daysDuration)
+      arr.push(" days")
+      arr.push("<br>")
+    }
+    if (scheduledEndDate) {
+      arr.push("<span class='text-info font-weight-bold'>Scheduled End Date : </span>")
+      arr.push(moment(scheduledEndDate).format("DD-MMM-yyyy HH:mm"))
+      arr.push("<br>")
+    }
+
+    if (reviewDate) {
+      arr.push("<span class='text-info font-weight-bold'>Review Date: </span>")
+      arr.push(moment(reviewDate).format("DD-MMM-yyyy HH:mm"))
+      arr.push("<br>")
+    }
+
+    if (lastIssueDate) {
+      arr.push("<span class='text-info font-weight-bold'>Last Issued: </span>")
+      arr.push(moment(lastIssueDate).format("DD-MMM-yyyy HH:mm"))
+      arr.push("<br>")
+    }
+
+    if (dosageInst) {
+      arr.push("<span class='text-info font-weight-bold'>Dosage Instructions: </span>")
+      arr.push(dosageInst)
+      arr.push("<br>")
+    }
+
+    if (additionalInfo) {
+      arr.push("<span class='text-info font-weight-bold'>Additional Info: </span>")
+      arr.push(additionalInfo)
+      arr.push("<br>")
+    }
+
+    //generate prescription object 
+    formsettings.medication = terminologyMedication;
+    formsettings.SetDoseType();
+    let p = formsettings.GeneratePrescriptionObject([{ key: 'frequency', value: '' }])
+    p.startdatetime = this.appService.getDateTimeinISOFormat(moment(med.medicationStartDate).toDate());
+    p.__posology[0].prescriptionstartdate = this.appService.getDateTimeinISOFormat(moment(med.medicationStartDate).toDate());
+    p.__posology[0].prescriptionenddate = scheduledEndDate;
+    // p.comments = dosageInst + "\n" + additionalInfo + "\n(Source is GP Connect)";
+    p.__GpConnect = { displayinfo: "", comments: "" }
+    p.__GpConnect.displayinfo = arr.join("");
+    p.prescriptionsources = "[\"437850c2-6d80-41f8-a136-2f590e72781e\"]";
+    p.__GpConnect.comments = dosageInst + "\n" + additionalInfo + "\n(Source is GP Connect)";
+
+    return p;
+  }
+
+  GetCurrentInpatientPrescriptionsForOP() {
+    const currentencounter = this.appService.personencounters.find(x => x.displayText.startsWith("Current Visit"));
+    if (currentencounter) {
+      let orderSetPrescriptions: Prescription[] = [];
+
+      this.subscriptions.add(
+        this.apiRequest.postRequest(this.appService.baseURI + "/GetBaseViewListByPost/epma_prescriptiondetail", this.contextPrescriptionFilter(PrescriptionContext.Inpatient, currentencounter.encounter_id))
+          .subscribe((response) => {
+            // this.appService.Medication = [];
+            for (let prescription of response) {
+              if (prescription.correlationid) {
+                prescription.__posology = JSON.parse(prescription.__posology);
+                prescription.__routes = JSON.parse(prescription.__routes);
+                prescription.__medications = JSON.parse(prescription.__medications);
+              }
+              orderSetPrescriptions.push(this.ClonePrescription(prescription, true));
+            }
+            let orderSetList: OrderSetList = {
+              prescriptionorderset_id: "",
+              orderSetName: "Current Medications",
+              defined_criteria: "",
+              showPrescriptions: false,
+              prescriptions: orderSetPrescriptions,
+              visible: true,
+              notes: null
+            };
+            this.CurrentInpatientPrescriptions.push(orderSetList);
+            this.showCMOrderSet = true;
+          })
+      )
+    }
+
   }
 
   GetPOAcallback(instance: OrdersetListComponent, prescriptionList: Prescription[]) {
@@ -783,7 +1153,8 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
                 defined_criteria: "",
                 showPrescriptions: false,
                 prescriptions: orderSetPrescriptions,
-                visible: true
+                visible: true,
+                notes: null
               };
               instance.POAPrescriptions.push(orderSetList);
             }
@@ -792,7 +1163,27 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
         ))
   }
 
+  CreateSessionFilter() {
+    const condition = "person_id=@person_id";
+    const f = new filters()
+    f.filters.push(new filter(condition));
 
+    const pm = new filterParams();
+    pm.filterparams.push(new filterparam("person_id", this.appService.personId));
+
+
+    const select = new selectstatement("SELECT *");
+
+    const orderby = new orderbystatement("ORDER BY 2");
+
+    const body = [];
+    body.push(f);
+    body.push(pm);
+    body.push(select);
+    body.push(orderby);
+
+    return JSON.stringify(body);
+  }
   GetMOAcallback(instance: OrdersetListComponent, prescriptionList: Prescription[]) {
     instance.subscriptions.add(
       //get all MOAs for this person
@@ -803,6 +1194,8 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
         )
         .subscribe((moas) => {
           moas = JSON.parse(moas);
+          moas.sort((a, b) => new Date(b.modifiedon).getTime() - new Date(a.modifiedon).getTime())
+
           //get all moa prescriptions for this person
           instance.subscriptions.add(
             instance.apiRequest
@@ -813,93 +1206,136 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
               .subscribe((moaprescriptions) => {
                 moaprescriptions = JSON.parse(moaprescriptions);
 
-                //for each moa get prescription list from epma_moaprescriptions
-                for (let moa of moas) {
-                  let orderSetPrescriptions: Prescription[] = [];
-                  if (prescriptionList && prescriptionList.length > 0) {
-                    // get all prescription objects in this moa
-                    let prescriptionsInOrderset: Prescription[] =
-                      prescriptionList.filter(p =>
-                        moaprescriptions.find(mp => mp.prescription_id == p.prescription_id && mp.epma_medsonadmission_id == moa.epma_medsonadmission_id));
-                    for (let p of prescriptionsInOrderset) {
-                      orderSetPrescriptions.push(p);
-                    }
-                  }
-                  if (orderSetPrescriptions.length != 0) {
-                    let moaencounter = instance.appService.personencounters.find(e => e.encounter_id == moa.encounterid);
-                    let admitdatetimeformoa = moaencounter ? moaencounter.sortdate : "na";
-                    let name = ["MOA (", moment(admitdatetimeformoa).format("DD MMM YYYY"), ")"]
-                    if (!moa.iscomplete)
-                      name.push(" - Incomplete");
-                    else if (moa.iscomplete) {
-                      name.push(" - Completed by ");
-                      name.push(moa.modifiedby);
-                      name.push(" (");
-                      name.push(moment(moa.modifiedon).format("DD MMM YYYY"));
-                      name.push(" at ");
-                      name.push(moment(moa.modifiedon).format("HH:mm"));
-                      name.push(")");
-                    }
+
+                instance.subscriptions.add(
+                  instance.apiRequest
+                    .postRequest(
+                      instance.appService.baseURI + "/GetBaseViewListByPost/epma_modonadmissionhistory", instance.CreateSessionFilter() // get "meds on admission" history 
+                    )
+                    .subscribe((nodesHistory) => {
+
+                      nodesHistory.sort((a, b) => b._sequenceid - a._sequenceid);
+
+                      //for each moa get prescription list from epma_moaprescriptions
+                      for (let moa of moas) {
+                        let encounterobjects = nodesHistory.filter(x => x.encounterid == moa.encounterid && x.action == "Notes")
+                        let encounterNotes
+                        if (encounterobjects && encounterobjects.length > 0) {
+                          encounterobjects.sort((a, b) => b._sequenceid - a._sequenceid);
+                          encounterNotes = encounterobjects[0].notes;
+                        }
+                        let orderSetPrescriptions: Prescription[] = [];
+                        if (prescriptionList && prescriptionList.length > 0) {
+                          // get all prescription objects in this moa
+                          let prescriptionsInOrderset: Prescription[] =
+                            prescriptionList.filter(p =>
+                              moaprescriptions.find(mp => mp.prescription_id == p.prescription_id && mp.epma_medsonadmission_id == moa.epma_medsonadmission_id));
+                          for (let p of prescriptionsInOrderset) {
+                            orderSetPrescriptions.push(p);
+                          }
+                        }
+                        if (orderSetPrescriptions.length != 0) {
+                          let moaencounter = instance.appService.personencounters.find(e => e.encounter_id == moa.encounterid);
+                          let admitdatetimeformoa = moaencounter ? moaencounter.sortdate : null;
+                          let name = admitdatetimeformoa ? ["MOA (", moment(admitdatetimeformoa).format("DD MMM YYYY"), ")"] : ["MOA (Cancelled)"];
+                          if (!moa.iscomplete)
+                            name.push(" - Incomplete");
+                          else if (moa.iscomplete) {
+                            name.push(" - Completed by ");
+                            name.push(moa.modifiedby);
+                            name.push(" (");
+                            name.push(moment(moa.modifiedon).format("DD MMM YYYY"));
+                            name.push(" at ");
+                            name.push(moment(moa.modifiedon).format("HH:mm"));
+                            name.push(")");
+                          }
+
+                          if (moa.noteshasaddinfo) {
+                            name.push(" - ");
+                            name.push("See medical notes for additional information")
+                          }
+
+                          let orderSetList: OrderSetList = {
+                            prescriptionorderset_id: moa.epma_medsonadmission_id,
+                            orderSetName: name.join(""),
+                            defined_criteria: "",
+                            showPrescriptions: false,
+                            prescriptions: orderSetPrescriptions,
+                            visible: true,
+                            notes: encounterNotes
+                          };
+                          instance.MOAPrescriptions.push(orderSetList);
+                        }
+
+                        //stopped moa prescriptions  if current encounter
+                        if (moa.encounterid == instance.appService.encounter.encounter_id) {
 
 
-                    let orderSetList: OrderSetList = {
-                      prescriptionorderset_id: moa.epma_medsonadmission_id,
-                      orderSetName: name.join(""),
-                      defined_criteria: "",
-                      showPrescriptions: false,
-                      prescriptions: orderSetPrescriptions,
-                      visible: true
-                    };
-                    instance.MOAPrescriptions.push(orderSetList);
-                  }
+                          //any moa that is stopped or any other prescription with same primary medicationa stopped and no other medication with same primary medication being active
+                          let stoppedid = instance.appService.MetaPrescriptionstatus.find(x => x.status.toLowerCase() == PrescriptionStatus.stopped.toLowerCase()).prescriptionstatus_id;
+                          let activeid = instance.appService.MetaPrescriptionstatus.find(x => x.status.toLowerCase() == PrescriptionStatus.active.toLowerCase()).prescriptionstatus_id;
+                          let modifiedid = instance.appService.MetaPrescriptionstatus.find(x => x.status.toLowerCase() == PrescriptionStatus.modified.toLowerCase()).prescriptionstatus_id;
+                          let restartedid = instance.appService.MetaPrescriptionstatus.find(x => x.status.toLowerCase() == PrescriptionStatus.restarted.toLowerCase()).prescriptionstatus_id;
 
-                  //stopped moa prescriptions  if current encounter
-                  if (moa.encounterid == instance.appService.encounter.encounter_id) {
+                          let inpatientid = instance.appService.MetaPrescriptioncontext.find(x => x.context.toLowerCase() == PrescriptionContext.Inpatient.toLowerCase()).prescriptioncontext_id;
 
+                          let stoppedlist: Prescription[] = [];
+                          //for each moa
+                          orderSetPrescriptions.forEach((moap: Prescription) => {
 
-                    //any moa that is stopped or any other prescription with same primary medicationa stopped and no other medication with same primary medication being active
-                    let stoppedid = instance.appService.MetaPrescriptionstatus.find(x => x.status.toLowerCase() == PrescriptionStatus.stopped.toLowerCase()).prescriptionstatus_id;
-                    let activeid = instance.appService.MetaPrescriptionstatus.find(x => x.status.toLowerCase() == PrescriptionStatus.active.toLowerCase()).prescriptionstatus_id;
+                            let medcode = moap.__medications.find(m => m.isprimary).__codes.find(c => c.terminology == "formulary").code;
 
-                    let stoppedlist: Prescription[] = [];
-                    //for each moa
-                    orderSetPrescriptions.forEach((moap: Prescription) => {
+                            let activeondc = instance.appService.Prescription.find(p =>
+                              p.__medications.find(m => m.isprimary).__codes.find(c => c.terminology == "formulary").code == medcode
+                              && (p.prescriptionstatus_id == activeid || p.prescriptionstatus_id == modifiedid || p.prescriptionstatus_id == restartedid || p.prescriptionstatus_id == "" || p.prescriptionstatus_id == null)
+                              && p.prescriptioncontext_id == inpatientid)
 
-                      let medcode = moap.__medications.find(m => m.isprimary).__codes.find(c => c.terminology == "formulary").code;
+                            let stoppedondc = instance.appService.Prescription.find(p =>
+                              p.__medications.find(m => m.isprimary).__codes.find(c => c.terminology == "formulary").code == medcode
+                              && (p.prescriptionstatus_id == stoppedid)
+                              && p.prescriptioncontext_id == inpatientid)
 
-                      let activeondc = instance.appService.Prescription.find(p =>
-                        p.__medications.find(m => m.isprimary).__codes.find(c => c.terminology == "formulary").code == medcode
-                        && (p.prescriptionstatus_id == activeid || p.prescriptionstatus_id == "" || p.prescriptionstatus_id == null))
+                            let notcompletedondc = instance.appService.Prescription.find(p =>
+                              p.__medications.find(m => m.isprimary).__codes.find(c => c.terminology == "formulary").code == medcode
+                              && (p.prescriptionstatus_id == activeid || p.prescriptionstatus_id == modifiedid || p.prescriptionstatus_id == restartedid || p.prescriptionstatus_id == "" || p.prescriptionstatus_id == null)
+                              && p.prescriptioncontext_id == inpatientid
+                              && p.__completed != true)
 
-                      let stoppedondc = instance.appService.Prescription.find(p =>
-                        p.__medications.find(m => m.isprimary).__codes.find(c => c.terminology == "formulary").code == medcode
-                        && (p.prescriptionstatus_id == stoppedid))
+                            let completedondc = instance.appService.Prescription.find(p =>
+                              p.__medications.find(m => m.isprimary).__codes.find(c => c.terminology == "formulary").code == medcode
+                              && (p.prescriptionstatus_id == activeid || p.prescriptionstatus_id == modifiedid || p.prescriptionstatus_id == restartedid || p.prescriptionstatus_id == "" || p.prescriptionstatus_id == null)
+                              && p.prescriptioncontext_id == inpatientid
+                              && p.__completed == true)
 
-                      //if not active in drug chart
-                      //check if its stopped
-                      if (moap.prescriptionstatus_id == stoppedid) {
-                        //check if there is any active with same dmd code
-                        stoppedlist.push(moap);
-                      }
-                      else {
-                        if (stoppedondc && !activeondc) {
-                          stoppedlist.push(moap);
+                            //if not active in drug chart
+                            //check if its stopped
+                            if (moap.prescriptionstatus_id == stoppedid) {
+                              //check if there is any active with same dmd code
+                              stoppedlist.push(moap);
+                            }
+                            else if (stoppedondc && !activeondc) {
+                              stoppedlist.push(moap);
+                            }
+                            else if (completedondc && !notcompletedondc) {
+                              stoppedlist.push(moap);
+                            }
+                          });
+
+                          let orderSetListStopped: OrderSetList = {
+                            prescriptionorderset_id: moa.epma_medsonadmission_id,
+                            orderSetName: "MOA - Stopped (" + moment(moa.createdon).format("DD MMM YYYY") + ")",
+                            defined_criteria: "",
+                            showPrescriptions: false,
+                            prescriptions: stoppedlist,
+                            visible: true,
+                            notes: encounterNotes
+                          };
+                          instance.StoppedMOAPrescriptions.push(orderSetListStopped);
                         }
                       }
-                    });
-
-                    let orderSetListStopped: OrderSetList = {
-                      prescriptionorderset_id: moa.epma_medsonadmission_id,
-                      orderSetName: "MOA - Stopped (" + moment(moa.createdon).format("DD MMM YYYY") + ")",
-                      defined_criteria: "",
-                      showPrescriptions: false,
-                      prescriptions: stoppedlist,
-                      visible: true
-                    };
-                    instance.StoppedMOAPrescriptions.push(orderSetListStopped);
-                  }
-                }
-                instance.isDataLoaded = true;
+                      instance.isDataLoaded = true;
+                    }
+                    ))
               }
               ))
         }));
@@ -915,6 +1351,7 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
         )
         .subscribe((mods) => {
           mods = JSON.parse(mods);
+          mods.sort((a, b) => new Date(b.modifiedon).getTime() - new Date(a.modifiedon).getTime())
           //get all mod prescriptions for this person
           instance.subscriptions.add(
             instance.apiRequest
@@ -943,7 +1380,8 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
                       defined_criteria: "",
                       showPrescriptions: false,
                       prescriptions: orderSetPrescriptions,
-                      visible: true
+                      visible: true,
+                      notes: null
                     };
                     instance.MODPrescriptions.push(orderSetList);
                   }
@@ -953,7 +1391,7 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
         }));
   }
 
-  private contextPrescriptionFilter(context: any) {
+  private contextPrescriptionFilter(context: any, encounter_id = null) {
     let condition = "person_id = @person_id and prescriptioncontext_id = @prescriptioncontext_id"
     let contextid = "";
     if (context == PrescriptionContext.Admission) {
@@ -973,6 +1411,13 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
     else if (context == "poa") {
       condition = "person_id = @person_id"
     }
+    else if (context == PrescriptionContext.Inpatient) {
+      let ipcontext = this.appService.MetaPrescriptioncontext.find(x => x.context.toLowerCase() == PrescriptionContext.Inpatient.toLowerCase());
+      if (ipcontext) {
+        contextid = ipcontext.prescriptioncontext_id;
+      }
+      condition = "person_id = @person_id and prescriptioncontext_id = @prescriptioncontext_id and encounter_id=@encounter_id"
+    }
     let f = new filters()
     f.filters.push(new filter(condition));
 
@@ -980,6 +1425,9 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
     pm.filterparams.push(new filterparam("person_id", this.appService.personId));
     if (context != "poa")
       pm.filterparams.push(new filterparam("prescriptioncontext_id", contextid));
+    if (context == PrescriptionContext.Inpatient) {
+      pm.filterparams.push(new filterparam("encounter_id", encounter_id));
+    }
 
     let select = new selectstatement("SELECT *");
 
@@ -1104,4 +1552,135 @@ export class OrdersetListComponent implements OnInit, OnDestroy {
 
     return JSON.stringify(body);
   }
+
+  ClonePrescription(p: Prescription, skipVisitIdentifiers = false) {
+
+    var person_id = p.person_id;
+    var encounter_id = p.encounter_id;
+    if (skipVisitIdentifiers) {
+      person_id = null;
+      encounter_id = null;
+    }
+    var p1 = <Prescription>FormSettings.CleanAndCloneObject(p);
+    p1.prescription_id = uuid();
+    p1.correlationid = uuid();
+
+    p1.__medications = new Array<Medication>();
+    p1.__medications = [];
+    p1.person_id = person_id;
+    p1.encounter_id = encounter_id;
+    //p1.prescriptionstatus_id = null;
+
+
+    p.__medications.forEach(m => {
+      var mindex = p.__medications.indexOf(m);
+      p1.__medications.push(<Medication>FormSettings.CleanAndCloneObject(m));
+      p1.__medications[mindex].medication_id = uuid();
+      p1.__medications[mindex].correlationid = p1.correlationid;
+
+      p1.__medications[mindex].prescription_id = p1.prescription_id;
+      p1.__medications[mindex].person_id = person_id;
+      p1.__medications[mindex].encounter_id = encounter_id;
+
+
+      p1.__medications[mindex].__codes = new Array<Medicationcodes>();
+      p1.__medications[mindex].__codes = [];
+      m.__codes.forEach(c => {
+        var cindex = m.__codes.indexOf(c);
+        p1.__medications[mindex].__codes.push(<Medicationcodes>FormSettings.CleanAndCloneObject(c));
+        p1.__medications[mindex].__codes[cindex].medication_id = p1.__medications[mindex].medication_id;
+        p1.__medications[mindex].__codes[cindex].medicationcodes_id = uuid();
+        p1.__medications[mindex].__codes[cindex].correlationid = p1.correlationid;
+      });
+
+      p1.__medications[mindex].__ingredients = new Array<Medicationingredients>();
+      p1.__medications[mindex].__ingredients = [];
+      m.__ingredients.forEach(ig => {
+        var igindex = m.__ingredients.indexOf(ig);
+        p1.__medications[mindex].__ingredients.push(<Medicationingredients>FormSettings.CleanAndCloneObject(ig));
+        p1.__medications[mindex].__ingredients[igindex].medication_id = p1.__medications[mindex].medication_id;
+        p1.__medications[mindex].__ingredients[igindex].medicationingredients_id = uuid();
+        p1.__medications[mindex].__ingredients[igindex].correlationid = p1.correlationid;
+      });
+    });
+
+    p1.__posology = [];
+    p1.__posology.push(<Posology>FormSettings.CleanAndCloneObject(this.appService.GetCurrentPosology(p)));
+    // p1.__posology[0] = <Posology>FormSettings.CleanAndCloneObject(p.__posology[0]);
+    p1.__posology[0].prescription_id = p1.prescription_id;
+    p1.__posology[0].posology_id = uuid();
+    p1.__posology[0].correlationid = p1.correlationid;
+
+    p1.__posology[0].person_id = person_id;
+    p1.__posology[0].encounter_id = encounter_id;
+
+    p1.__posology[0].__dose = new Array<Dose>();
+    p1.__posology[0].__dose = [];
+    this.appService.GetCurrentPosology(p).__dose.forEach(d => {
+      var dindex = this.appService.GetCurrentPosology(p).__dose.indexOf(d);
+      p1.__posology[0].__dose.push(<Dose>FormSettings.CleanAndCloneObject(d));
+      p1.__posology[0].__dose[dindex].dose_id = uuid();
+      if (dindex > 0 && p.isinfusion)
+        p1.__posology[0].__dose[dindex].continuityid = p1.__posology[0].__dose[0].dose_id;
+      p1.__posology[0].__dose[dindex].posology_id = p1.__posology[0].posology_id;
+      p1.__posology[0].__dose[dindex].prescription_id = p1.prescription_id;
+      p1.__posology[0].__dose[dindex].correlationid = p1.correlationid;
+
+    });
+
+    p1.__routes = new Array<Route>();
+    p1.__routes = [];
+    p.__routes.forEach(r => {
+      var rindex = p.__routes.indexOf(r);
+      p1.__routes.push(<Route>FormSettings.CleanAndCloneObject(r));
+      p1.__routes[rindex].medication_id = "";
+      p1.__routes[rindex].prescription_id = p1.prescription_id;
+      p1.__routes[rindex].prescriptionroutes_id = uuid();
+      p1.__routes[rindex].correlationid = p1.correlationid;
+
+    });
+
+    p1.__customWarning = [];
+    if (p.__customWarning)
+      p.__customWarning.forEach(cw => {
+        p1.__customWarning.push(<any>FormSettings.CleanAndCloneObject(cw));
+      });
+
+    this.appService.logToConsole(p);
+    this.appService.logToConsole(p1);
+
+    return p1;
+  }
+
+  showMOANotespop(notes) {
+    this.showNotespopup = true;
+    this.latestNotes = notes
+  }
+
+  closepopupNotes() {
+    this.showNotespopup = false;
+  }
+
+  GetordersetAccess(action) {
+    if (this.context == FormContext.ip) {
+      return this.appService.AuthoriseAction(action)
+    }
+    else if (this.context == FormContext.moa) {
+      return this.appService.AuthoriseAction(action + "_moa")
+    }
+    else if (this.context == FormContext.op) {
+      return this.appService.AuthoriseAction(action + "_op")
+    }
+    else if (this.context == FormContext.mod) {
+      return this.appService.AuthoriseAction(action + "_mod")
+    }
+  }
+
+}
+
+export class GPConnectDataContract {
+  nhsNumber: string;
+  includeAllergies: boolean;
+  acuteMedicationsSinceInMonths: number;
+  repeatMedicationsSinceInMonths: number
 }

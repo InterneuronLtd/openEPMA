@@ -1,0 +1,53 @@
+.close-away-period {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAYdJREFUeNq0VdFtgzAQNVEH8AZtN+gGhQ2SDZoJyH+kJK3U75YJyAZlg5AJ8AiMwAb0jM7UPnzGNMqTLCQbv2ffvTsnfd+LJElECKePTwmfFzKtTod9F9o3cIcEgPgNPrmHfBSBUYDQeZEAEGvCMkBM0cLYgJCiAivm1JcF5BpPMBrc68C5AZ68Ebchg5vUkxBhIhs8jYFJomTIfOt67lkbgIZo5yHPcHQMuW9dItcAWyAnBNodChNHSToMhVkvyN7cEYDwpJ4wHE3SiMhIbpniSPZKmF/bN0iZGJceEUpeMnsHFz5EuEKLaIGz7fMZco1HmoMQvtBlzlxEbUQJmJhTJ3HuMrjaAu0M+RhzJvFsjRiBOoYcY15GitR/Nj3sW49IEXALFSk8rVw5vQhr4UJ+3BpCJgzcuu6s1aRdg8gPfNY3NrsKyDdcu97iI/JfKOtWk14k0IoZk/Q51D47s08mhGuHPUZG1Mk7EH8vfpMtB71iZabWaVsspop7/EeBe2Il7oxfAQYArevp53qUQ7cAAAAASUVORK5CYII=);
+    width: 24px;
+    height: 24px;
+    margin-top: -3px;
+    cursor: pointer;
+  }
+  .edit-away-period {
+    width: 2em;
+    height: 2em;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-image: url(/assets/images/epma/op/edit_therapy.svg);
+    cursor: pointer;
+}
+ 
+.remove-away-period  {
+  width: 24px;
+  height: 24px;
+  background-repeat: no-repeat;
+  background-image: url("/assets/images/epma/therapy/Stop_Or_Remove.svg");
+  cursor: pointer;
+}
+.away-period-history  {
+  width: 1.3em;
+  height: 1.3em;
+  background-repeat: no-repeat;
+  background-image: url("/assets/images/epma/history.svg");
+  cursor: pointer;
+}
+.away-reason-break-all {
+  word-break: break-all;
+}
+
+table tbody {
+  display: block;
+  max-height: 300px;
+  overflow-y: scroll;
+}
+
+table thead, table tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+.table th, .table td {
+padding: 0.2rem; 
+ 
+}
+::ng-deep .required-field::after {
+  content: "*";
+  color: red;
+}

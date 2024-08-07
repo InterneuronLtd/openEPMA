@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -21,17 +21,18 @@
 import { Injectable } from '@angular/core';
 import { Encounter } from '../models/encounter.model';
 import jwt_decode from 'jwt-decode';
-import { Prescription, Posology, Dose, DoseEvents, Medication, Medicationadministration, Medicationcodes, Medicationingredients, Medicationroutes, MetaPrescriptionstatus, MetaPrescriptionduration, DrugChart, MetaPrescriptionadditionalcondition, Prescriptionroutes, InfusionEvents, PrescriptionSource, Oxygendevices, MetaReviewstatus, SupplyRequest, Prescriptionreminders, Prescriptionreviewstatus, MetaPrescriptioncontext, Orderset, PrescriptionEvent, PrescriptionMedicaitonSupply, AdministerMedication } from "src/app/models/EPMA"
+import { Prescription, Posology, Dose, DoseEvents, Medication, Medicationadministration, Medicationcodes, Medicationingredients, Medicationroutes, MetaPrescriptionstatus, MetaPrescriptionduration, DrugChart, MetaPrescriptionadditionalcondition, Prescriptionroutes, InfusionEvents, PrescriptionSource, Oxygendevices, MetaReviewstatus, SupplyRequest, Prescriptionreminders, Prescriptionreviewstatus, MetaPrescriptioncontext, Orderset, PrescriptionEvent, PrescriptionMedicaitonSupply, AdministerMedication, PersonAwayPeriod, NursingInstruction, NursingInstructions, Remindersack } from "src/app/models/EPMA"
 import { action } from '../models/filter.model';
 import { Observation, Observationscaletype, PersonObservationScale } from '../models/observations.model';
 import * as moment from 'moment';
-import { Indication } from '../components/prescribing-form/formhelper';
-import { DoseType, PrescriptionContext, PrescriptionStatus, RefWeightType } from './enum';
+import { Indication, PRNMaxDose } from '../components/prescribing-form/formhelper';
+import { DaysOfWeek, DoseForm, DoseType, InfusionType, PrescriptionContext, PrescriptionStatus, RefWeightType } from './enum';
 import { PatientInfo, WarningContext, WarningContexts, WarningService } from '../models/WarningServiceModal';
 import { Allergyintolerance } from '../models/allergy.model';
 import { SubjectsService } from './subjects.service';
 import { Product } from '../models/productdetail';
-import { Subject } from 'rxjs';
+import { ComplianceAid } from '../models/EPMA';
+import { v4 as uuid } from 'uuid';
 
 
 @Injectable({
@@ -75,6 +76,8 @@ export class AppService {
           )
           &&
           p.prescriptioncontext_id == this.MetaPrescriptioncontext.find(pc => pc.context === PrescriptionContext.Inpatient).prescriptioncontext_id
+          &&
+          p.__completed != true
       )
     }
     else if (wc == WarningContext.mod) {
@@ -147,6 +150,7 @@ export class AppService {
   public MetaReviewstatus: Array<MetaReviewstatus>;
   public MetaPrescriptioncontext: Array<MetaPrescriptioncontext>;
   public Prescription: Array<Prescription>;
+  public currentBasket: Array<Prescription> = [];
   public Prescriptionreminders: Array<Prescriptionreminders>;
   public PrescriptionBag: any;
   public Prescriptionreviewstatus: Array<Prescriptionreviewstatus>;
@@ -154,7 +158,10 @@ export class AppService {
   public TherapyPrescription: Array<Prescription>;
   //public Posology: Array<Posology>;
   //public Dose: Array<Dose>;
+  public remindersack: Array<Remindersack>;
   public events: any = [];
+  public CurrentReminderevents: any = [];
+  public AllReminderevents: any = [];
   public DoseEvents: Array<DoseEvents>;
   public InfusionEvents: Array<InfusionEvents>;
   //public Medication: Array<Medication>;
@@ -208,6 +215,8 @@ export class AppService {
   public warningService: WarningContexts;
   public allergyintolerance: Array<Allergyintolerance>;
   public gender: string;
+  public stackButtons: any = [];
+  public arrPrescriptionCurrentFlowRate: any = [];
   public isReasonForChangeReuired: boolean = false;
   public administrationWitness = [];
   public platfromServiceURI: string;
@@ -221,7 +230,24 @@ export class AppService {
   public InfusionEventsHistory: Array<InfusionEvents>;
   public MedicationadministrationHistory: Array<Medicationadministration>;
   public AdministermedicationHistory: Array<AdministerMedication>;
+  public PersonAwayPeriod: Array<PersonAwayPeriod> = [];
+  public MetaComplianceAid: Array<ComplianceAid>;
+  public outPatientPrescriptionSelected: any;
+  public PatientDrugHistory: Array<PrescriptionMedicaitonSupply> = [];
+  public NursingInstructions: Array<NursingInstructions>;
+  public Choosenfilterdate: any;
+  public currentTerminusModle = "";
+  public outpatientPrescribingMode: boolean = false;
+  public isOP = false;
+  public chartScrolled = false;
+  public disabledatechange = true;
   reset(): void {
+    this.disabledatechange = true;
+    this.chartScrolled = false;
+    this.stackButtons = [];
+    this.arrPrescriptionCurrentFlowRate = [];
+    this.PersonAwayPeriod = [];
+    this.currentBasket = [];
     this.warningServiceIPContextInitComplete = false;
     this.dataversion = null;
     this.personId = null;
@@ -243,6 +269,7 @@ export class AppService {
     this.obsScales = [];
     this.optherapies = [];
     this.prescriptionId = null;
+    this.outPatientPrescriptionSelected = null;
     if (this.Prescription)
       this.Prescription.forEach(p => {
         p.__posology.forEach(pos => {
@@ -349,6 +376,12 @@ export class AppService {
     this.InfusionEventsHistory = [];
     this.MedicationadministrationHistory = [];
     this.AdministermedicationHistory = [];
+    this.MetaComplianceAid = [];
+    this.PatientDrugHistory = [];
+    this.NursingInstructions = [];
+    this.currentTerminusModle = "";
+    this.outpatientPrescribingMode = false;
+    this.isOP = false;
   }
 
   decodeAccessToken(token: string): any {
@@ -602,7 +635,7 @@ export class AppService {
 
   RefreshWarningsFromApi(cb, ws = this.warningServiceIPContext) {
     if (this.isTCI && !this.encounter.sortdate) {
-      let minposologystartdateexisting = moment.min([].concat(...this.GetCurrentPrescriptionsForWarnings(ws.context).map(p => p.__posology)).map(pos => (<Posology>pos).prescriptionstartdate));
+      let minposologystartdateexisting = moment.min([].concat(...this.GetCurrentPrescriptionsForWarnings(ws.context).map(p => p.__posology)).map(pos => moment((<Posology>pos).prescriptionstartdate)));
 
       this.setPatientAgeAtAdmission(minposologystartdateexisting);
     }
@@ -790,6 +823,29 @@ export class AppService {
     else
       return false
   }
+
+  RefreshPageWithStaleError(error) {
+    let refreshed = false;
+    if (error.error) {
+      if (error.error.includes("serverversion:")) {
+        let splitmsg = error.error.split("serverversion:");
+        if (Array.isArray(splitmsg) && splitmsg.length == 2) {
+          let serverversion = splitmsg[1];
+          if (serverversion) {
+            let versionobject = JSON.parse(serverversion);
+            let serverversion_userid = versionobject.createdby;
+            refreshed = true;
+
+            this.subject.ShowRefreshPageMessage.next(serverversion_userid);
+          }
+        }
+      }
+    }
+    if (!refreshed) {
+      this.subject.ShowRefreshPageMessage.next();
+    }
+  }
+
   GroupingBasics(val) {
     let dcgroup;
     let isIvFluid = false;
@@ -858,7 +914,8 @@ export class AppService {
           }
         }
       }
-      if (val.__posology.find(x => x.iscurrent == true).infusiontypeid == 'ci' || (val.__posology.find(x => x.iscurrent == true).infusiontypeid == 'rate' && val.__posology.find(x => x.iscurrent == true).frequency == "variable")) {
+
+      if (val.__posology.find(x => x.iscurrent == true).infusiontypeid == 'ci' || val.__posology.find(x => x.iscurrent == true).infusiontypeid == 'pca' || (val.__posology.find(x => x.iscurrent == true).infusiontypeid == 'rate' && val.__posology.find(x => x.iscurrent == true).frequency == "variable")) {
         if (!this.dcgroupadded.find(x => x.prescriptionid == val.prescription_id)) { // checking is allready add this pres
           dcgroup = {
             group: "Variable/Continuous infusion",
@@ -892,6 +949,436 @@ export class AppService {
     }
     return dcgroup;
   }
+
+  GetPRNMaxDoseDisplayString(prnmaxdose: string) {
+    const prnMaxDoseObj = <PRNMaxDose>JSON.parse(prnmaxdose)
+    if (prnMaxDoseObj) {
+      if (prnMaxDoseObj.type == DoseType.units) {
+        return prnMaxDoseObj.maxdenominator + " " + prnMaxDoseObj.d_units;
+      }
+      else if (prnMaxDoseObj.type == "numeratoronlystrength" || prnMaxDoseObj.type == DoseType.strength) {
+        return prnMaxDoseObj.maxnumerator + " " + prnMaxDoseObj.n_units + "/" + prnMaxDoseObj.maxdenominator + " " + prnMaxDoseObj.d_units;
+      }
+      else if (prnMaxDoseObj.type == "na") {
+        return prnMaxDoseObj.maxtimes + " doses";
+      }
+    }
+  }
+  public GetMostFrequentElementInArray(arr) {
+    let compare = "";
+    let mostFreq = "";
+
+    arr.reduce((acc, val) => {
+      if (val in acc) {               // if key already exists
+        acc[val]++;                // then increment it by 1
+      } else {
+        acc[val] = 1;      // or else create a key with value 1
+      }
+      if (acc[val] > compare) {   // if value of that key is greater
+        // than the compare value.
+        compare = acc[val];    // than make it a new compare value.
+        mostFreq = val;        // also make that key most frequent.
+      }
+      return acc;
+    }, {})
+    this.logToConsole("Most Frequent Item is:" + mostFreq);
+    return mostFreq;
+  }
+
+  HideWarning(context) {
+    if (document.getElementById(context + "_ToggleShowLowPriorityWarnings").innerText == 'Hide all warnings') {
+      document.getElementById(context + "_ToggleShowLowPriorityWarnings").click()
+    }
+  }
+
+  UpdatePrescriptionCompletedStatus(p: Prescription) {
+    p.__completed = false;
+    const currentposology = this.GetCurrentPosology(p);
+    if (currentposology.prescriptionenddate) {
+      let lastdosedate;
+      let tempdose = [];
+      let logical_ID;
+      let iteration = 0;
+      Object.assign(tempdose, currentposology.__dose);
+      tempdose.sort((a, b) => new Date(b.dosestartdatetime).getTime() - new Date(a.dosestartdatetime).getTime());
+      let enddate = moment(currentposology.prescriptionenddate);
+      let cd_startdtm = moment(currentposology.prescriptionstartdate).clone().set("minute", 0).set("hour", 0).set("seconds", 0);
+      let cd_enddtm = enddate.clone().set("minute", 0).set("hour", 0).set("seconds", 0);
+      let chosendays_dose_dates = [];
+      let days_of_week_selected = [];
+      try {
+        days_of_week_selected = JSON.parse(currentposology.daysofweek);
+      }
+      catch { }
+      if (Array.isArray(days_of_week_selected) && days_of_week_selected.length != 0) {
+
+        while (cd_startdtm.isSameOrBefore(cd_enddtm)) {
+          if (days_of_week_selected.find(x => x.toLowerCase() == cd_enddtm.format('dddd').toLowerCase())) {
+            chosendays_dose_dates.push(cd_enddtm.clone());
+          }
+          cd_enddtm.subtract(1, 'days');
+        }
+        chosendays_dose_dates.reverse(); //because we iterated last date first 
+      }
+      else if (currentposology.dosingdaysfrequencysize > 0) {
+        while (cd_startdtm.isSameOrBefore(cd_enddtm)) {
+          chosendays_dose_dates.push(cd_startdtm.clone());
+          if (currentposology.dosingdaysfrequency == "days") {
+            cd_startdtm.add(currentposology.dosingdaysfrequencysize, "days");
+          }
+          else if (currentposology.dosingdaysfrequency == "weeks") {
+            cd_startdtm.add(currentposology.dosingdaysfrequencysize, "weeks");
+          }
+          else if (currentposology.dosingdaysfrequency == "months") {
+            cd_startdtm.add(currentposology.dosingdaysfrequencysize, "months");
+          }
+        }
+      }
+
+
+      if (chosendays_dose_dates.length != 0)
+      // chosen days has been selected in the prescription, last dose date might not be on the 
+      // prescription end date use the last index of this prepared array as last date
+      {
+        const newenddate = chosendays_dose_dates[chosendays_dose_dates.length - 1];
+        if (newenddate.format('LL') != enddate.format('LL')) {
+          enddate.date(newenddate.date());
+          enddate.month(newenddate.month());
+          enddate.year(newenddate.year());
+
+          //pick the last dose for the day 
+          enddate.hour(moment(tempdose[0].dosestartdatetime).hour())
+          enddate.minute(moment(tempdose[0].dosestartdatetime).minute())
+        }
+
+      }
+
+
+      for (let startdate = moment(currentposology.prescriptionstartdate).clone().set("minute", 0).set("hour", 0).set("seconds", 0); enddate.isSameOrAfter(startdate); enddate.subtract(1, 'days')) {
+        for (let i = 0; i < tempdose.length; i++) {
+          let dose = tempdose[i];
+          //to create logical id get last dose date and doseid
+          //if start date is smaller than prescriptionenddate, last dose date = prescription end date 
+          //if start date is bigger than prescriptionenddate, last dose date = start date of dose
+          //logical id = lastdosedate plus doseid
+
+          if (p.isinfusion && (p.infusiontype_id == InfusionType.ci || p.infusiontype_id == InfusionType.pca)) {
+            if (dose.continuityid)
+              logical_ID = "end_" + moment(dose.doseenddatatime).format('YYYYMMDDHHmm') + "_" + dose.continuityid.toString();
+            else
+              logical_ID = "end_" + moment(dose.doseenddatatime).format('YYYYMMDDHHmm') + "_" + dose.dose_id.toString();
+
+            const endevent = this.InfusionEvents.find(x => x.logicalid == logical_ID);
+            if (endevent) {
+              p.__completed = true;
+              p.__completedOn = moment(endevent.eventdatetime);
+              return;
+            }
+            else {
+              p.__completed = false;
+              return;
+            }
+          }
+          else
+            if (p.isinfusion && currentposology.infusiontypeid == InfusionType.rate) {
+              let lasteventstartdate = moment({
+                year: moment(enddate).year(),
+                month: moment(enddate).month(),
+                day: moment(enddate).date(),
+                hour: moment(dose.dosestartdatetime).hour(),
+                minute: moment(dose.dosestartdatetime).minute()
+              });
+              if (lasteventstartdate.isAfter(enddate) && iteration == 0)
+                continue;
+              logical_ID = moment(lasteventstartdate).format('YYYYMMDDHHmm') + "_" + dose.dose_id.toString();
+
+              //check if this event is cancelled
+              let infusionevent = this.InfusionEvents.find(de => de.eventtype.toLowerCase() == "cancel" && de.logicalid.includes(logical_ID));
+              if (!infusionevent) { //this is the last dose now get the stop event logical id
+                lastdosedate = moment({
+                  year: moment(enddate).year(),
+                  month: moment(enddate).month(),
+                  day: moment(enddate).date(),
+                  hour: moment(dose.doseenddatatime).hour(),
+                  minute: moment(dose.doseenddatatime).minute()
+                });
+                if (moment(dose.dosestartdatetime).format("YYYYMMDD") != moment(dose.doseenddatatime).format("YYYYMMDD")) // if end date is after start date. 
+                  lastdosedate = moment({
+                    year: moment(enddate).add(1, "day").year(),
+                    month: moment(enddate).add(1, "day").month(),
+                    day: moment(enddate).add(1, "day").date(),
+                    hour: moment(dose.doseenddatatime).hour(),
+                    minute: moment(dose.doseenddatatime).minute()
+                  });
+
+                logical_ID = "end_" + moment(lastdosedate).format('YYYYMMDDHHmm') + "_" + dose.dose_id.toString();
+
+                const adminrecord = this.InfusionEvents.find(x => x.logicalid.includes(logical_ID));
+                if (adminrecord) {
+                  p.__completed = true;
+                  p.__completedOn = moment(adminrecord.eventdatetime);
+                }
+                else {
+                  p.__completed = false;
+                }
+                return;
+              }
+            }
+            else {
+              if (moment(dose.dosestartdatetime).isAfter(moment(currentposology.prescriptionenddate)))
+                lastdosedate = dose.dosestartdatetime;
+              else {
+                lastdosedate = moment({
+                  year: moment(enddate).year(),
+                  month: moment(enddate).month(),
+                  day: moment(enddate).date(),
+                  hour: moment(dose.dosestartdatetime).hour(),
+                  minute: moment(dose.dosestartdatetime).minute()
+                });
+                if (lastdosedate.isAfter(enddate) && iteration == 0)
+                  continue;
+              }
+              logical_ID = moment(lastdosedate).format('YYYYMMDDHHmm') + "_" + dose.dose_id.toString();
+
+              //check if this event is cancelled
+              let doseevent = this.DoseEvents.find(de => de.eventtype.toLowerCase() == "cancel" && de.logicalid.includes(logical_ID));
+              if (!doseevent) { //this is the last dose 
+                const adminrecord = this.Medicationadministration.find(x => x.logicalid.includes(logical_ID));
+                if (adminrecord) {
+                  p.__completed = true;
+                  p.__completedOn = moment(adminrecord.administrationstartime);
+                }
+                else {
+                  p.__completed = false;
+                }
+                return;
+              }
+            }
+        }
+        iteration++;
+      }
+    }
+    else {
+      p.__completed = false;
+      return;
+    }
+  }
+
+  public GetDefaultSupplyRequestObject(prescription: Prescription, doseSize?: any, strengthneumerator?: any, strengthdenominator?: any) {
+    let supplyRequest: SupplyRequest = new SupplyRequest();
+    let primaryMed = prescription.__medications.find(m => m.isprimary == true);
+    if (primaryMed && primaryMed.producttype.toLocaleLowerCase() != "custom") {
+      let medicationCode = primaryMed.__codes.find(c => c.terminology == 'formulary').code;
+      let isFormulary = !primaryMed.isformulary;
+      prescription.__medications[0].producttype
+      let requests = this.SupplyRequest.filter(s => s.prescription_id == prescription.prescription_id &&
+        s.medication_id == medicationCode && (s.requeststatus == 'Incomplete' || s.requeststatus == 'Pending'));
+      if (requests.length == 0) {
+        supplyRequest.epma_supplyrequest_id = uuid();
+        supplyRequest.requeststatus = 'Incomplete';
+        supplyRequest.lastmodifiedby = '';
+        supplyRequest.requestedon = this.getDateTimeinISOFormat(moment().toDate());;
+        supplyRequest.requestedby = this.loggedInUserName;
+      } else {
+        supplyRequest.epma_supplyrequest_id = requests[0].epma_supplyrequest_id;
+        supplyRequest.requeststatus = requests[0].requeststatus;
+        supplyRequest.lastmodifiedby = this.loggedInUserName;
+        supplyRequest.lastmodifiedon = this.getDateTimeinISOFormat(moment().toDate());;
+        supplyRequest.requestedon = requests[0].requestedon;
+        supplyRequest.requestedby = requests[0].requestedby;
+      }
+
+      supplyRequest.prescription_id = prescription.prescription_id;
+      supplyRequest.medication_id = medicationCode;
+      supplyRequest.personid = this.personId;
+      supplyRequest.encounterid = this.encounter.encounter_id;
+
+      supplyRequest.requestednoofdays = null;
+      let currentposology = this.GetCurrentPosology(prescription);
+      if (currentposology.dosetype == 'units') {
+        supplyRequest.requestquantity = doseSize;
+        supplyRequest.requestedquantityunits = currentposology.__dose[0].doseunit;
+      } else if (currentposology.dosetype == 'strength') {
+        supplyRequest.requestquantity = (strengthneumerator / strengthdenominator).toFixed(2);
+        supplyRequest.requestedquantityunits = currentposology.__dose[0].strengthdenominatorunit;
+      }
+      supplyRequest.daterequired = null;
+      supplyRequest.labelinstructiosrequired = false;
+      supplyRequest.additionaldirections = '';
+      supplyRequest.isformulary = !isFormulary;
+      supplyRequest.ordermessage = '';
+      return supplyRequest;
+    }
+    else
+      return null;
+
+  }
+
+  static IsNullOrEmpty(o: string) {
+    if (o === undefined || o == null)
+      return true;
+    else if (o.trim() === "")
+      return true;
+
+    return false;
+  }
+
+
+  GetAdministrationDoseType(medication: Product) {
+    var m = medication;
+    var doseFormType = m.detail.doseFormCd;
+    var t = <any>{};
+    if (m.formularyIngredients.length == 1 && (m.formularyIngredients[0].ingredientName ?? "").toLowerCase() == "oxygen" && (doseFormType == DoseForm.Continuous || doseFormType == DoseForm.NA)) {
+      t.dose_type = DoseType.units;
+      t.dose_units = "L/min";
+    }
+    else
+      if (m.productType.toLowerCase() == "vtm") {
+
+        var ing = m.formularyIngredients;
+        if (ing.length > 0) {
+
+          //new logic - create an arry to bind to a dropdownlist of dose units
+
+          t.vtm_dose_units = [...new Set(ing.map(ig => ig.strengthValueNumeratorUnitDesc))]; //get distinct values using Set 
+
+          t.vtm_dose_units.sort();
+          let emptyneumerators = t.vtm_dose_units.filter(x => AppService.IsNullOrEmpty(x) == true);
+          if (t.vtm_dose_units.length != 0 && emptyneumerators.length == 0) {
+            t.dose_type = DoseType.units;
+          }
+          else // there is at least one ingredient with value for no strength neumerator  - use unit dose form units if available 
+            if (!AppService.IsNullOrEmpty(m.detail.unitDoseFormUnitsDesc))  //units available
+            {
+              t.dose_type = DoseType.units;
+              t.vtm_dose_units = [];
+              t.vtm_dose_units.push(m.detail.unitDoseFormUnitsDesc);
+            }
+            else
+              t.dose_type = DoseType.descriptive;
+        }
+      }
+      else
+        if (doseFormType == DoseForm.NA) {
+          t.dose_type = DoseType.descriptive;
+        }
+        else
+          if (doseFormType == DoseForm.Continuous) {
+            t.dose_type = DoseType.descriptive;
+          }
+          else
+            if (doseFormType == DoseForm.Discrete) {
+              //whenever there is strength denomninator unit - and there is one ingredient -  use dose/volume - if not  - use quantity/units
+              var ingredients = m.formularyIngredients;
+              if (ingredients && ingredients.length == 1) // one ingredient 
+              {
+                var strength_value_denominatorunits = ingredients[0].strengthValueDenominatorUnitDesc;
+                var strength_value_neumeratorunits = ingredients[0].strengthValueNumeratorUnitDesc;
+
+                var strength_value_denominator = ingredients[0].strengthValueDenominator;
+                var strength_value_neumerator = ingredients[0].strengthValueNumerator;
+
+                if (!AppService.IsNullOrEmpty(strength_value_denominatorunits) && strength_value_denominatorunits.toLowerCase() == "ml" && !this.IsBasicFluid(m) && !((m.detail.formDesc ?? "").toLowerCase().includes("oral solution")))//one ingredient and strength denominator units available
+                {
+                  t.dose_type = DoseType.strength;
+                  t.dose_strength_neumerator_units = strength_value_neumeratorunits;
+                  t.dose_strength_denominator_units = strength_value_denominatorunits;
+
+                  t.dose_strength_neumerator = +strength_value_neumerator;
+                  t.dose_strength_denominator = +strength_value_denominator;
+                }
+                else
+                  if (!AppService.IsNullOrEmpty(m.detail.unitDoseFormUnitsDesc))  //one ingredient and units available
+                  {
+                    t.dose_type = DoseType.units;
+                    t.dose_units = m.detail.unitDoseFormUnitsDesc;
+                  }
+                  else  //discrete and one ingredient and strength and units not available
+                    t.dose_type = DoseType.descriptive;
+              }
+              else // more than one ingredient
+                if (!AppService.IsNullOrEmpty(m.detail.unitDoseFormUnitsDesc))  //multiple ingredients and units available
+                {
+                  t.dose_type = DoseType.units;
+                  t.dose_units = m.detail.unitDoseFormUnitsDesc;
+                }
+                else  //discrete and multiple ingredienst and strength and units not available
+                  t.dose_type = DoseType.descriptive;
+            }
+
+    return t;
+  }
+
+  IsBasicFluid(medication) {
+    return medication.formularyAdditionalCodes && (medication.formularyAdditionalCodes.filter(x => x.additionalCodeSystem == "Custom" && x.additionalCode == "BASIC_FLUID").length != 0);
+  }
+
+  JSONTryParse(jsonstring) {
+    try {
+      return JSON.parse(jsonstring);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  CalculatePrescribedConcentration(p: Prescription) {
+    const primaryPosology = this.GetCurrentPosology(p);
+    const vtmstyle = p.orderformtype == "vtmstyle";
+    const dose_type = primaryPosology.dosetype;
+    const primaryMed = p.__medications.find(x => x.isprimary == true);
+    let productType = null;
+    if (primaryMed)
+      productType = primaryMed.producttype;
+    let dose = 0;
+    let units = "";
+    let prescribedConcentration = "";
+    const totalvolume = primaryPosology.totalinfusionvolume;
+    let diluents = p.__medications.filter(x => x.isprimary != true);
+    if (primaryPosology.__dose.length != 0) {
+      if (vtmstyle && productType.toLowerCase() != 'vtm') {
+        dose = +primaryPosology.__dose[0].dosesize; //+this.prescription.get('posology.strength.dose_size').value; 
+        units = primaryPosology.__dose[0].doseunit; // this.formsettings.dose_units;
+      }
+      else if (dose_type == DoseType.units && +primaryPosology.__dose[0].dosestrength) {
+        dose = +primaryPosology.__dose[0].dosestrength;  //+this.prescription.get("posology.strength.totalstrength").value;
+        units = primaryPosology.__dose[0].dosestrengthunits; //this.formsettings.singleIngredientStrength;
+      }
+      else if (dose_type == DoseType.strength) {
+        dose = +primaryPosology.__dose[0].strengthneumerator; //+this.prescription.get("posology.strength.dose_strength_neumerator").value;
+        units = primaryPosology.__dose[0].strengthneumeratorunit; //this.formsettings.dose_strength_neumerator_units; 
+      }
+      let concentration = this.FixToDecimalPlaces(dose / totalvolume, 2);
+      if (concentration == 0 || diluents.length != 0)
+        concentration = this.FixToDecimalPlaces(dose / totalvolume, 7);
+      prescribedConcentration = +dose > 0 && +totalvolume > 0 ?
+        [concentration, " ", units, "/ml"].join("") : "";
+    }
+    return prescribedConcentration;
+  }
+  FixToDecimalPlaces(input: number, n: number = 2) {
+    if (!isNaN(input)) {
+      if (input % 1 != 0)
+        return +(+input).toFixed(n).replace(/\.0+$/g, '');
+      else
+        return input;
+    }
+    else if (input.toString().indexOf('-') != -1) {
+      let components = input.toString().split('-');
+      let comp1 = components[0];
+      let comp2 = components[1];
+      if (!isNaN(+comp1) && +comp1 > 0 && +comp1 != Infinity && !isNaN(+comp2) && +comp2 > 0 && +comp2 != Infinity) {
+        comp1 = (+comp1).toFixed(n).replace(/\.0+$/g, '');
+        comp2 = (+comp2).toFixed(n).replace(/\.0+$/g, '');
+        return comp1 + "-" + comp2;
+      }
+      else {
+        return input
+      }
+    }
+    else
+      return input;
+  }
+
 }
 
 

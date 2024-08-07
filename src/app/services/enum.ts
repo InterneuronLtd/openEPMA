@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ export enum title {
   Administration_Defered = "Defered",
   Administration_Deferedinfusion = "Defered",
   Administration_Failed = "Failed",
+  EnterInError="Enter In Error",
   AdministrationInfution_Failed = "Failed",
   Due_Administration = "Due",
   Late_Administration = "Late",
@@ -32,10 +33,13 @@ export enum title {
   Administration_withheld_by_doctor = "Withheld by doctor",
   Administration_withheld_by_doctor_Infution ="Withheld by doctor",
   Completed_Administration = "Completed",
+  Dose_Administered_Is_A_Different_Product_From_Prescribed="Dose Administered Is A Different Product",
+  Dose_Administered_Late_Is_A_Different_Product_From_Prescribed="Dose Administered Late Is A Different Product From Prescribed",
+  Dose_Administered_Early_Is_A_Different_Product_From_Prescribed="Dose Administered Early Is A Different Product From Prescribed",
   Dose_administered_is_differnt_from_prescribed = "Dose administered is differnt from prescribed",
   Dose_administered_early_is_differnt_from_prescribed = "Dose administered early is differnt from prescribed",
   Dose_administered_late_is_differnt_from_prescribed = "Dose administered late is differnt from prescribed",
-  Administration_requires_doctors_confirmation_Planned = "Administration requires doctors confirmation Planned",
+  Administration_requires_doctors_confirmation_Planned = "Planned: requires prescriber to confirm",
   Administration_requires_doctors_confirmation_Late = "Administration requires doctors confirmation Late",
   Administration_requires_doctors_confirmation_Due = "Administration requires doctors confirmation Due",
   Infusionplanned = "Infusion planned",
@@ -93,6 +97,9 @@ export enum title {
   Continuousinfusionsyringeorbagchange = "syringe or bag change",
 
   Maintain_Infusion_Rate_done = "Maintain Infusion Rate done",
+  Adjusted_Decrease_Infusion_Rate_Done_Kit_Change = "Decrease Infusion Rate and Kit Change",
+  Adjusted_Increase_Infusion_Rate_Done_Kit_Change = "Increase Infusion Rate and Kit Change",
+  Adjusted_Maintain_Infusion_Rate_Done_Kit_Change = "Maintain Infusion Rate and Kit Change",
   Maintain_Infusion_Rate_Late = "Maintain Infusion Rate Late",
   Maintain_Infusion_Rate_Planned = "Maintain Infusion Rate Planned",
   Maintain_Infusion_Rate_Due = "Maintain Infusion Rate Due",
@@ -127,6 +134,9 @@ export enum contents {
   Planned_Administration = "<div class='Planned_Administration'></div>",
   Administration_withheld_by_doctor = "<div class='Administration_withheld_by_doctor'></div>",
   Administration_withheld_by_doctor_Infution = "<div class='Administration_withheld_by_doctor_Infution'></div>",
+  Dose_Administered_Early_Is_A_Different_Product_From_Prescribed = "<div class='Dose_Administered_Early_Is_A_Different_Product_From_Prescribed'></div>",
+  Dose_Administered_Is_A_Different_Product_From_Prescribed = "<div class='Dose_Administered_Is_A_Different_Product_From_Prescribed'></div>",
+  Dose_Administered_Late_Is_A_Different_Product_From_Prescribed = "<div class='Dose_Administered_Late_Is_A_Different_Product_From_Prescribed'></div>",
   Completed_Administration = "<div class='Completed_Administration'></div>",
   Dose_administered_is_differnt_from_prescribed = "<div class='Dose_administered_is_differnt_from_prescribed'></div>",
   Dose_administered_early_is_differnt_from_prescribed = "<div class='Dose_administered_early_is_differnt_from_prescribed'></div>",
@@ -142,6 +152,11 @@ export enum contents {
   InfusionCompleteoverdue = "<div class='InfusionCompleteoverdue'></div>",
   durationline = "<div></div>",
   PRNRange = "<div class='PRNRange'></div>",
+  ReminderAcknowledged = "<div class='ReminderAcknowledged'></div>",
+  Reminder = "<div class='Reminder'></div>",
+  Reminderdue = "<div class='Reminderdue'></div>",
+  Reminderoverdue = "<div class='Reminderoverdue'></div>",
+  Multiple_Reminders = "<div class='Multiple_Reminders'></div>",
   IncreaseInfusionRatePlanned = "<div class='IncreaseInfusionRatePlanned'></div>",
   IncreaseInfusionRateDue = "<div class='IncreaseInfusionRateDue'></div>",
   IncreaseInfusionRateLate = "<div class='IncreaseInfusionRateLate'></div>",
@@ -152,9 +167,12 @@ export enum contents {
   BolusAdministrationCompleted = "<div class='BolusAdministrationCompleted'></div>",
 
   additionaladministration = "<div class='additionaladministration'></div>",
-
+  Multiple_Reminders_With_The_Date = "<div class='Multiple_Reminders_With_The_Date'></div>",
+  Multiple_Reminders_One_Day_Has_Passed = "<div class='Multiple_Reminders_One_Day_Has_Passed'></div>",
+  Multiple_Reminders_Has_Been_Acknowledged = "<div class='Multiple_Reminders_Has_Been_Acknowledged'></div>",
   Infusiondone = "<div class='Infusiondone'></div>",
-
+  EnterInError="<div class='EnterInError'></div>",
+  EnterInErrorbolus="<div class='EnterInErrorbolus'></div>",
   InfusionCompletedEarly = "<div class='InfusionCompletedEarly'></div>",
   InfusionCompletedLate = "<div class='InfusionCompletedLate'></div>",
   IncreaseInfusionRatedone = "<div class='IncreaseInfusionRatedone'></div>",
@@ -194,11 +212,34 @@ export enum contents {
   Maintain_Infusion_Rate_Due = "<div class='Maintain_Infusion_Rate_Due'></div>",
   Cancelled = "<div title='Cancelled' class='Cancelled'></div>",
 
-  Recordadditionaladministration = "<div  class='Recordadditionaladministration'></div>"
+  Recordadditionaladministration = "<div  class='Recordadditionaladministration'></div>",
 
-  
+  Adjusted_Maintain_Infusion_Rate_Done_Kit_Change = "<div class='Adjusted_Maintain_Infusion_Rate_Done_Kit_Change'></div>",
+  Adjusted_Increase_Infusion_Rate_Done_Kit_Change = "<div class='Adjusted_Increase_Infusion_Rate_Done_Kit_Change'></div>",
+  Adjusted_Decrease_Infusion_Rate_Done_Kit_Change = "<div class='Adjusted_Decrease_Infusion_Rate_Done_Kit_Change'></div>"
 }
 
+export enum OpPrescriptionType {
+  ["NHS"] = "NHS",
+  ["Private"] = "Private"
+}
+
+export enum OpPrescriptionCategory {
+  ["Outpatient"] = "Outpatient",
+  ["Homecare"] = "Homecare",
+  ["Clinicaltrial"] = "Clinical trial"
+}
+
+export enum OpDispensing {
+  ["Radiology"] = "Radiology",
+  ["OutpatientStanmore"] = "Outpatient Stanmore",
+  ["Outpatient Bolsover"] = "Outpatient Bolsover",
+  ["OPAT"] = "OPAT",
+  ["POA"] = "POA",
+  ["Orthotics"] = "Orthotics",
+  ["PhilipNewmanWard"] = "Philip Newman Ward",
+  ["Patient/Relative/StaffCollecting"] = "Patient/Relative/Staff Collecting"
+}
 
 
 export enum DoseType {
@@ -226,7 +267,8 @@ export enum IntervalType {
 export enum InfusionType {
   ["ci"] = "ci",
   ["bolus"] = "bolus",
-  ["rate"] = "rate"
+  ["rate"] = "rate",
+  ["pca"] = "pca"
 }
 
 export enum DoseForm {
@@ -311,6 +353,8 @@ export enum popovers {
   ["app-supply-request"] = 'app-supply-request',
   ["app-titration-chart"] = 'app-titration-chart',
   ["app-end-infusion"] = 'app-end-infusion',
+  ["app-away-period"] = 'app-away-period',
+  ["app-prescription-history"] = 'app-prescription-history',
   ["none"] = ''
 }
 
@@ -362,6 +406,8 @@ export enum SupplyRequestStatus {
   ["Approved"] = "Approved",
   ["Rejected"] = "Rejected",
   ["Fulfilled"] = "Dispensed",
+  ["OutpatientApproved"] = "Screened",
+  ["OutpatientChecked"] = "Checked",
 
 }
 export enum RoleAction {
@@ -404,11 +450,16 @@ export enum RoleAction {
   ["epma_canwitnessauth"] = "epma_canwitnessauth",
   ["epma_administer_administrationevent"] = "epma_administer_administrationevent",
   ["epma_reconciliation_pharmacist"] = "epma_reconciliation_pharmacist",
-  ["epma_reconciliation_pharmacytech"] = "epma_reconciliation_pharmacytech"
+  ["epma_reconciliation_pharmacytech"] = "epma_reconciliation_pharmacytech",
+  ["epma_display_dose_as_quantity"] = "epma_display_dose_as_quantity"
 
 }
 
 export enum RefWeightType {
   ["estimated"] = "estimated",
   ["actual"] = "actual"
+}
+
+export enum Common{
+  ["op_encounter_placeholder"] = "op_encounter_placeholder"
 }

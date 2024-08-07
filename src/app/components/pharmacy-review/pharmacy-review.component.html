@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -46,18 +46,22 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                         <div class=" col-2">
                             <h5>Recorded By</h5>
                         </div>
-                        <div class=" col-2">
+                        <div class=" col-2"  *ngIf="presCreatedMessage !='MOA Added'">
                             <h5>Status</h5>
                         </div>
                     </div>
                     <hr class="new4">
                 <div >
-                  <div *ngFor="let review of prescriptionreviewstatus; let i = index;let lastindex = last;">
+                  <div *ngFor="let review of prescriptionreviewstatus; let i = index;let lastindex = last;let first = first;">
+                    <div  class="row">
+                        <div class=" col-5" *ngIf="review.epma_prescriptionevent_id !=''"><br> <b>{{prescriptionstatuscheck(review.epma_prescriptionevent_id)}}</b></div>
+                    </div>
                         <div  class="row">
-                            <div class=" col-3"> {{review.modifieddatetime | date:"dd-MMM-yyyy HH:mm"}}</div>
+                            <div class=" col-3"> {{review.modifieddatetime | date:"dd-MMM-yyyy HH:mm"}}
+                               </div>
                             <div class=" col-5 text-break">{{review.reviewcomments}}</div>
                             <div class=" col-2">{{review.modifiedby}}</div>
-                            <div class=" col-2">
+                            <div class=" col-2"  *ngIf="presCreatedMessage !='MOA Added'">
                                 <div class="Pharmacist_review_not_required"
                                     *ngIf="review.status == 'b86d30f4-d8db-484e-9c6f-1e67fbd89c8e'"></div>
                                 <div class="Waiting_for_pharmacist_review"
@@ -149,7 +153,9 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                                 </span>
 
                                                 <span
-                                                    *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).infusiontypeid=='ci' && !review.__newprescriptiondata.titration">
+                                                    *ngIf="(appService.GetCurrentPosology(review.__newprescriptiondata).infusiontypeid=='ci' ||
+                                                            appService.GetCurrentPosology(review.__newprescriptiondata).infusiontypeid=='pca') 
+                                                            && !review.__newprescriptiondata.titration">
                                                     <!-- olddata -->
                                                     <span
                                                         *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='variable' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency != appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
@@ -181,27 +187,26 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                                             {{appService.GetCurrentPosology(review.__oldprescriptiondata).infusionrate
                                                             |
                                                             number}}
-                                                            <span
-                                                                *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].doseunit">{{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].doseunit}}</span>
-                                                            <span
-                                                                *ngIf="!appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].doseunit">ml/h</span>
+                                                            <span>{{appService.GetCurrentPosology(review.__oldprescriptiondata).infusionrateunits}}</span>
                                                         </span>
                                                         <span class="empa-template-bold">
                                                             {{appService.GetCurrentPosology(review.__newprescriptiondata).infusionrate
                                                             |
                                                             number}}
-                                                            <span
-                                                                *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].doseunit">{{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].doseunit}}</span>
-                                                            <span
-                                                                *ngIf="!appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].doseunit">ml/h</span>
+                                                            <span>{{appService.GetCurrentPosology(review.__newprescriptiondata).infusionrateunits}}</span>
+                                                          
                                                         </span>
                                                     </span>
                                                     <span
                                                         *ngFor="let med of review.__newprescriptiondata.__medications">
-                                                        <span *ngIf="med.form.indexOf('Inhalation')==-1"><span> -
+                                                        <span *ngIf="med.form.indexOf('Inhalation')==-1 && appService.GetCurrentPosology(review.__newprescriptiondata).infusiontypeid=='ci'"><span> -
                                                                 CONTINUOUS
                                                                 INFUSION</span>
                                                         </span>
+                                                        <span *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).infusiontypeid=='pca'"><span> -
+                                                            PCA/NCA
+                                                            </span>
+                                                    </span>
                                                     </span>
 
                                                 </span>
@@ -247,11 +252,9 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                                         <span
                                                             class="empa-template-bold">{{appService.GetCurrentPosology(review.__newprescriptiondata).infusionrate
                                                             | number}}
-                                                            <span
-                                                                *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].doseunit">{{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].doseunit}}</span>
-                                                            <span
-                                                                *ngIf="!appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].doseunit">ml/h</span>
+                                                            <span>{{appService.GetCurrentPosology(review.__newprescriptiondata).infusionrateunits}}</span>
                                                         </span>
+                                                        <span *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).infusiontypeid=='rate'"> - INTERMITTENT</span>
                                                         - <span class="empa-template-dose-label">DURATION </span>
                                                         <span
                                                             *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).infusionduration != appService.GetCurrentPosology(review.__oldprescriptiondata).infusionduration"
@@ -366,6 +369,16 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                                     Evening
                                                 </span>
                                                 <!-- olddata -->
+                                            <span class="empa-template-dose-text font-italic strickout"
+                                                *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='night' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency!=appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
+                                                - Night
+                                            </span>
+                                            <span class="empa-template-dose-text"
+                                                *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='night'">
+                                                - Night
+                                            </span>
+                                            <!-- olddata -->
+                                                
                                                 <span class="empa-template-dose-text font-italic strickout"
                                                     *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='stat' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency!=appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
                                                     - Stat. dose
@@ -394,12 +407,24 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                                     {{appService.GetCurrentPosology(review.__oldprescriptiondata).frequencysize}}
                                                     hours
                                                 </span>
+                                                <span class="empa-template-dose-text font-italic strickout"
+                                                *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='m' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency!=appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
+                                                - Every
+                                                {{appService.GetCurrentPosology(review.__oldprescriptiondata).frequencysize}}
+                                                mins
+                                            </span>
                                                 <span class="empa-template-dose-text"
                                                     *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='h'">
                                                     - Every
                                                     {{appService.GetCurrentPosology(review.__newprescriptiondata).frequencysize}}
                                                     hours
                                                 </span>
+                                                <span class="empa-template-dose-text"
+                                                *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='m'">
+                                                - Every
+                                                {{appService.GetCurrentPosology(review.__newprescriptiondata).frequencysize}}
+                                                mins
+                                            </span>
                                                 <!-- olddata -->
                                                 <span class="empa-template-dose-text font-italic strickout"
                                                     *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).prn != appService.GetCurrentPosology(review.__newprescriptiondata).prn && appService.GetCurrentPosology(review.__oldprescriptiondata).prn">
@@ -507,12 +532,18 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                                             *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].dosesize != appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].dosesize">{{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].dosesize
                                                             | number}}
                                                             {{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].doseunit}}
+                                                            <span  *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].dosesizerangemax">
+                                                                - {{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].dosesizerangemax|number}}{{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].doseunit}}
+                                                            </span>
                                                         </span>
                                                         <!-- olddata -->
                                                         <span class="empa-template-bold"
                                                             *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).__dose.length>0">{{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].dosesize
                                                             | number}}
                                                             {{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].doseunit}}</span>
+                                                            <span class="empa-template-bold" *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].dosesizerangemax">
+                                                                - {{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].dosesizerangemax|number}}{{appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].doseunit}}
+                                                            </span>
                                                     </span>
                                                     <!-- olddata -->
                                                     <span
@@ -634,6 +665,15 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                                 </span>
                                                 <!-- olddata -->
                                                 <span class="empa-template-dose-text font-italic strickout"
+                                                *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='night' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency!=appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
+                                                - Night
+                                            </span>
+                                            <span class="empa-template-dose-text"
+                                                *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='night'">
+                                                - Night
+                                            </span>
+                                            <!-- olddata -->
+                                                <span class="empa-template-dose-text font-italic strickout"
                                                     *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='stat' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequency!=appService.GetCurrentPosology(review.__newprescriptiondata).frequency">
                                                     - Stat. dose
                                                 </span>
@@ -661,12 +701,24 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                                     {{appService.GetCurrentPosology(review.__oldprescriptiondata).frequencysize}}
                                                     hours
                                                 </span>
+                                                <span class="empa-template-dose-text font-italic strickout"
+                                                *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).frequency=='m' && appService.GetCurrentPosology(review.__oldprescriptiondata).frequencysize != appService.GetCurrentPosology(review.__newprescriptiondata).frequencysize">
+                                                - Every
+                                                {{appService.GetCurrentPosology(review.__oldprescriptiondata).frequencysize}}
+                                                mins
+                                            </span>
                                                 <span class="empa-template-dose-text"
                                                     *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='h'">
                                                     - Every
                                                     {{appService.GetCurrentPosology(review.__newprescriptiondata).frequencysize}}
                                                     hours
                                                 </span>
+                                                <span class="empa-template-dose-text"
+                                                *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='m'">
+                                                - Every
+                                                {{appService.GetCurrentPosology(review.__newprescriptiondata).frequencysize}}
+                                                mins
+                                            </span>
                                                 <!-- olddata -->
                                                 <span class="empa-template-dose-text font-italic strickout"
                                                     *ngIf=" GetChoosenDays(review.__oldprescriptiondata) != GetChoosenDays(review.__newprescriptiondata) && appService.GetCurrentPosology(review.__oldprescriptiondata).daysofweek && appService.GetCurrentPosology(review.__oldprescriptiondata).daysofweek.length>2">
@@ -756,11 +808,19 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                                     class="empa-template-induction-label">UNTIL </span>
                                                 <!-- olddata -->
                                                 <span
+                                                *ngIf="!appService.GetCurrentPosology(review.__oldprescriptiondata).prescriptionenddate && appService.GetCurrentPosology(review.__newprescriptiondata).prescriptionenddate">
+                                                <span
+                                                    class="empa-template-dose-text font-italic strickout"> cancelled</span></span>
+                                                <span
                                                     *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).prescriptionenddate != appService.GetCurrentPosology(review.__newprescriptiondata).prescriptionenddate">
                                                     <span
                                                         class="empa-template-dose-text font-italic strickout">{{appService.GetCurrentPosology(review.__oldprescriptiondata).prescriptionenddate
                                                         | date :
                                                         "dd-MMM-yyyy HH:mm " }} </span></span>
+
+                                             <span
+                                                   *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).prescriptionenddate && !appService.GetCurrentPosology(review.__newprescriptiondata).prescriptionenddate">
+                                                 <span class="empa-template-dose-text">  cancelled</span></span>
 
                                                 <span
                                                     *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).prescriptionenddate">
@@ -888,9 +948,14 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                     <span *ngIf="appService.GetCurrentPosology(oldprescription).infusiontypeid=='bolus'">
                                         <span>BOLUS</span>
                                     </span>
-                                    <span *ngIf="appService.GetCurrentPosology(oldprescription).infusiontypeid=='ci'">
+                                    <span *ngIf="appService.GetCurrentPosology(oldprescription).infusiontypeid=='ci' || appService.GetCurrentPosology(oldprescription).infusiontypeid=='pca'">
                                         <span *ngFor="let med of oldprescription.__medications">
-                                            <span *ngIf="med.form.indexOf('Inhalation')==-1"><span>CONTINUOUS INFUSION -
+                                            <span
+                                                *ngIf="med.form.indexOf('Inhalation')==-1 && appService.GetCurrentPosology(oldprescription).infusiontypeid=='ci'"><span>CONTINUOUS
+                                                    INFUSION -
+                                                </span>
+                                            </span>
+                                            <span *ngIf="appService.GetCurrentPosology(oldprescription).infusiontypeid=='pca'"><span>PCA/NCA -
                                                 </span>
                                             </span>
                                         </span>
@@ -924,7 +989,9 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                                 <span
                                                     *ngIf="appService.GetCurrentPosology(oldprescription).__dose[0].doseunit">{{appService.GetCurrentPosology(oldprescription).__dose[0].doseunit}}</span>
                                                 <span *ngIf="!appService.GetCurrentPosology(oldprescription).__dose[0].doseunit">ml/h</span>
-                                            </span> - <span>DURATION
+                                            </span> - 
+                                            <span>INTERMITTENT - </span> 
+                                            <span>DURATION
                                             </span> {{appService.GetCurrentPosology(oldprescription).infusionduration}}h
                                         </span>
 
@@ -939,6 +1006,9 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                             <span
                                                 class="empa-template-bold">{{appService.GetCurrentPosology(oldprescription).__dose[0].dosesize|
                                                 number}} {{appService.GetCurrentPosology(oldprescription).__dose[0].doseunit}}</span>
+                                                <span class="empa-template-bold" *ngIf="appService.GetCurrentPosology(oldprescription).__dose[0].dosesizerangemax">
+                                                    - {{appService.GetCurrentPosology(oldprescription).__dose[0].dosesizerangemax|number}}{{appService.GetCurrentPosology(oldprescription).__dose[0].doseunit}}
+                                                </span>
                                         </span>
                                         <span
                                             *ngIf="appService.GetCurrentPosology(oldprescription).dosetype=='strength' && !oldprescription.titration">
@@ -986,9 +1056,14 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                     <span *ngIf="appService.GetCurrentPosology(editedprescription).infusiontypeid=='bolus'">
                                         <span>BOLUS</span>
                                     </span>
-                                    <span *ngIf="appService.GetCurrentPosology(editedprescription).infusiontypeid=='ci'">
+                                    <span *ngIf="appService.GetCurrentPosology(editedprescription).infusiontypeid=='ci' || appService.GetCurrentPosology(editedprescription).infusiontypeid=='pca'">
                                         <span *ngFor="let med of editedprescription.__medications">
-                                            <span *ngIf="med.form.indexOf('Inhalation')==-1"><span>CONTINUOUS INFUSION -
+                                            <span
+                                                *ngIf="med.form.indexOf('Inhalation')==-1 && appService.GetCurrentPosology(editedprescription).infusiontypeid=='ci'"><span>CONTINUOUS
+                                                    INFUSION -
+                                                </span>
+                                            </span>
+                                            <span *ngIf="appService.GetCurrentPosology(editedprescription).infusiontypeid=='pca'"><span>PCA/NCA -
                                                 </span>
                                             </span>
                                         </span>
@@ -1024,7 +1099,9 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                                     *ngIf="appService.GetCurrentPosology(editedprescription).__dose[0].doseunit">{{appService.GetCurrentPosology(editedprescription).__dose[0].doseunit}}</span>
                                                 <span
                                                     *ngIf="!appService.GetCurrentPosology(editedprescription).__dose[0].doseunit">ml/h</span>
-                                            </span> - <span>DURATION
+                                            </span> - 
+                                            <span>INTERMITTENT -</span>
+                                            <span>DURATION
                                             </span> {{appService.GetCurrentPosology(editedprescription).infusionduration}}h
                                         </span>
 
@@ -1040,6 +1117,9 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                             <span
                                                 class="empa-template-bold">{{appService.GetCurrentPosology(editedprescription).__dose[0].dosesize|
                                                 number}} {{appService.GetCurrentPosology(editedprescription).__dose[0].doseunit}}</span>
+                                                <span class="empa-template-bold" *ngIf="appService.GetCurrentPosology(editedprescription).__dose[0].dosesizerangemax">
+                                                    - {{appService.GetCurrentPosology(editedprescription).__dose[0].dosesizerangemax|number}}{{appService.GetCurrentPosology(editedprescription).__dose[0].doseunit}}
+                                                </span>
                                         </span>
                                         <span
                                             *ngIf="appService.GetCurrentPosology(editedprescription).dosetype=='strength' && !editedprescription.titration">
@@ -1081,8 +1161,11 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                             <div class="p-popover-body-width-s3">
                                 <span *ngIf="appService.GetCurrentPosology(oldprescription).dosetype=='units'">
                                     <span class="empa-template-bold">{{appService.GetCurrentPosology(oldprescription).__dose[0].dosesize|
-                                        number}}
+                                        number}} 
                                         {{appService.GetCurrentPosology(oldprescription).__dose[0].doseunit}}</span>
+                                        <span class="empa-template-bold" *ngIf="appService.GetCurrentPosology(oldprescription).__dose[0].dosesizerangemax">
+                                            - {{appService.GetCurrentPosology(oldprescription).__dose[0].dosesizerangemax|number}}{{appService.GetCurrentPosology(oldprescription).__dose[0].doseunit}}
+                                        </span>
                                 </span>
                                 <span *ngIf="appService.GetCurrentPosology(oldprescription).dosetype=='strength'">
                                     <span
@@ -1129,6 +1212,10 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                 <span class="dose-text" *ngIf="appService.GetCurrentPosology(oldprescription).frequency=='eve'">
                                     Evening
                                 </span>
+                                <span class="dose-text" *ngIf="appService.GetCurrentPosology(oldprescription).frequency=='night'">
+                                    Night
+                                </span>
+                                
                                 <span class="dose-text" *ngIf="appService.GetCurrentPosology(oldprescription).frequency=='stat'">
                                     Stat. dose
                                 </span>
@@ -1162,6 +1249,10 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                 <span class="dose-text" *ngIf="appService.GetCurrentPosology(editedprescription).frequency=='eve'">
                                     Evening
                                 </span>
+                                <span class="dose-text" *ngIf="appService.GetCurrentPosology(editedprescription).frequency=='night'">
+                                    Night
+                                </span>
+                               
                                 <span class="dose-text" *ngIf="appService.GetCurrentPosology(editedprescription).frequency=='stat'">
                                     Stat. dose
                                 </span>

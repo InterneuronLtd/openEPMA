@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.If not, see<http://www.gnu.org/licenses/>.
 //END LICENSE BLOCK 
-import { Component, OnInit, Output, EventEmitter, OnDestroy, Input } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, OnDestroy, Input, ViewChild, ElementRef } from '@angular/core';
 import { filters, filter, filterParams, filterparam, selectstatement, orderbystatement } from 'src/app/models/filter.model';
 import { DatePipe } from '@angular/common';
 import { Subscription } from 'rxjs';
@@ -35,6 +35,7 @@ import { AppService } from 'src/app/services/app.service';
 
 export class SelectEncounterComponent implements OnInit, OnDestroy {
 
+  selectedEncounter: any;
   encounters: Array<Encounter> = [];
 
   selectedEncounterText: string = "Visits";
@@ -43,6 +44,8 @@ export class SelectEncounterComponent implements OnInit, OnDestroy {
   @Output() clicked: EventEmitter<string> = new EventEmitter();
   @Output() encountersLoaded: EventEmitter<boolean> = new EventEmitter();
   @Input() nonInitiatorView: boolean = false;
+  @ViewChild('encounterDropdown') encounterDropdown: ElementRef;
+  @ViewChild('encounterTypeahead') encounterTypeahead: ElementRef;
 
   subscriptions: Subscription = new Subscription();
 
@@ -59,6 +62,10 @@ export class SelectEncounterComponent implements OnInit, OnDestroy {
 
   fillEncounters() {
     let tcicode = this.appService.appConfig.AppSettings.encounterTCIClassCode;
+    const ipcode = this.appService.appConfig.AppSettings.encounterInpatientClassCode;
+    const opcode = this.appService.appConfig.AppSettings.encounterOPClassCode;
+    const wlcode = this.appService.appConfig.AppSettings.encounterWLClassCode;
+
     this.subscriptions.add(this.callAPI.postRequest(this.appService.baseURI + "/GetBaseViewListByPost/epma_encounters", this.createEncounterFilter())
       .subscribe((response) => {
         this.encounters = [];
@@ -84,7 +91,7 @@ export class SelectEncounterComponent implements OnInit, OnDestroy {
             else
               response[i].displayText = "TCI  (" + tcidisplaydate + ")";
           }
-          else {
+          else if (response[i].patientclasscode?.toLowerCase() == ipcode) {
             if (currentvisitadded == false) {
               if (response[i].dischargedatetime == "" || response[i].dischargedatetime == null)
                 response[i].displayText = "Current Visit (" + this.datePipe.transform(response[i].admitdatetime, 'dd-MMM-yyyy', 'en-GB') + ")";
@@ -95,6 +102,13 @@ export class SelectEncounterComponent implements OnInit, OnDestroy {
             else
               response[i].displayText = "Previous Visit (" + this.datePipe.transform(response[i].admitdatetime, 'dd-MMM-yyyy', 'en-GB') + ")";
           }
+          else if (response[i].patientclasscode?.toLowerCase() == wlcode) {
+            response[i].displayText = "Waiting List - " + response[i].consultingdoctortext;
+          }
+          else if (response[i].patientclasscode?.toLowerCase() == opcode) {
+            response[i].displayText = "Outpatient Visit (" + this.datePipe.transform(response[i].admitdatetime, 'dd-MMM-yyyy', 'en-GB') + ") - " + response[i].consultingdoctortext;
+          }
+
           this.encounters.push(response[i])
           if (!this.nonInitiatorView) {
             this.appService.personencounters.push(response[i]);
@@ -127,6 +141,13 @@ export class SelectEncounterComponent implements OnInit, OnDestroy {
     let pm = new filterParams();
     pm.filterparams.push(new filterparam("person_id", this.appService.personId));
 
+    if (this.appService.outpatientPrescribingMode) {
+      const opcode = this.appService.appConfig.AppSettings.encounterOPClassCode;
+      let c1 = "lower(patientclasscode) = @patientclasscode"
+      f.filters.push(new filter(c1));
+      pm.filterparams.push(new filterparam("patientclasscode", opcode));
+    }
+
     let select = new selectstatement("SELECT *");
 
     let orderby = new orderbystatement("ORDER BY sortdate desc");
@@ -151,14 +172,18 @@ export class SelectEncounterComponent implements OnInit, OnDestroy {
     this.selectedEncounterText = encounter.displayText;
     this.appService.encounter = encounter;
     this.appService.isCurrentEncouner = encounter.displayText.indexOf("Current Visit") != -1;
-    this.appService.isTCI = encounter.displayText.indexOf("TCI") != -1;
-    this.appService.isTCICancelled = encounter.displayText.indexOf("TCI") != -1 && encounter.displayText.indexOf("Cancelled") != -1
+    this.appService.isTCI = encounter.displayText.indexOf("TCI") != -1 || encounter.displayText.indexOf("Waiting") != -1;
+    this.appService.isTCICancelled = encounter.displayText.indexOf("TCI") != -1 && encounter.displayText.indexOf("Cancelled") != -1;
+    this.appService.isOP = encounter.displayText.indexOf("Outpatient") != -1;
 
     this.appService.setPatientAgeAtAdmission();
     this.subjects.encounterChange.next(encounter);
+    this.selectedEncounter = "";
+    this.encounterDropdown.nativeElement.click();
   }
 
   encounterClicked() {
     this.clicked.emit("Encounter component clicked");
+    this.encounterTypeahead.nativeElement.click();
   }
 }

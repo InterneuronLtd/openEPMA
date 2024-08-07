@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -94,7 +94,7 @@ export class DoctorConfirmationComponent implements OnInit, OnDestroy {
     //       this.hideAdministrationForm.emit(true);
 
     //       if (this.appService.IsDataVersionStaleError(error)) {
-    //         this.subjects.ShowRefreshPageMessage.next(error);
+    //         this.appService.RefreshPageWithStaleError(error);
     //       }
     //     }));
   }
@@ -111,7 +111,10 @@ export class DoctorConfirmationComponent implements OnInit, OnDestroy {
     this.doseEvents.eventtype = "doconfirm";
     this.doseEvents.iscancelled = false;
     this.doseEvents.posology_id = this.dose.posology_id;
-    this.doseEvents.comments = "";
+    this.doseEvents.createdon = this.appService.getDateTimeinISOFormat(moment().toDate());
+    this.doseEvents.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());;
+    this.doseEvents.createdby = this.appService.loggedInUserName;
+    this.doseEvents.modifiedby = this.appService.loggedInUserName;
     delete this.doseEvents._sequenceid;
     this.appService.logToConsole(this.doseEvents);
     this.showSpinnerConfirm = true;
@@ -135,7 +138,7 @@ export class DoctorConfirmationComponent implements OnInit, OnDestroy {
           this.hideAdministrationForm.emit(true);
 
           if (this.appService.IsDataVersionStaleError(error)) {
-            this.subjects.ShowRefreshPageMessage.next(error);
+            this.appService.RefreshPageWithStaleError(error);
           }
         }));
   }

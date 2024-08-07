@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -26,6 +26,9 @@ import { HelperService } from 'src/app/services/helper.service';
 import { TimeerHelper } from '../drug-chart/timer-helper';
 import { DataRequest } from 'src/app/services/datarequest';
 import { ApirequestService } from 'src/app/services/apirequest.service';
+import { AdmissionRecordsTemplate } from '../admission-records-templates/admission-records-template.component';
+import { AdministrationStatus, InfusionType } from 'src/app/services/enum';
+import $ from "jquery";
 
 @Component({
   selector: 'app-demo-admission-record',
@@ -48,9 +51,10 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
   @ViewChildren("pageFooter2") pageFooter2: QueryList<ElementRef>;
   @ViewChildren("headerSecondPart") headerSecondPart: QueryList<ElementRef>;
   @ViewChild("presParentNode") parentNode: ElementRef;
+
   @Output() destroyTemplate: EventEmitter<any> = new EventEmitter();
   repeatArray = [1, 2, 3];
-  repeatArray2 = [1, 2, 3, 4, 5, 6];
+  repeatArray2 = [];
   dates = [];
   pres1 = [1, 2, 3];
   daysOfWeek = {
@@ -84,20 +88,43 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
     admitdatetime: '', admitdate: '', dayspassed: 0, assignedpatientlocationpointofcare: '', consultingdoctortext: ''
   };
   partTwoHeights = [];
-
+  medicationAdministration: any;
+  rateEventsdata = [];
+  headerSection: number = 0;
   constructor(public timeerHelper: TimeerHelper, public appService: AppService, public hs: HelperService, private renderer: Renderer2, public dr: DataRequest, private apiRequest: ApirequestService) {
 
   }
 
   ngOnInit() {
+    ///////
+    const dateTo = moment().add(3, 'd');
+    dateTo.set({'hour':23,'minute': 59,'second':59})
+   
+    const startDate = moment().add(-1, 'd');
+    startDate.set({'hour':23,'minute': 59,'second':59})
+    this.timeerHelper.createEvents(startDate,dateTo, true);
+  
+    this.appService.reportData = this.appService.reportData.filter(function( element ) {
+      return element !== undefined;
+    });
+    var todayDate = moment();
+    todayDate.set({'hour':0,'minute': 0,'second':0});
+    this.rateEventsdata = this.appService.reportData.filter(e => {
+      return !e.dose_id.includes("dur") && !e.dose_id.includes("pause") && !e.dose_id.includes("flowrate") && !e.dose_id.includes("infusionevent")
+      && moment(e.eventStart).isBetween(moment(todayDate),dateTo)
+    });
+
+    //////
     this.prescription = [];
     // this.appService.prescriptionEvent
+    this.appService.reportData = [];
 
     this.appService.Prescription.forEach(pres => {
       pres.comments = pres.comments ? pres.comments?.split(' ').join(' ') : null;
     })
     this.partTwoHeights = [];
-    this.appService.Medicationadministration.forEach(ma => {
+    this.medicationAdministration = this.appService.Medicationadministration.slice();
+    this.medicationAdministration.forEach(ma => {
       ma['checked'] = false;
     })
     this.todaysDate = moment().format('DD-MM-YYYY');
@@ -131,7 +158,7 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
     this.prescription = [];
     // this.hs.getDosesPrescriptions(this.prescription);
     this.dates.push(new Date());
-    for (let i = 1; i <= 2; i++) {
+    for (let i = 1; i <= 3; i++) {
       this.dates.push(new Date(this.dates[i - 1].getTime() + 86400000));
     }
 
@@ -142,16 +169,24 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
       }
     } else if (this.marType === 'active') {
       const dateFrom = moment().subtract(this.activeRecordedDays || 5, 'd');
-      const pastEvents = this.appService.events.filter(e => {
-        return !e.dose_id.includes("dur") && !e.dose_id.includes("pause") && !e.dose_id.includes("flowrate") 
-        && moment(e.eventStart).isBefore() && moment(e.eventStart).isAfter(dateFrom)
+      this.timeerHelper.createEvents(dateFrom, moment(), true);
+      this.appService.reportData = this.appService.reportData.filter(function( element ) {
+        return element !== undefined;
+      });
+      const pastEvents = this.appService.reportData.filter(e => {
+        return !e.dose_id.includes("dur") && !e.dose_id.includes("pause") && !e.dose_id.includes("flowrate") && !e.dose_id.includes("infusionevent") 
+        && moment(e.eventStart).isBefore() && moment(e.eventStart).isAfter(dateFrom) && !e.content.includes("Administer_PRN")
       });
       // const pastEvents = this.appService.events.filter(obj => {
       //   return moment(obj.eventStart).isBefore() && moment(obj.eventStart).isAfter(dateFrom);
       // });
       // console.log("past events", pastEvents);
-      const checkPresId = {}
-      const futureEvents = this.appService.events.filter(obj => {
+      const checkPresId = {};
+      const activeStartDate = moment().add(-1, 'd');
+      activeStartDate.set({'hour':23,'minute': 59,'second':59})
+      const dateToForFuture = moment().add(3, 'd');
+      this.timeerHelper.createEvents(activeStartDate, dateToForFuture, true);
+      const futureEvents = this.appService.reportData.filter(obj => {
         const endDate = this.appService.GetCurrentPosology(this.prescriptionMapping[obj.prescription_id]).prescriptionenddate;
         let endDateCheck = true;
         // // for test
@@ -169,12 +204,12 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
           return true;
         }
       });
-      futureEvents.forEach(obj => {
+      this.appService.FilteredPrescription.forEach(obj => {
         this.prescription.push(this.prescriptionMapping[obj.prescription_id]);
       });
 
       // console.log('prescription 1',this.prescription);
-      this.prescription = this.prescription.filter(x => x.prescriptionstatus_id == "fe406230-be68-4ad6-a979-ef15c42365cf" || x.prescriptionstatus_id == "fd8833de-213b-4570-8cc7-67babfa31393" || x.prescriptionstatus_id == "63e946cd-b4a4-4f60-9c18-a384c49486ea")
+      this.prescription = this.prescription.filter(x => (x.prescriptionstatus_id == "fe406230-be68-4ad6-a979-ef15c42365cf" || x.prescriptionstatus_id == "fd8833de-213b-4570-8cc7-67babfa31393" || x.prescriptionstatus_id == "63e946cd-b4a4-4f60-9c18-a384c49486ea"))
 
       // console.log('prescription 2',this.prescription);
       this.hs.getDosesPrescriptions(this.prescription);
@@ -188,9 +223,16 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
 
 
     } else if (this.marType === 'report') {
-      this.timeerHelper.createEvents(this.sdate, this.edate, true);
+      const reportStartDate = moment(this.sdate).subtract(1,'d');
+      reportStartDate.set({'hour':23,'minute': 59,'second':59})
+      const reportEndDate = moment(this.edate);
+      reportEndDate.set({'hour':23,'minute': 59,'second':59})
+      this.timeerHelper.createEvents(reportStartDate, reportEndDate, true);
+      this.appService.reportData = this.appService.reportData.filter(function( element ) {
+        return element !== undefined;
+      });
       const rangeEvents = this.appService.reportData.filter(e => {
-        return !e.dose_id.includes("dur") && !e.dose_id.includes("pause") && !e.dose_id.includes("flowrate") 
+        return !e.dose_id.includes("dur") && !e.dose_id.includes("pause") && !e.dose_id.includes("flowrate") && !e.content.includes("Administer_PRN")
         && !e.dose_id.includes("infusionevent") && (moment(e.eventStart).isSameOrAfter(this.sdate, 'day') && moment(e.eventStart).isSameOrBefore(this.edate, 'day'))
       });
       // const rangeEvents = this.appService.reportData.filter(obj => {
@@ -200,10 +242,19 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
       this.distributeEvents(rangeEvents);
 
     } else {
-      const todayEvents = this.appService.events.filter(e => {
-        return !e.dose_id.includes("dur") && !e.dose_id.includes("pause") && !e.dose_id.includes("flowrate") 
-        && moment().isSame(e.eventStart, 'day')
+      var todayDate = moment().add(-1,'d');
+      this.timeerHelper.createEvents(todayDate, moment(), true);
+      this.appService.reportData = this.appService.reportData.filter(function( element ) {
+        return element !== undefined;
       });
+      const todayEvents = this.appService.reportData.filter(e => {
+        return !e.dose_id.includes("dur") && !e.dose_id.includes("pause") && !e.dose_id.includes("flowrate") && !e.content.includes('Administer_PRN')
+          && moment().isSame(e.eventStart, 'day')
+      });
+      // const todayEvents = this.appService.events.filter(e => {
+      //   return !e.dose_id.includes("dur") && !e.dose_id.includes("pause") && !e.dose_id.includes("flowrate") 
+      //   && moment().isSame(e.eventStart, 'day')
+      // });
       // const todayEvents = this.appService.events.filter(obj => {
       //   return moment().isSame(obj.eventStart, 'day');
       // });
@@ -221,13 +272,12 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
   }
 
   ngAfterViewInit() {
-
     this.updateHeights.forEach(h => {
       // const filteredDivHeight = this.divs.filter((el, ind) => ind === h[0])[0].nativeElement.offsetHeight;
       // const filterPresHeight = this.presDescriptionDivs.filter((el, ind) => ind === h[0])[0].nativeElement.offsetHeight;
       // let extraRowsHeight;
       // let presDivHeight;
-      const filteredDivHeight = this.divs.filter((el, ind) => ind === h[0])[0].nativeElement.offsetHeight;
+      // const filteredDivHeight = this.divs.filter((el, ind) => ind === h[0])[0].nativeElement.offsetHeight;
       let extraRowsHeight;
       let presDivHeight;
       if (h[1] > 5) {
@@ -238,7 +288,7 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
         presDivHeight = (h[1] + 6) * 30
       }
 
-      const extraHeightAdded = (filteredDivHeight + extraRowsHeight);
+      // const extraHeightAdded = (filteredDivHeight + extraRowsHeight);
       // this.renderer.setStyle(this.divs.filter((el, i) => i === h[0])[0].nativeElement, "height", extraHeightAdded + 'px');
       // this.renderer.setStyle(this.presDescriptionDivs.filter((el, i) => i === h[0])[0].nativeElement, "height", presDivHeight + 30 + 'px');
     })
@@ -430,27 +480,166 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
 
   distributeEvents(events: Array<any>) {
     this.prescriptionMappingForTemplate = {};
+    events=events.filter(x=> !x.dose_id.includes("infusionevent"))
     events.forEach(obj => {
+     
       const status = this.getPrescriptionStatus(this.prescriptionMapping[obj.prescription_id]);
       this.prescriptionMappingForTemplate[obj.prescription_id] ? '' : this.prescriptionMappingForTemplate[obj.prescription_id] = { status };
       this.prescriptionMappingForTemplate[obj.prescription_id]['name'] = this.prescriptionMapping[obj.prescription_id].__medications[0].name;
       this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'] ? '' : this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'] = [];
       const updatedObj = this.checkMedicationAdministered(obj);
-      if (updatedObj.content.includes("Administration_Completed") || updatedObj.given) {
-        let administrationStatus = this.appService.Medicationadministration.find(x => x.logicalid == updatedObj.dose_id).adminstrationstatus;
-        if(administrationStatus == 'self-administer')
-          this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, stat: 'SELF ' + ' - ' + 'ADMINISTERED' });
-        else
-          this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, sort: updatedObj.sort, stat: 'GIVEN' });
-      } else if (updatedObj.content.includes("Administration_Defered")) {
-        this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, stat: 'DEFERRED' });
-      } else if (updatedObj.content.includes("Planned_Administration")) {
-        this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, stat: 'PLANNED' });
-      } else if (updatedObj.content.includes("Late_Administration")) {
-        this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, stat: 'NOT GIVEN' });
+      let administration = this.medicationAdministration.find(x => x.logicalid == updatedObj.dose_id);
+      if (administration && !administration.isenterinerror) {
+        let administrationStatus = administration.adminstrationstatus;
+        if (administrationStatus == AdministrationStatus.selfadminister)
+          if(this.prescriptionMapping[obj.prescription_id].infusiontype_id == "rate")
+          {
+            this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, sort: updatedObj.sort, stat: 'STARTED' });
+          }
+          else{
+            this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, stat: 'SELF ' + ' - ' + 'ADMINISTERED' });
+          }
+        else if (administrationStatus == AdministrationStatus.notgiven)
+          if(this.prescriptionMapping[obj.prescription_id].infusiontype_id == "rate")
+          {
+            this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, sort: updatedObj.sort, stat: 'STARTED' });
+          }
+          else{
+            this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, sort: updatedObj.sort, stat: 'NOT GIVEN' });
+          }
+        else if (administrationStatus == AdministrationStatus.defer)
+          if(this.prescriptionMapping[obj.prescription_id].infusiontype_id == "rate")
+          {
+            this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, sort: updatedObj.sort, stat: 'STARTED' });
+          }
+          else{
+            this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, sort: updatedObj.sort, stat: 'DEFERRED' });
+          }
+        else {
+          if(this.prescriptionMapping[obj.prescription_id].infusiontype_id == "rate")
+          {
+            if(updatedObj.content.includes('BolusAdministrationCompleted'))
+            {
+            this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, sort: updatedObj.sort, stat: 'GIVEN' });
+            }
+            else{
+              this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, sort: updatedObj.sort, stat: 'STARTED' });
+            }
+          }
+          else {
+            this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, sort: updatedObj.sort, stat: 'GIVEN' });
+          }
+          
+        }
       } else {
-        this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, stat: 'PLANNED' })
+        if(updatedObj.content.includes('InfusionCompleted'))
+        {
+          this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, stat: 'COMPLETED' })
+        }
+        else {
+          if(moment() > updatedObj.eventStart)
+          {
+            if(updatedObj.doctorsorder || updatedObj.titration)
+            {
+              if(updatedObj.content.includes('Administration_requires_doctors_confirmation_Late'))
+              {
+                let ptcTime = updatedObj.time.split('-');
+                this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: ptcTime[0], stat: 'PTC' })
+              }
+              else if(updatedObj.content.includes('Late_Administration'))
+              {
+                this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, stat: 'MISSED' })
+              }
+            }
+            else {
+              if(this.prescriptionMapping[obj.prescription_id].infusiontype_id == "rate" && updatedObj.dose_id.includes("end_")){
+                
+                let originalDoseStartTime = this.appService.Prescription.find(x => x.prescription_id == updatedObj.prescription_id).__posology.find(y => y.posology_id == updatedObj.posology_id).__dose.find(z => z.dose_id == updatedObj.dose_id.split("_")[2]).dosestartdatetime;
+                let originalDoseEndTime = this.appService.Prescription.find(x => x.prescription_id == updatedObj.prescription_id).__posology.find(y => y.posology_id == updatedObj.posology_id).__dose.find(z => z.dose_id == updatedObj.dose_id.split("_")[2]).doseenddatatime;
+                
+                var a = moment(originalDoseEndTime);//now
+                var b = moment(originalDoseStartTime);
+                var convertToMinites = a.diff(b, 'minutes');
+
+                let startDate = moment(updatedObj.eventStart).subtract(convertToMinites, "minutes");
+
+                let starsubstring= 'start_'+moment(startDate).format('YYYYMMDDHHmm') + "_" + updatedObj.dose_id.split("_")[2].toString();
+                
+                
+                // let startevent=events.filter(x=>x.dose_id.includes(updatedObj.dose_id.split("_")[2]) && x.dose_id.includes(starsubstring))
+                // if(startevent){
+                //   startevent=this.appService.events.filter(x=>x.dose_id.includes(updatedObj.dose_id.split("_")[2]) && x.dose_id.includes(starsubstring))
+                // }
+                // let startevent=events.filter(x=>x.dose_id.includes(updatedObj.dose_id.split("_")[2]) && x.dose_id.includes(starsubstring))
+
+                let startadministred = this.medicationAdministration.find(x => x.logicalid == starsubstring)
+                if(startadministred){
+                  // if(startadministred.adminstrationstatus != 'given') {
+                  //   this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, stat: startadministred.adminstrationstatus.toUpperCase() })
+                  // }
+                  // else {
+                    this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, stat: 'OVERDUE' })
+                  // }
+                  
+                }else{
+                  this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, stat: 'MISSED' })
+                }
+  
+               }
+               else{
+                if(obj.prn) {
+                  if(administration && administration.isenterinerror && this.marType == 'current') {
+                    this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: '', time: '', stat: '' })
+                  }   
+                  else if(administration && administration.isenterinerror && this.marType != 'current') {
+                    // this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: '', time: '', stat: '' })
+                  } 
+                }
+                else {
+                  if(administration && !administration.isenterinerror) {
+                    this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, stat: 'MISSED' })
+                  } 
+                  else {
+                    this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, stat: 'MISSED' })
+                  } 
+                }
+               }
+            }
+          }
+          else {
+            if(updatedObj.doctorsorder || updatedObj.titration)
+            {
+              if(updatedObj.content.includes('Administration_requires_doctors_confirmation_Planned') || updatedObj.content.includes('Administration_requires_doctors_confirmation_Due'))
+              {
+                let ptcTime = updatedObj.time.split('-');
+                this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: ptcTime[0], stat: 'PTC' })
+              }
+            }
+            else {
+              this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, stat: 'PLANNED' })
+            }
+            
+          }
+          
+        }
+        
       }
+
+      // if (updatedObj.content.includes("Administration_Completed") || updatedObj.given) {
+      //   let administrationStatus = this.appService.Medicationadministration.find(x => x.logicalid == updatedObj.dose_id).adminstrationstatus;
+      //   if(administrationStatus == 'self-administer')
+      //     this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, stat: 'SELF ' + ' - ' + 'ADMINISTERED' });
+      //   else
+      //     this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, sort: updatedObj.sort, stat: 'GIVEN' });
+      // } else if (updatedObj.content.includes("Administration_Defered")) {
+      //   this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, stat: 'DEFERRED' });
+      // } else if (updatedObj.content.includes("Planned_Administration")) {
+      //   this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, stat: 'PLANNED' });
+      // } else if (updatedObj.content.includes("Late_Administration")) {
+      //   this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, stat: 'NOT GIVEN' });
+      // } else {
+      //   this.prescriptionMappingForTemplate[obj.prescription_id]['prescription_information'].push({ date: updatedObj.date, time: updatedObj.time, stat: 'PLANNED' })
+      // }
     });
     for (let key in this.prescriptionMappingForTemplate) {
       this.prescriptionMappingForTemplate[key]['prescription_information'].sort(function (a, b) {
@@ -458,23 +647,23 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
         const aDate = a.date?.split('-').reverse().join('-');
         return bDate.localeCompare(aDate) || b.time.localeCompare(a.time);
       });
-      if (this.prescriptionMappingForTemplate[key]['prescription_information'].length > 16) {
-        const noOfArrays = Math.ceil(this.prescriptionMappingForTemplate[key]['prescription_information'].length / 16);
-        for (let i = 0; i < noOfArrays; i++) {
-          this.partTwoPrescriptions.push({
-            ...this.prescriptionMappingForTemplate[key],
-            'prescription_information': this.prescriptionMappingForTemplate[key]['prescription_information'].slice(i * 16, (i + 1) * 16), key
-          });
-        }
-      } else {
+      // if (this.prescriptionMappingForTemplate[key]['prescription_information'].length > 16) {
+      //   const noOfArrays = Math.ceil(this.prescriptionMappingForTemplate[key]['prescription_information'].length / 16);
+      //   for (let i = 0; i < noOfArrays; i++) {
+      //     this.partTwoPrescriptions.push({
+      //       ...this.prescriptionMappingForTemplate[key],
+      //       'prescription_information': this.prescriptionMappingForTemplate[key]['prescription_information'].slice(i * 16, (i + 1) * 16), key
+      //     });
+      //   }
+      // } else {
         this.partTwoPrescriptions.push({ ...this.prescriptionMappingForTemplate[key], key });
-      }
+      // }
 
     }
     // console.log(this.prescription);
     console.log('------',this.partTwoPrescriptions);
 
-    this.partTwoPrescriptions.sort((a, b) => (a.prescription_information.length > b.prescription_information.length) ? 1 : ((b.prescription_information.length > a.prescription_information.length ? -1 : 0)));
+    // this.partTwoPrescriptions.sort((a, b) => (a.prescription_information.length > b.prescription_information.length) ? 1 : ((b.prescription_information.length > a.prescription_information.length ? -1 : 0)));
     this.partTwoPrescriptions.forEach(presTwo => {
       const requiredHistory = this.appService.prescriptionHistory.filter(presHistory => presHistory.prescription_id === presTwo.key);
       requiredHistory.sort((a, b) => b.lastmodifiedon.localeCompare(a.lastmodifiedon));
@@ -556,22 +745,24 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
   }
 
   checkMedicationAdministered(obj: any) {
-    console.log('hs pres', this.hs.prescriptionDictionary);
+    // console.log('hs pres', this.hs.prescriptionDictionary);
     const doseId = obj.dose_id?.split('_')[1];
-    const ma = this.appService.Medicationadministration.filter(ma => {
-      let date = obj.eventStart.format('DD-MM-YYYY');
-      let time = obj.eventStart.format('HH:mm');
-      if (!ma.planneddatetime) {
-        return false;
-      }
-      let [maDate, maTime] = ma.planneddatetime?.split('T');
-      maDate = maDate?.split('-').reverse().join('-');
-      maTime = maTime.slice(0, 5);
-      return doseId === ma.dose_id && date === maDate;
-    });
+    // const ma = this.appService.Medicationadministration.filter(ma => {
+    //   let date = obj.eventStart.format('DD-MM-YYYY');
+    //   let time = obj.eventStart.format('HH:mm');
+    //   if (!ma.planneddatetime) {
+    //     return false;
+    //   }
+    //   let [maDate, maTime] = ma.planneddatetime?.split('T');
+    //   maDate = maDate?.split('-').reverse().join('-');
+    //   maTime = maTime.slice(0, 5);
+    //   return doseId === ma.dose_id && date === maDate;
+    // });
+    const ma = this.medicationAdministration.filter(ma => ma.logicalid == doseId);
     const newObj = { ...obj };
+    let dose;
     if (ma.length) {
-      let dose;
+      // let dose;
       if (ma[0].administreddosesize) {
         dose = ma[0].administreddosesize + ' ' + ma[0].administreddoseunit;
       } else if (ma[0].administeredstrengthdenominator) {
@@ -585,13 +776,9 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
       newObj.given = true;
     } else {
       newObj.date = obj.eventStart.format('DD-MM-YYYY');
-      if(obj.content.includes("Late_Administration"))
-      {
-        newObj.time = obj.eventStart.format('HH:mm');
-      }
-      else{
-        newObj.time = obj.eventStart.format('HH:mm') + ((this.getDose(obj) != undefined || this.getDose(obj) != null || this.getDose(obj) != ' ')?' - ' : '') + this.getDose(obj);
-      }
+      dose = this.getDose(obj);
+
+      newObj.time = obj.eventStart.format('HH:mm') + ((dose != undefined || dose != null || dose != ' ')?' - ' : '') + dose;
     }
 
     return newObj;
@@ -603,14 +790,41 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
     const posology = this.appService.Prescription.find(pres => pres.prescription_id == obj.prescription_id).__posology.find(poso => poso.posology_id == obj.posology_id);
     // const posology = this.appService.GetCurrentPosology(this.appService.Prescription.filter(pres => pres.prescription_id === obj.prescription_id)[0]);
     let dose;
-    if (posology.infusiontypeid === 'ci') {
-      dose = posology.__dose.filter(dose => dose.dose_id === obj.dose_id?.split('_')[2])[0];
-    } else if (posology.infusiontypeid === 'bolus') {
-      dose = posology.__dose.filter(dose => dose.dose_id === obj.dose_id?.split('_')[2])[0];
-    } else {
-      dose = posology.__dose.filter(dose => dose.dose_id === obj.dose_id?.split('_')[1])[0];
-    }
+    dose = posology.__dose.filter(dose => dose.dose_id === obj.dose_id?.split('_')[obj.dose_id.split('_').length - 1])[0];
 
+    let admininsteredDose = this.medicationAdministration.find( x => x.logicalid == obj.dose_id);
+    if(admininsteredDose)
+    {
+      if(obj.isinfusion)
+      {
+        if(admininsteredDose.administredinfusionrate != 0 && admininsteredDose.administredinfusionrate != null)
+        {
+          return admininsteredDose.administredinfusionrate + ' ' + ((posology.infusiondoserateunits == undefined || posology.infusiondoserateunits == null) ? 'ml/h' : posology.infusionrateunits);
+        }
+        else if(admininsteredDose.administeredstrengthneumerator)
+        {
+          return admininsteredDose.administeredstrengthneumerator + ' ' + admininsteredDose.administeredstrengthneumeratorunits + '/' + admininsteredDose.administeredstrengthdenominator + ' ' + admininsteredDose.administeredstrengthdenominatorunits;
+        }
+        else {
+          return admininsteredDose.administreddosesize + ' ' + admininsteredDose.administreddoseunit + '/' + 'hr';
+        }
+      }
+      else{
+        if(admininsteredDose.administreddosesize)
+        {
+          return admininsteredDose.administreddosesize + ' ' + admininsteredDose.administreddoseunit;
+        }
+        else if (admininsteredDose.administeredstrengthneumerator)
+        {
+          return admininsteredDose.administeredstrengthneumerator + admininsteredDose.administeredstrengthneumeratorunits +  '/' + admininsteredDose.administeredstrengthdenominator  +  admininsteredDose.administeredstrengthdenominatorunits;
+        }
+        else if(admininsteredDose.administereddescriptivedose)
+        {
+          return admininsteredDose.administereddescriptivedose;
+        }
+      }
+    }
+    
     if (!obj.isinfusion && dose) {
       let doseUnit;
       if (dose.doseunit === 'capsule') {
@@ -622,11 +836,34 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
       } else {
         doseUnit = dose.doseunit;
       }
-      return dose.dosesize + ' ' + doseUnit;
-    } else if (posology.infusiontypeid === 'ci' && posology) {
-      let infusiondose = this.appService.Medicationadministration.find(x=>x.logicalid == obj.dose_id);
+      if(dose.descriptivedose)
+      {
+        return dose.descriptivedose;
+      }
+      else if(posology.dosetype == 'strength')
+      {
+        return dose.strengthneumerator + ' ' + dose.strengthneumeratorunit + ' / ' + dose.strengthdenominator + ' ' + dose.strengthdenominatorunit;
+      }
+      else if(posology.titration)
+      {
+        let groupTitrationData = this.appService.DoseEvents.find(x => x.posology_id == obj.posology_id && x.grouptitration == true)
+        let titrationData = this.appService.DoseEvents.filter(x => x.logicalid == obj.dose_id && x.eventtype == 'titration');
+        if(titrationData.length > 0)
+        {
+          return titrationData[0].titrateddosesize + ' ' + titrationData[0].titrateddoseunit;
+        }
+        if(groupTitrationData)
+        {
+          return groupTitrationData.titrateddosesize + ' ' + groupTitrationData.titrateddoseunit;
+        }
+      }
+      else{
+        return dose.dosesize + ' ' + doseUnit;
+      }
+    } else if ((posology.infusiontypeid === 'ci' || posology.infusiontypeid === InfusionType.pca) && posology) {
+      let infusiondose = this.medicationAdministration.find(x=>x.logicalid == obj.dose_id);
       if(infusiondose) {
-        return infusiondose.administredinfusionrate + ' ' + posology.infusionrateunits;
+        return (infusiondose.administredinfusionrate !== null) ? infusiondose.administredinfusionrate : (infusiondose.administreddosesize !== null) ? infusiondose.administreddosesize : '' + ' ' + posology.infusionrateunits;
       } else {
       return posology.infusionrate + ' ' + posology.infusionrateunits;
       }
@@ -634,9 +871,15 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
 
 
     } else if (posology.infusiontypeid === 'bolus' && dose) {
-      return dose.dosesize + ' ' + dose.doseunit + ' / ' + 'hr';
+      if(posology.dosetype == 'strength')
+      {
+        return dose.strengthneumerator + ' ' + dose.strengthneumeratorunit + ' / ' + dose.strengthdenominator + ' ' + dose.strengthdenominatorunit;
+      }  
+      else {
+        return dose.dosesize + ' ' + dose.doseunit + ' / ' + 'hr';
+      }
     } else if (posology.infusiontypeid === 'rate' && dose) {
-      return dose.infusionrate + ' ' + dose.strengthdenominatorunit + ' / ' + dose.infusionduration + ' hrs';
+      return dose.infusionrate + ' ' + ((posology.infusionrateunits == undefined || posology.infusionrateunits == null) ? 'ml' : posology.infusionrateunits);
     }
     else{
       return ' ';
@@ -664,28 +907,41 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
   arrayForTemplate(pres: Prescription, index: number) {
     if (pres) {
       let extraInfoRows = 0;
-      let nameCharacters = 0;
-      let commentChars = 0;
-      pres.__medications.forEach(meds => {
-        nameCharacters += (meds.name ? meds.name.length : 0) + (meds.__ingredients.length ? meds.__ingredients[0].name.length : 0) + 2;
-      });
-      commentChars += pres.comments ? pres.comments.length : 0;
-      nameCharacters -= 110;
-      commentChars -= 110;
-      if (nameCharacters > 0) {
-        extraInfoRows += Math.ceil(nameCharacters / 55);
+      // let nameCharacters = 0;
+      // let commentChars = 0;
+      // pres.__medications.forEach(meds => {
+      //   nameCharacters += (meds.name ? meds.name.length : 0) + (meds.__ingredients.length ? meds.__ingredients[0].name.length : 0) + 2;
+      // });
+      // commentChars += pres.comments ? pres.comments.length : 0;
+      // nameCharacters -= 110;
+      // commentChars -= 110;
+      // if (nameCharacters > 0) {
+      //   extraInfoRows += Math.ceil(nameCharacters / 55);
+      // }
+      // if (commentChars > 0) {
+      //   extraInfoRows += Math.ceil(commentChars / 55);
+      // }
+      // if (extraInfoRows > 10) {
+      //   extraInfoRows = 10;
+      // }
+      let protocolCount 
+      if(pres.infusiontype_id == "rate")
+      {
+       //the previous code here is move to oninit
+        const rateRowsLength = this.rateEventsdata.filter(e => {
+          return  pres.prescription_id == e.prescription_id
+        });
+
+        protocolCount = Math.floor((rateRowsLength.length / this.repeatArray.length));
       }
-      if (commentChars > 0) {
-        extraInfoRows += Math.ceil(commentChars / 55);
+      else {
+        protocolCount = this.hs.prescriptionDictionary[pres.prescription_id][0].frequency == 'protocol' ? this.hs.prescriptionDictionary[pres.prescription_id][0].protocolCount : this.hs.prescriptionDictionary[pres.prescription_id].length;
       }
-      if (extraInfoRows > 10) {
-        extraInfoRows = 10;
-      }
-      let protocolCount = this.hs.prescriptionDictionary[pres.prescription_id][0].protocolCount;
+      
       if (!protocolCount) {
         protocolCount = 6;
       }
-      const templateArray = Array((protocolCount - 1)).fill(4);
+      const templateArray = Array((protocolCount != undefined? protocolCount: 1)).fill(4);
       if (templateArray.length > 6) {
         const extraRows = 0;
         let extraTransferRows = this.checkTodayTransfer(pres);
@@ -721,35 +977,40 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
       } else {
         let finalRows = 0;
         let extraTransferRows = this.checkTodayTransfer(pres);
-        if (protocolCount - 1 - extraTransferRows < 0) {
-          for (let k = 0; k < extraTransferRows - protocolCount - 1; k++) {
+        if ((protocolCount) - extraTransferRows < 0) {
+          for (let k = 0; k < extraTransferRows - (protocolCount); k++) {
             templateArray.push(4);
           }
 
-          if (extraTransferRows + extraInfoRows - protocolCount - 1 >= 6) {
+          if (extraTransferRows + extraInfoRows - (protocolCount) >= 6) {
             finalRows = 22;
-            for (let k = 0; k < (22 - extraTransferRows + extraInfoRows - protocolCount - 1); k++) {
+            for (let k = 0; k < (22 - extraTransferRows + extraInfoRows - (protocolCount)); k++) {
               templateArray.push(4);
             }
           }
-          this.updateHeights.push([index, finalRows ? finalRows : extraTransferRows + extraInfoRows - protocolCount - 1]);
+          this.updateHeights.push([index, finalRows ? finalRows : extraTransferRows + extraInfoRows - (protocolCount)]);
         } else {
           if (extraInfoRows >= 6) {
-            // finalRows = 22;
-            finalRows = 6;
+            finalRows = 22;
+            // finalRows = 6;
           }
           this.updateHeights.push([index, finalRows ? finalRows : extraInfoRows]);
         }
-        if (!extraInfoRows) {
-          return this.repeatArray2;
-        } else {
-          let newArr = []
-          extraInfoRows = finalRows ? finalRows : extraInfoRows;
-          for (let k = 0; k < 6; k++) {
-            newArr.push(4);
+        // if (!extraInfoRows) {
+          let tempArray = [];
+          for (let k = 0; k < protocolCount; k++) {
+            tempArray.push(4);
           }
-          return newArr;
-        }
+          return tempArray;
+          // return this.repeatArray2;
+        // } else {
+        //   let newArr = []
+        //   extraInfoRows = finalRows ? finalRows : extraInfoRows;
+        //   for (let k = 0; k < 6; k++) {
+        //     newArr.push(4);
+        //   }
+        //   return newArr;
+        // }
 
       }
     } else {
@@ -849,7 +1110,7 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
       }
       let administeredEvents = [];
       if (this.hs.prescriptionDictionary[pres.prescription_id][i]) {
-        administeredEvents = this.appService.Medicationadministration.filter(ma => {
+        administeredEvents = this.medicationAdministration.filter(ma => {
           return ma.dose_id === this.hs.prescriptionDictionary[pres.prescription_id][i].doseId;
         });
       }
@@ -866,7 +1127,11 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
       }
 
       if (checkTransfer) {
-        return this.hs.prescriptionDictionary[pres.prescription_id][0]["remainingDoses"][((protocolCount + 1) * j) + i].dosesize + ' ' + this.hs.prescriptionDictionary[pres.prescription_id][0]["remainingDoses"][i + j].doseunit;
+        if(this.hs.prescriptionDictionary[pres.prescription_id][0]["remainingDoses"][((protocolCount + 1) * j) + i].dosesize == null)
+        {
+          return '';
+        }
+          return this.hs.prescriptionDictionary[pres.prescription_id][0]["remainingDoses"][((protocolCount + 1) * j) + i].dosesize + ' ' + this.hs.prescriptionDictionary[pres.prescription_id][0]["remainingDoses"][i + j].doseunit;
       }
       return '';
 
@@ -879,6 +1144,52 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
       array[j] = new Array(i)
     }
     return array;
+  }
+
+  returnProtocolAdministartionStatus(pres: Prescription, i: number, j: number, currDate)
+  {
+    let month = currDate.getMonth() + 1;
+    let addDay = currDate.getDate();
+    if (addDay < 10) {
+      addDay = <any>('0' + addDay);
+    }
+    if (month < 10) {
+      month = <any>('0' + month);
+    }
+    const date = currDate.getFullYear() + '-' + month + '-' + addDay;
+    const protocolCount = this.hs.prescriptionDictionary[pres.prescription_id][0].protocolCount - 1;
+    if (protocolCount >= i) {
+      let checkTransfer;
+      if (this.hs.prescriptionDictionary[pres.prescription_id] && this.hs.prescriptionDictionary[pres.prescription_id][0]["remainingDoses"]
+        && this.hs.prescriptionDictionary[pres.prescription_id][0]["remainingDoses"][((protocolCount + 1) * j) + i]) {
+        checkTransfer = this.checkTransfer(pres, this.hs.prescriptionDictionary[pres.prescription_id][0]["remainingDoses"][((protocolCount + 1) * j) + i].dose_id,
+          currDate, this.hs.prescriptionDictionary[pres.prescription_id][0]["remainingDoses"][((protocolCount + 1) * j) + i].dosestartdatetime?.split('T')[1].slice(0, 5));
+      }
+      let administeredEvents = [];
+      if (this.hs.prescriptionDictionary[pres.prescription_id][i]) {
+        administeredEvents = this.medicationAdministration.filter(ma => {
+          return ma.dose_id === this.hs.prescriptionDictionary[pres.prescription_id][i].doseId;
+        });
+      }
+
+      let administrationstatus;
+      administeredEvents.forEach((administeredEvent, ind) => {
+        if (administeredEvents[ind].administrationstartime.split('T')[0] === date) {
+            administrationstatus = [administeredEvents[ind].adminstrationstatus];
+        }
+      })
+
+      if (administrationstatus) {
+        if(this.hs.prescriptionDictionary[pres.prescription_id][0]["remainingDoses"][((protocolCount + 1) * j) + i].dosesize == null)
+        {
+          return null;
+        }
+        return administrationstatus;
+      }
+      return '';
+    }
+
+    return '';
   }
 
 
@@ -902,7 +1213,7 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
       }
       let administeredEvents = [];
       if (this.hs.prescriptionDictionary[pres.prescription_id][i]) {
-        administeredEvents = this.appService.Medicationadministration.filter(ma => {
+        administeredEvents = this.medicationAdministration.filter(ma => {
           return ma.dose_id === this.hs.prescriptionDictionary[pres.prescription_id][i].doseId;
         });
       }
@@ -938,7 +1249,12 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
     const doseEvent = this.appService.DoseEvents.filter(doseEvent => {
       let [startDate, startTime] = doseEvent.startdatetime?.split('T');
       startTime = startTime.slice(0, 5);
-      return (doseEvent.dose_id === doseId) && (startDate === date) && (startTime === currTime);
+      // if(pres.infusiontype_id == 'rate') {
+      //   this.medicationAdministration.find(x => x.logicalid == doseEvent.logicalid)
+      // }
+      // else {
+        return (doseEvent.dose_id === doseId) && (startDate === date) && (startTime === currTime);
+      // }
     });
     if (!doseEvent[0]) {
       return true;
@@ -946,6 +1262,82 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
       const [doseDate, doseTime] = doseEvent[0].dosedatetime?.split('T');
       if (date === doseDate) {
         return doseTime;
+      } else {
+        return false;
+      }
+    }
+    else if (doseEvent[0].eventtype === 'doconfirm') {
+      const [doseDate, doseTime] = doseEvent[0].dosedatetime?.split('T');
+      if (date === doseDate) {
+        return doseTime;
+      } else {
+        return false;
+      }
+    }
+    else if (doseEvent[0].eventtype === 'titration') {
+      const [doseDate, doseTime] = doseEvent[0].titrateduntildatetime?.split('T');
+      if (date === doseDate) {
+        return doseTime;
+      } else {
+        return false;
+      }
+    }
+    else if (doseEvent[0].eventtype === 'Undo') {
+      const [doseDate, doseTime] = doseEvent[0].dosedatetime?.split('T');
+      if (date === doseDate) {
+        return doseTime;
+      } else {
+        return false;
+      }
+    }
+    else if (doseEvent[0].eventtype === 'AdminTransfer' && pres.infusiontype_id == 'rate') {
+      const [doseDate, doseTime] = doseEvent[0].startdatetime?.split('T');
+      // if (date === doseDate) {
+      //   return doseTime;
+      // } else {
+      //   return false;
+      // }
+      if (date === doseDate) {
+        if(pres.infusiontype_id == 'rate') {
+          // let originalDoseStartTime = this.appService.Prescription.find(x => x.prescription_id == pres.prescription_id).__posology.find(y => y.posology_id == this.appService.GetCurrentPosology(pres).posology_id).__dose.find(z => z.dose_id == doseEvent[0].dose_id).dosestartdatetime;
+          // let originalDoseEndTime = this.appService.Prescription.find(x => x.prescription_id == pres.prescription_id).__posology.find(y => y.posology_id == this.appService.GetCurrentPosology(pres).posology_id).__dose.find(z => z.dose_id == doseEvent[0].dose_id).doseenddatatime;
+          
+          // var a = moment(originalDoseEndTime);//now
+          // var b = moment(originalDoseStartTime);
+          // var convertToMinites = a.diff(b, 'minutes');
+
+          let splitLogicalId: any = doseEvent[0].logicalid.split('_');
+          let date = moment();
+          date.set({'year': splitLogicalId[1].substring(0,4),'month': splitLogicalId[1].substring(4,6) - 1,'date': splitLogicalId[1].substring(6,8),'hour':splitLogicalId[1].substring(8,10),'minute': splitLogicalId[1].substring(10,12),'second':0})
+
+          // let startDate = moment(date).subtract(convertToMinites, "minutes");
+
+          let starsubstring= 'end_'+moment(date).format('YYYYMMDDHHmm') + "_" + doseEvent[0].dose_id;
+
+          // let starsubstring='start' + dateFilteredData[i].logicalId.substring(3,12);// append start to _20221228 only date to get start dose 
+          // let startevent=dateFilteredData.filter(x=>x.logicalId.includes(dateFilteredData[i].logicalId.split("_")[2]) && x.logicalId.includes(starsubstring))
+
+          // let startadministred = this.medicationAdministration.find(x => x.logicalid == starsubstring)
+
+          // if(startadministred) {
+          //   return false;
+          // }
+          // else {
+          //   return doseTime;
+          // }
+
+          let checkDose = this.medicationAdministration.find(x => x.logicalid == doseEvent[0].logicalid);
+          let checkDoseInfusionEvents = this.appService.InfusionEvents.find(x => x.logicalid == starsubstring);
+          if(checkDose || (checkDoseInfusionEvents && checkDoseInfusionEvents.eventtype != 'endinfusion')) {
+            return false;
+          }
+          else {
+            return true;
+          }
+        }
+        else {
+          return doseTime;
+        }
       } else {
         return false;
       }
@@ -981,21 +1373,32 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
           let time;
           let dose;
           let administered = false;
+          let administrationstatus;
+          let flag = false;
+          let isPRN = this.appService.GetCurrentPosology(pres).prn;
           if (frequency === 'protocol' || frequency === 'variable') {
             time = this.returnProtocolTime(pres, n, m, this.dates[m]);
             dose = this.returnProtocolDose(n, m, pres, this.dates[m]);
+            administrationstatus = this.returnProtocolAdministartionStatus(pres, n, m, this.dates[m]);
+            flag = true;
           } else {
             time = this.returnXTime(n, pres, this.dates[m]);
             dose = this.returnXTime(n, pres, this.dates[m], 'dose');
+            administrationstatus = this.returnXTime(n, pres, this.dates[m], 'administrationstatus');
+            flag = true;
           }
           if (n >= this.hs.prescriptionDictionary[pres.prescription_id][0].protocolCount - 1 && frequency !== 'protocol' && !time) {
             let dataObj = this.returnTransferTime(n, pres, m);
             time = dataObj.time;
             dose = dataObj.dose;
+            administrationstatus = dataObj.administrationstatus;
+            flag = false;
           } else if (n >= this.hs.prescriptionDictionary[pres.prescription_id][0].protocolCount && frequency === 'protocol' && !time) {
             let dataObj = this.returnTransferTime(n, pres, m);
             time = dataObj.time;
             dose = dataObj.dose;
+            administrationstatus = dataObj.administrationstatus;
+            flag = false;
           }
 
           // if (!time) {
@@ -1003,11 +1406,26 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
           //   time = dataObj.time;
           //   dose = dataObj.dose;
           // }
-          if (time instanceof Object) {
-            time = time[0];
-            administered = true;
+          if(flag)
+          {
+            if (time instanceof Object) {
+              dose = time[2];
+              administrationstatus = time[1];
+              time = time[0];
+              administered = true;
+            }
+            if (administrationstatus instanceof Object) {
+              administrationstatus = administrationstatus[0];
+              administered = true;
+            }
           }
-          this.prescriptionProperFlow[pres.prescription_id][n][m] = { time, dose, administered };
+          
+          if(isPRN == true && administered == false)
+          {
+            time = '';
+            dose = '';
+          }
+          this.prescriptionProperFlow[pres.prescription_id][n][m] = { time, dose, administered, isPRN, administrationstatus };
         }
         // this.sortRow(n,cols, pres);
       }
@@ -1043,10 +1461,67 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
         const checkTime = moment().format("HH:mm");
         const checkTime2 = this.prescriptionProperFlow[pres.prescription_id][i][j].time;
         if (checkTime2 < checkTime && currDate === this.dates[0]) {
-          return 'N.A';
+          // return 'N.A';
+          if(this.prescriptionProperFlow[pres.prescription_id][i][j].administrationstatus == null)
+          {
+            return ''
+          }
+          else if(this.prescriptionProperFlow[pres.prescription_id][i][j].administrationstatus)
+          {
+            return this.prescriptionProperFlow[pres.prescription_id][i][j].administrationstatus;
+          }
+          if(pres.infusiontype_id == "rate")
+          {
+            let dateFilteredData = this.hs.prescriptionDictionary[pres.prescription_id].filter(x => x.date == moment(currDate).format('YYYYMMDD'));
+            if(dateFilteredData.length > 0 && dateFilteredData[i] && dateFilteredData[i].logicalId != undefined && dateFilteredData[i].logicalId.includes('end'))
+            {
+              let originalDoseStartTime = this.appService.Prescription.find(x => x.prescription_id == pres.prescription_id).__posology.find(y => y.posology_id == this.appService.GetCurrentPosology(pres).posology_id).__dose.find(z => z.dose_id == dateFilteredData[i].doseId).dosestartdatetime;
+              let originalDoseEndTime = this.appService.Prescription.find(x => x.prescription_id == pres.prescription_id).__posology.find(y => y.posology_id == this.appService.GetCurrentPosology(pres).posology_id).__dose.find(z => z.dose_id == dateFilteredData[i].doseId).doseenddatatime;
+              
+              var a = moment(originalDoseEndTime);//now
+              var b = moment(originalDoseStartTime);
+              var convertToMinites = a.diff(b, 'minutes');
+
+              let splitLogicalId = dateFilteredData[i].logicalId.split('_');
+              let date = moment();
+              date.set({'year': splitLogicalId[1].substring(0,4),'month': splitLogicalId[1].substring(4,6) - 1,'date': splitLogicalId[1].substring(6,8),'hour':splitLogicalId[1].substring(8,10),'minute': splitLogicalId[1].substring(10,12),'second':0})
+
+              let startDate = moment(date).subtract(convertToMinites, "minutes");
+
+              let starsubstring= 'start_'+moment(startDate).format('YYYYMMDDHHmm') + "_" + dateFilteredData[i].doseId;
+
+              // let starsubstring='start' + dateFilteredData[i].logicalId.substring(3,12);// append start to _20221228 only date to get start dose 
+              // let startevent=dateFilteredData.filter(x=>x.logicalId.includes(dateFilteredData[i].logicalId.split("_")[2]) && x.logicalId.includes(starsubstring))
+
+              let startadministred = this.medicationAdministration.find(x => x.logicalid == starsubstring)
+              if(startadministred){
+                if(dateFilteredData[i].content.includes('InfusionCompleteoverdue')) {
+                  return 'overdue' ;
+                }
+                return 'completed' ;
+              }else{
+                return 'Missed';
+              }
+            }
+            else {
+              return 'Missed';
+            }
+          }
+          else {
+            if(this.hs.prescriptionDictionary[pres.prescription_id][i].doctorsorder || this.hs.prescriptionDictionary[pres.prescription_id][i].titration)
+            {
+              return this.prescriptionProperFlow[pres.prescription_id][i][j].administrationstatus;
+            }
+            return 'Missed';
+          }
         }
       } else {
-        return 'A';
+        // return 'A';
+        if(pres.infusiontype_id == "rate" && this.prescriptionProperFlow[pres.prescription_id][i][j].administrationstatus == 'given')
+        {
+          return 'started'
+        }
+        return this.prescriptionProperFlow[pres.prescription_id][i][j].administrationstatus
       }
     }
 
@@ -1077,7 +1552,23 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
         checkDate = false;
       }
     }
-    if (pres.isinfusion && pres.infusiontype_id === 'ci') {
+
+    if (currentpos.dosingdaysfrequency == 'days' || currentpos.dosingdaysfrequency == 'weeks' || currentpos.dosingdaysfrequency == 'months') {
+      let time = this.hs.prescriptionDictionary[pres.prescription_id][i].time.split(':')
+      let finalLogicalID = moment(currDate).format('YYYYMMDD') + time[0] + time[1] + "_" + this.hs.prescriptionDictionary[pres.prescription_id][i].doseId;
+      if(pres.infusiontype_id == "rate"){
+        finalLogicalID=this.hs.prescriptionDictionary[pres.prescription_id][i].logicalId
+      }
+      let weekData = this.appService.reportData.filter(x => x.dose_id == finalLogicalID);
+      if (weekData.length) {
+        checkDate = true;
+      }
+      else {
+        checkDate = false;
+      }
+    }
+
+    if (pres.isinfusion && (pres.infusiontype_id === 'ci' || pres.infusiontype_id === InfusionType.pca)) {
       if (this.hs.prescriptionDictionary[pres.prescription_id][i]) {
         checkDate = moment(currDate.getFullYear() + '-' + (currDate.getMonth() + 1) + '-' + currDate.getDate()).isSame(this.hs.prescriptionDictionary[pres.prescription_id][i].ciDate);
       } else {
@@ -1089,45 +1580,155 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
     let checkTransfer;
     let administeredEvents = [];
     if (this.hs.prescriptionDictionary[pres.prescription_id][i]) {
-      administeredEvents = this.appService.Medicationadministration.filter(ma => {
-        const logicalDate = ma.logicalid?.split('_')[0].slice(0, 8);
+      administeredEvents = this.medicationAdministration.filter(ma => {
+       const logicalDateArrray = ma.logicalid?.split('_');
+       let logicalDate;
+       if(logicalDateArrray.length == 2)
+       {
+        logicalDate = logicalDateArrray[0];
+       }
+       else if(logicalDateArrray.length == 3)
+       {
+        logicalDate = logicalDateArrray[1];
+       }
         const originalDate = logicalDate.slice(0, 4) + '-' + logicalDate.slice(4, 6) + '-' + logicalDate.slice(6, 8);
         if (!ma.planneddatetime) {
           return false;
         }
-        return ma.dose_id === this.hs.prescriptionDictionary[pres.prescription_id][i].doseId && ma.planneddatetime?.split('T')[0] === originalDate;
+        if(currentpos.infusiontypeid === "ci")
+        {
+          return (ma.prescription_id == pres.prescription_id);
+        }
+        else if(currentpos.prn) {
+          return (ma.prescription_id == pres.prescription_id) && (ma.planneddatetime.split('T')[0] == date) && ma.checked == false;
+        }
+        else {
+          return (ma.dose_id === this.hs.prescriptionDictionary[pres.prescription_id][i].doseId) && (ma.planneddatetime.split('T')[0] == originalDate);
+        }
+        
       });
     }
     let time;
     let dose;
-    administeredEvents.forEach((administeredEvent, ind) => {
-      if (!administeredEvents[ind].checked && administeredEvents[ind].administrationstartime?.split('T')[0] === date) {
-        if (type === 'time') {
-          time = [administeredEvents[ind].administrationstartime?.split('T')[1].slice(0, 5)];
+    let administrationstatus;
 
-        } else {
-          if (administeredEvents[0].administreddosesize) {
-            dose = administeredEvents[0].administreddosesize + ' ' + administeredEvents[0].administreddoseunit;
-          } else if (administeredEvents[0].administredinfusionrate) {
-            dose = administeredEvents[0].administredinfusionrate + ' ' + administeredEvents[0].administeredstrengthdenominatorunits;
-          } else if (administeredEvents[0].administeredstrengthdenominator) {
-            dose = administeredEvents[0].administeredstrengthdenominator + ' ' + administeredEvents[0].administeredstrengthdenominatorunits;
-          };
-          administeredEvents[ind].checked = true;
+    if(currentpos.infusiontypeid === "ci" && administeredEvents.length > 0)
+    {
+      if(administeredEvents.length > 0)
+      {
+        if(currentpos.prescription_id == administeredEvents[0].prescription_id)
+        {
+          if (!administeredEvents[0].checked && administeredEvents[0].administrationstartime.split('T')[0] === date) {
+            if (type === 'time') {
+              time = administeredEvents[0].administrationstartime.split('T')[1].slice(0, 5);
+              administrationstatus = administeredEvents[0].adminstrationstatus;
+              dose = administeredEvents[0].administredinfusionrate + ' ' + currentpos.infusionrateunits;
+            }
+          }
         }
-
       }
-      else if (administeredEvents.length && administeredEvents[0].administrationstartime?.split('T')[0] !== date && administeredEvents[0].planneddatetime?.split('T')[0] === date) {
-        time = 'changed';
+      
+    }
+    else if(currentpos.prn && administeredEvents.length > 0) {
+      administeredEvents.reverse();
+      if(administeredEvents.length > 0)
+      {
+        if (administeredEvents[0].administrationstartime.split('T')[0] === date) {
+          if (type === 'time' && !administeredEvents[0].isenterinerror) {
+            time = administeredEvents[0].administrationstartime.split('T')[1].slice(0, 5);
+            administrationstatus = administeredEvents[0].adminstrationstatus;
+            dose = administeredEvents[0].administreddosesize + ' ' + administeredEvents[0].administreddoseunit;
+            
+            // this.medicationAdministration = this.medicationAdministration.filter(x=> x.prescription_id == administeredEvents[0].prescription_id && x.administrationstartime != administeredEvents[0].administrationstartime);
+          }
+          if (type === 'time') { 
+            this.medicationAdministration.forEach((element, index) => {
+              if(element.prescription_id == administeredEvents[0].prescription_id && element.administrationstartime == administeredEvents[0].administrationstartime) {
+                this.medicationAdministration[index].checked = true;
+              }
+            });
+          } 
+   
+        }
+        else {
+          if (type === 'time') { 
+            this.medicationAdministration.forEach((element, index) => {
+              if(element.prescription_id == administeredEvents[0].prescription_id && element.administrationstartime == administeredEvents[0].administrationstartime) {
+                this.medicationAdministration[index].checked = true;
+              }
+            });
+          } 
+        }
       }
-    });
+    }
+    else{
+      administeredEvents.forEach((administeredEvent, ind) => {
+        if(currentpos.prescription_id == administeredEvents[ind].prescription_id)
+        {
+          if (!administeredEvents[ind].checked && administeredEvents[ind].administrationstartime.split('T')[0] === date) {
+            if (type === 'time') {
+              time = [administeredEvents[ind].administrationstartime.split('T')[1].slice(0, 5)];
+              administrationstatus = [administeredEvents[ind].adminstrationstatus];
+              if (administeredEvents[ind].administreddosesize) {
+                if(currentpos.infusiontypeid == "rate")
+                {
+                  dose = [administeredEvents[ind].administredinfusionrate + ' ' + currentpos.infusionrateunits];
+                }
+                else {
+                  dose = [administeredEvents[ind].administreddosesize + ' ' + administeredEvents[ind].administreddoseunit];
+                }
+                
+              } else if(currentpos.doctorsorder && currentpos.dosetype == 'strength') {
+                dose = [administeredEvents[ind].administeredstrengthdenominator + ' ' + administeredEvents[ind].administeredstrengthdenominatorunits];
+              } else if (administeredEvents[ind].administredinfusionrate != "0") {
+                dose = [(administeredEvents[ind].administredinfusionrate != null?administeredEvents[ind].administredinfusionrate:'') + ' ' + (administeredEvents[ind].administeredstrengthdenominatorunits != null?administeredEvents[ind].administeredstrengthdenominatorunits:'')];
+              } else if (administeredEvents[ind].administeredstrengthdenominator) {
+                dose = [administeredEvents[ind].administeredstrengthdenominator + ' ' + administeredEvents[ind].administeredstrengthdenominatorunits];
+              };
+    
+            } else if (type === 'dose') {
+              if (administeredEvents[0].administreddosesize) {
+                if(currentpos.infusiontypeid == "rate")
+                {
+                  dose = [administeredEvents[0].administredinfusionrate + ' ' + currentpos.infusionrateunits];
+                }
+                else {
+                  dose = administeredEvents[0].administreddosesize + ' ' + administeredEvents[0].administreddoseunit;
+                }
+                
+              } else if (currentpos.doctorsorder && currentpos.dosetype == 'strength') {
+                dose = administeredEvents[0].administeredstrengthdenominator + ' ' + administeredEvents[0].administeredstrengthdenominatorunits;
+              } else if (administeredEvents[0].administredinfusionrate != "0") {
+                dose = (administeredEvents[0].administredinfusionrate != null?administeredEvents[0].administredinfusionrate:'') + ' ' + (administeredEvents[0].administeredstrengthdenominatorunits != null?administeredEvents[0].administeredstrengthdenominatorunits:'');
+              } else if (administeredEvents[0].administeredstrengthdenominator) {
+                dose = administeredEvents[0].administeredstrengthdenominator + ' ' + administeredEvents[0].administeredstrengthdenominatorunits;
+              };
+              administeredEvents[ind].checked = true;
+            }
+            else{
+              administrationstatus = administeredEvents[ind].adminstrationstatus
+            }
+          }
+          else if (administeredEvents.length && administeredEvents[0].administrationstartime?.split('T')[0] !== date && administeredEvents[0].planneddatetime?.split('T')[0] === date) {
+            time = 'changed';
+          }
+        }
+        
+      });
+    }
+      
+    
     if (time === 'changed') {
       return '';
     } else if (time && type === 'time') {
-      return time
+      // return time
+      return [time, administrationstatus, dose]
     } else if (time && type === 'dose') {
       return dose;
-    } else {
+    } else if (time && type === 'administrationstatus') {
+      return administrationstatus;
+    }
+    else {
       if (this.hs.prescriptionDictionary[pres.prescription_id][i]) {
         checkTransfer = this.checkTransfer(pres, this.hs.prescriptionDictionary[pres.prescription_id][i].doseId, currDate, this.hs.prescriptionDictionary[pres.prescription_id][i].time);
       }
@@ -1136,57 +1737,263 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
         return '';
       }
 
-      if (checkTransfer === true && checkDate) {
-        if (pres.infusiontype_id === 'bolus') {
-
-          if (type === 'time') {
-            return this.hs.prescriptionDictionary[pres.prescription_id][i].time;
+        if (checkTransfer === true && checkDate) {
+          let status = this.medicationAdministration.filter(x => x.logicalid == this.hs.prescriptionDictionary[pres.prescription_id][i].logicalId)
+          if (pres.infusiontype_id === 'bolus') {
+  
+            if (type === 'time') {
+              return this.hs.prescriptionDictionary[pres.prescription_id][i].time;
+            }
+            else if (type === 'dose')
+            {
+              return this.hs.prescriptionDictionary[pres.prescription_id][i].bolusDose
+            }
+            return status.length > 0 ? status[0].adminstrationstatus : '';
+          } else if (pres.infusiontype_id === 'rate' && !checkTransfer) {
+            if (type === 'time') {
+              return this.hs.prescriptionDictionary[pres.prescription_id][i].time;
+            }
+            else if (type === 'dose')
+            {
+              return this.hs.prescriptionDictionary[pres.prescription_id][i].rateDose
+            }
+            return status.length > 0 ? status[0].adminstrationstatus : '';
+          } else if (pres.infusiontype_id === 'ci' || pres.infusiontype_id === InfusionType.pca) {
+            if (type === 'time') {
+              return this.hs.prescriptionDictionary[pres.prescription_id][i].time;
+            }
+            else if (type === 'dose')
+            {
+              return status.length > 0 ? status[0].administredinfusionrate + ' ' +  pres.__posology[i].infusionrateunits : this.hs.prescriptionDictionary[pres.prescription_id][i].ciDose;
+            }
+            return status.length > 0 ? status[0].adminstrationstatus : '';
+          }  
+          if (this.hs.prescriptionDictionary[pres.prescription_id][i].dose) {
+            if (type === 'time') {
+                if(pres.infusiontype_id == "rate")
+                {
+                  let dateFilteredData = this.hs.prescriptionDictionary[pres.prescription_id].filter(x => x.date == moment(currDate).format('YYYYMMDD'));
+                  if(dateFilteredData.length > 0 && dateFilteredData[i] != undefined)
+                  {
+                    return dateFilteredData[i].time;
+                  }
+                  
+                }
+                else {
+                    return this.hs.prescriptionDictionary[pres.prescription_id][i].time;
+                }
+            }
+            else if (type === 'dose')
+            {
+              if(pres.infusiontype_id == "rate")
+              {
+                let dateFilteredData = this.hs.prescriptionDictionary[pres.prescription_id].filter(x => x.date == moment(currDate).format('YYYYMMDD'));
+                if(dateFilteredData.length > 0 && dateFilteredData[i] != undefined)
+                {
+                  if(dateFilteredData[i].logicalId.includes('end'))
+                  {
+                    return '';
+                  }
+                  else {
+                    return dateFilteredData[i].dose;
+                  }
+                }
+              }
+              else {
+                
+                if(this.hs.prescriptionDictionary[pres.prescription_id][i].doctorsorder || this.hs.prescriptionDictionary[pres.prescription_id][i].titration)
+                {
+                  let changeDateFormat = moment(currDate).format('YYYYMMDD');
+                  let changeTimeFormat = this.hs.prescriptionDictionary[pres.prescription_id][i].time.split(':');
+                  let finalTitrationLogicalID = changeDateFormat + changeTimeFormat[0] + changeTimeFormat[1] + "_" + this.hs.prescriptionDictionary[pres.prescription_id][i].doseId;
+                  let doctorConfirmData = this.appService.DoseEvents.filter(x => x.logicalid == this.hs.prescriptionDictionary[pres.prescription_id][i].logicalId && x.eventtype == 'doconfirm')
+                  let titrationData = this.appService.DoseEvents.filter(x => x.logicalid == finalTitrationLogicalID && x.eventtype == 'titration') 
+                  if(doctorConfirmData.length > 0 || titrationData.length > 0)
+                  {
+                    return 'PTC'
+                  }
+                  else 
+                  {
+                    if(doctorConfirmData.length > 0 || titrationData.length > 0)
+                    {
+                      if(titrationData[0].eventtype == 'titration')
+                      {
+                        return titrationData[0].titrateddosesize + ' ' + titrationData[0].titrateddoseunit 
+                      }
+                      else {
+                        return this.hs.prescriptionDictionary[pres.prescription_id][i].dose + ' ' + this.shortenUnitName(this.hs.prescriptionDictionary[pres.prescription_id][i].doseunit);
+                      }
+                    }
+                    else {
+                      let groupTitrationData = this.appService.DoseEvents.find(x => x.posology_id == this.hs.prescriptionDictionary[pres.prescription_id][i].posologyId && x.grouptitration == true); 
+                      if(groupTitrationData)
+                      {
+                        let date = moment(currDate).format('YYYY-MM-DD') +' '+ this.hs.prescriptionDictionary[pres.prescription_id][i].time;
+                        // let currentTime = moment().format('HH:mm');
+                        if(moment(date).isSameOrBefore(moment(groupTitrationData.titrateduntildatetime)))
+                        {
+                          return groupTitrationData.titrateddosesize + ' ' + groupTitrationData.titrateddoseunit;
+                        }
+                      }
+                      
+                      
+                      return 'PTC'
+                    }
+                      
+                  }
+                }
+                else {
+                  return this.hs.prescriptionDictionary[pres.prescription_id][i].dose + ' ' + this.shortenUnitName(this.hs.prescriptionDictionary[pres.prescription_id][i].doseunit);
+                }
+              }
+              
+            }
+            else if (type === 'administrationstatus')
+            {
+              if(pres.infusiontype_id == "rate")
+              {
+                let dateFilteredData = this.hs.prescriptionDictionary[pres.prescription_id].filter(x => x.date == moment(currDate).format('YYYYMMDD'));
+                if(dateFilteredData.length > 0 && dateFilteredData[i] != undefined)
+                {
+                  if(dateFilteredData[i].content.includes('InfusionCompleteddone'))
+                  {
+                    return 'completed'
+                  }
+                  else {
+                    return dateFilteredData[i].administrationStatus;
+                  }
+                }
+                
+              }
+              else {
+                if(pres.__posology[0].doctorsorder == false && pres.__posology[0].titration == false)
+                {
+                  return status.length > 0 ? status[0].adminstrationstatus : '';
+                }
+                else {
+                  if(this.hs.prescriptionDictionary[pres.prescription_id][i].doctorsorder || this.hs.prescriptionDictionary[pres.prescription_id][i].titration)
+                  {
+                    let currentDate = moment().format('YYYY-MM-DD');
+                    let currentTime = moment().format('HH:mm');
+                    let finalCurrentDate = moment(currDate).format('YYYY-MM-DD') +' '+ currentTime;
+                    let finalTitrationDate = moment(this.hs.prescriptionDictionary[pres.prescription_id][i].ciDate).format('YYYY-MM-DD') +' '+ this.hs.prescriptionDictionary[pres.prescription_id][i].time
+                    if(moment(finalTitrationDate).isSameOrBefore(finalCurrentDate))
+                    {
+                      let groupTitrationData = this.appService.DoseEvents.find(x => x.posology_id == this.hs.prescriptionDictionary[pres.prescription_id][i].posologyId && x.grouptitration == true);
+                      let changeDateFormat = moment(currDate).format('YYYYMMDD');
+                      let changeTimeFormat = this.hs.prescriptionDictionary[pres.prescription_id][i].time.split(':');
+                      let finalTitrationLogicalID = changeDateFormat + changeTimeFormat[0] + changeTimeFormat[1] + "_" + this.hs.prescriptionDictionary[pres.prescription_id][i].doseId;
+                      let doctorConfirmData = this.appService.DoseEvents.filter(x => x.logicalid == this.hs.prescriptionDictionary[pres.prescription_id][i].logicalId && x.eventtype == 'doconfirm')
+                      let titrationData = this.appService.DoseEvents.filter(x => x.logicalid == finalTitrationLogicalID  && x.eventtype == 'titration')
+                      if(titrationData.length > 0 || doctorConfirmData.length > 0)
+                      {
+                        return 'Missed';
+                      }
+                      if(groupTitrationData)
+                      {
+                        return 'Missed';
+                      }
+                    }
+                    // else {
+                    //   return 'false'
+                    // }
+                  }
+                }
+              }
+            }
+            
+            
           }
-          return this.hs.prescriptionDictionary[pres.prescription_id][i].bolusDose
-        } else if (pres.infusiontype_id === 'rate' && !checkTransfer) {
-          if (type === 'time') {
-            return this.hs.prescriptionDictionary[pres.prescription_id][i].time;
+          else if (this.hs.prescriptionDictionary[pres.prescription_id][i].descriptiveDose){
+            if (type === 'time') {
+              return this.hs.prescriptionDictionary[pres.prescription_id][i].time;
+            }
+            else if (type === 'dose')
+            {
+              return '';
+              // return this.hs.prescriptionDictionary[pres.prescription_id][i].dose + ' ' + this.shortenUnitName(this.hs.prescriptionDictionary[pres.prescription_id][i].doseunit);
+            }
+            return status.length > 0 ? status[0].adminstrationstatus : '';
           }
-          return this.hs.prescriptionDictionary[pres.prescription_id][i].rateDose
-        } else if (pres.infusiontype_id === 'ci') {
+        } else if (checkTransfer && checkDate) {
+          // how to get dose?
           if (type === 'time') {
-            return this.hs.prescriptionDictionary[pres.prescription_id][i].time;
+            return checkTransfer.slice(0, 5);
+          } else if (type === 'dose') {
+            if (this.hs.prescriptionDictionary[pres.prescription_id][i].bolusDose && !this.hs.prescriptionDictionary[pres.prescription_id][i].bolusDose.includes('null')) {
+              return this.hs.prescriptionDictionary[pres.prescription_id][i].bolusDose
+            } else if (this.hs.prescriptionDictionary[pres.prescription_id][i].rateDose && !this.hs.prescriptionDictionary[pres.prescription_id][i].rateDose.includes('null')) {
+              return this.hs.prescriptionDictionary[pres.prescription_id][i].rateDose
+            } else if (this.hs.prescriptionDictionary[pres.prescription_id][i].ciDose && !this.hs.prescriptionDictionary[pres.prescription_id][i].ciDose.includes('null')) {
+              return this.hs.prescriptionDictionary[pres.prescription_id][i].ciDose
+            } else {
+              if(this.hs.prescriptionDictionary[pres.prescription_id][i].titration)
+              {
+                let groupTitrationData = this.appService.DoseEvents.find(x => x.posology_id == this.hs.prescriptionDictionary[pres.prescription_id][i].posologyId && x.grouptitration == true);
+                let changeDateFormat = moment(currDate).format('YYYYMMDD');
+                let changeTimeFormat = this.hs.prescriptionDictionary[pres.prescription_id][i].time.split(':');
+                let finalTitrationLogicalID = changeDateFormat + changeTimeFormat[0] + changeTimeFormat[1] + "_" + this.hs.prescriptionDictionary[pres.prescription_id][i].doseId;
+                let titrationData = this.appService.DoseEvents.filter(x => x.logicalid == finalTitrationLogicalID && x.eventtype == 'titration');
+                if(titrationData.length > 0)
+                {
+                  return titrationData[0].titrateddosesize + ' ' + titrationData[0].titrateddoseunit 
+                }
+                if(groupTitrationData)
+                {
+                  let date = moment(currDate).format('YYYY-MM-DD') +' '+ this.hs.prescriptionDictionary[pres.prescription_id][i].time;
+                  if(moment(date).isSameOrBefore(groupTitrationData.titrateduntildatetime))
+                  {
+                    return groupTitrationData.titrateddosesize + ' ' + groupTitrationData.titrateddoseunit;
+                  }
+                }
+              }
+              else {
+                return (this.hs.prescriptionDictionary[pres.prescription_id][i].dose + ' ' + this.shortenUnitName(this.hs.prescriptionDictionary[pres.prescription_id][i].doseunit))
+              }
+              
+            }
           }
-          return this.hs.prescriptionDictionary[pres.prescription_id][i].ciDose;
-
+          else {
+            if(this.hs.prescriptionDictionary[pres.prescription_id][i].doctorsorder || this.hs.prescriptionDictionary[pres.prescription_id][i].titration)
+            {
+              let currentDate = moment().format('YYYY-MM-DD');
+              let currentTime = moment().format('HH:mm');
+              // let [startDate, startTime] = todayDate?.split('T');
+              // startTime = startTime.slice(0, 5);
+              if(currentDate > this.hs.prescriptionDictionary[pres.prescription_id][i].ciDate || currentTime > this.hs.prescriptionDictionary[pres.prescription_id][i].time)
+              {
+                return 'Missed'
+              }
+              // else {
+              //   return 'false'
+              // }
+            }
+            else {
+              let status = this.medicationAdministration.filter(x => x.logicalid == this.hs.prescriptionDictionary[pres.prescription_id][i].logicalId);
+              return status.length > 0 ? status[0].adminstrationstatus : '';
+            }
+            
+          }
         }
-        if (this.hs.prescriptionDictionary[pres.prescription_id][i].dose) {
-          if (type === 'time') {
-            return this.hs.prescriptionDictionary[pres.prescription_id][i].time;
-          }
-          return this.hs.prescriptionDictionary[pres.prescription_id][i].dose + ' ' + this.shortenUnitName(this.hs.prescriptionDictionary[pres.prescription_id][i].doseunit);
-
-        }
-      } else if (checkTransfer && checkDate) {
-        // how to get dose?
-        if (type === 'time') {
-          return checkTransfer.slice(0, 5);
-        } else {
-          if (this.hs.prescriptionDictionary[pres.prescription_id][i].bolusDose && !this.hs.prescriptionDictionary[pres.prescription_id][i].bolusDose.includes('null')) {
-            return this.hs.prescriptionDictionary[pres.prescription_id][i].bolusDose
-          } else if (this.hs.prescriptionDictionary[pres.prescription_id][i].rateDose && !this.hs.prescriptionDictionary[pres.prescription_id][i].rateDose.includes('null')) {
-            return this.hs.prescriptionDictionary[pres.prescription_id][i].rateDose
-          } else if (this.hs.prescriptionDictionary[pres.prescription_id][i].ciDose && !this.hs.prescriptionDictionary[pres.prescription_id][i].ciDose.includes('null')) {
-            return this.hs.prescriptionDictionary[pres.prescription_id][i].ciDose
-          } else {
-            return (this.hs.prescriptionDictionary[pres.prescription_id][i].dose + ' ' + this.shortenUnitName(this.hs.prescriptionDictionary[pres.prescription_id][i].doseunit))
-          }
-        }
-
       }
-    }
 
-  }
+    }
   checkShowDose(pres: Prescription, date: any) {
     if (moment(this.appService.GetCurrentPosology(pres).prescriptionstartdate?.split('T')[0]).isAfter(date)) {
       return false
-    };
-    return true;
+    }
+    // else if (this.appService.GetCurrentPosology(pres).dosingdaysfrequency == 'days' || this.appService.GetCurrentPosology(pres).dosingdaysfrequency == 'weeks' || this.appService.GetCurrentPosology(pres).dosingdaysfrequency == 'months') {
+    //   if(!moment(this.appService.GetCurrentPosology(pres).prescriptionstartdate?.split('T')[0]).isSame(date)) {
+    //     return false;
+    //   }
+    //   else {
+    //     return true;
+    //   }
+    // }
+    // else {
+      return true;
+    // }
+    
   }
   checkTodayTransfer(pres: Prescription) {
     const doseEvents = this.appService.DoseEvents.filter(doseEvent => {
@@ -1216,7 +2023,7 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
     return maxRows;
   }
 
-  returnTransferTime(i: number, pres: Prescription, j: number): { time: string, dose: string } {
+  returnTransferTime(i: number, pres: Prescription, j: number): { time: string, dose: string, administrationstatus: string } {
     let time;
     let dose;
     let month = this.dates[j].getMonth() + 1;
@@ -1239,7 +2046,7 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
         }
         return doseEvent.posology_id === prespos.posology_id && doseEvent.dosedatetime?.split('T')[0] === date;
       });
-      const MAevents = this.appService.Medicationadministration.filter(ma => {
+      const MAevents = this.medicationAdministration.filter(ma => {
         return ma.posology_id === prespos.posology_id;
       });
       // if (doseEvents.length) {
@@ -1280,8 +2087,8 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
         dose = dose.infusionrate + ' ' + dose.strengthdenominatorunit + 'hrs ' + ' / ' + dose.infusionduration + ' ' + 'hrs';
       } else if (type === 'bolus') {
         dose = dose.strengthdenominator + ' ' + dose.strengthdenominatorunit;
-      } else if (type === 'ci') {
-        dose = prespos.__dose[0].infusionrate + ' ' + prespos[0].__dose[0].strengthdenominatorunit;
+      } else if (type === 'ci' || type == InfusionType.pca) {
+        dose = prespos.__dose[0].infusionrate + ' ' + prespos.__dose[0].strengthdenominatorunit;
       } else if (doseToSend.length) {
         dose = doseToSend[0].dosesize + ' ' + doseToSend[0].doseunit;
       }
@@ -1314,8 +2121,10 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
       this.transferDoses[pres.prescription_id][date].count += 1;
 
     }
+    let administrationstatus;
     if (this.transferDoses[pres.prescription_id][date].maEvents.length && (!time || !dose)) {
       const filterEvents = this.transferDoses[pres.prescription_id][date].maEvents.filter(ma => {
+        administrationstatus = ma.adminstrationstatus;
         const logicalDate = ma.logicalid?.split('_')[0].slice(0, 8);
         const originalDate = logicalDate.slice(0, 4) + '-' + logicalDate.slice(4, 6) + '-' + logicalDate.slice(6, 8);
         if (!ma.planneddatetime) {
@@ -1329,7 +2138,7 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
         if (filterEvents[macount].administreddosesize) {
           dose = filterEvents[macount].administreddosesize + ' ' + filterEvents[macount].administreddoseunit;
         } else if (filterEvents[macount].administredinfusionrate) {
-          dose = filterEvents[macount].administredinfusionrate + ' ' + filterEvents[macount].administeredstrengthdenominatorunits;
+          dose = filterEvents[macount].administredinfusionrate + ' ' + pres.__posology[0].infusionrateunits;
         } else if (filterEvents[macount].administeredstrengthdenominator) {
           dose = filterEvents[macount].administeredstrengthdenominator + ' ' + filterEvents[macount].administeredstrengthdenominatorunits
         };
@@ -1340,7 +2149,17 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
       time = '';
     }
 
-    return { time, dose };
+    return { time, dose, administrationstatus };
+  }
+
+  getMargin()
+  {
+    return this.marType === 'empty' ? '10px 10px 50px 10px' : '10px 10px 20px 10px';
+  }
+
+  setHeightWidthForEmptyTemplate()
+  {
+    return this.marType === 'empty' ? {height: '300px', margin: '10px 10px 200px 10px',width: '70px'} : '';
   }
 
 }

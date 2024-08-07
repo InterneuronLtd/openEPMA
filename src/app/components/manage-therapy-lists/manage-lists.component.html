@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,10 +18,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <!--END LICENSE BLOCK--> 
-<div class="card" *ngIf="(appService.isCurrentEncouner || appService.isTCI) && !appService.isTCICancelled">
+<div class="card"
+    *ngIf="appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled) || formContext =='op' || (formContext && formContext =='mod')">
     <div *ngIf="formContext && formContext !='mod' || (appService.warningService && appService.warningService.encounterId && 
     appService.warningServiceMODContext && !appService.warningServiceMODContext.loader)" class="pl-3 card-body">
-        <app-search-medication [formContext]="formContext" (medicationselected)="onmedicationselected($event)"></app-search-medication>
+        <app-search-medication *ngIf="GetMedicineSearchAccess('epma_access_search_medicines')" [formContext]="formContext" (medicationselected)="onmedicationselected($event)">
+        </app-search-medication>
     </div>
     <div *ngIf="formContext !='mod' || (appService.warningService && appService.warningService.encounterId &&
          appService.warningServiceMODContext && !appService.warningServiceMODContext.loader)">
@@ -90,7 +92,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                 </div>
 
                 <div class="col text-right"
-                    *ngIf="PrescriptionBasket.length > 0 && appService.AuthoriseAction('epma_create_org_orderset') && formContext =='moa'">
+                    *ngIf="PrescriptionBasket.length > 0 && formContext =='moa'">
                     <a href="javascript:void(0)" (click)="saveOrderSet()">
                         <img alt="Save to order set" src="../../../assets/images/epma/therapy/Save.svg"
                             title="Save to order set">
@@ -102,7 +104,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
             <div *ngFor="let p of PrescriptionBasket">
                 <div *ngIf="p.itemtype !='delete'" class="border mb-1">
                     <app-prescription-template (basketAction)="BasketAction($event)" [prescription]="p.prescription"
-                        [componenttype]="formContext == 'moa' ? 'medication_rec_moa' : 'medication_rec'">
+                        [componenttype]="formContext == 'moa' ? 'medication_rec_moa' : (formContext == 'mod'? 'medication_rec' : 'medication_op')">
                     </app-prescription-template>
                 </div>
             </div>
@@ -121,7 +123,8 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
         <button type="button" style="color:white" class="btn btn-info" (click)="SaveAllPrescriptions()"
             [disabled]="isFormSaving || PrescriptionBasket.length==0 || (formContext == 'op' && ws && (ws.loader || !ws.newWarningsStatus))">
             <span class="spinner-border spinner-border-sm" *ngIf="isFormSaving" role="status" aria-hidden="true">
-            </span> Save</button>
+            </span> <span *ngIf="formContext=='moa'">Save</span> <span *ngIf="formContext!='moa'">Prescribe</span>
+        </button>
         <button type="button" [disabled]="isFormSaving" (click)="Cancel()" class="btn btn-secondary"
             data-dismiss="modal">Cancel</button>
     </div>

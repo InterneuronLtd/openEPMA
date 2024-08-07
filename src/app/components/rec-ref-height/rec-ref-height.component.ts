@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ export class RecRefHeightComponent implements OnInit, OnDestroy {
   isSaving: boolean = false;
   invalidHeight = false;
 
-  constructor(private appService: AppService, private apiRequest: ApirequestService, private subjects: SubjectsService, public bsModalRef: BsModalRef) {
+  constructor(public appService: AppService, private apiRequest: ApirequestService, private subjects: SubjectsService, public bsModalRef: BsModalRef) {
     this.headerLabelText = "Reference height";
     this.unitOfMeasure = "cm";
     this.init();
@@ -170,20 +170,24 @@ export class RecRefHeightComponent implements OnInit, OnDestroy {
                 this.appService.bodySurfaceArea = +(Math.sqrt(+this.appService.refWeightValue * +this.height) / 60).toFixed(2);
               }
               this.appService.setIdealBodyWeight();
+
+              this.appService.patientInfo.height = this.appService.refHeightValue;
+              this.appService.patientInfo.bsa = this.appService.bodySurfaceArea;
+
               this.bsModalRef.content.saveDone(true);
               this.bsModalRef.hide();
               this.subjects.frameworkEvent.next("UPDATE_HEIGHT_WEIGHT");
             }, (error) => {
               this.bsModalRef.hide();
               if (this.appService.IsDataVersionStaleError(error)) {
-                this.subjects.ShowRefreshPageMessage.next(error);
+                this.appService.RefreshPageWithStaleError(error);
               }
             })
           );
         }, (error) => {
           this.bsModalRef.hide();
           if (this.appService.IsDataVersionStaleError(error)) {
-            this.subjects.ShowRefreshPageMessage.next(error);
+            this.appService.RefreshPageWithStaleError(error);
           }
         })
       );

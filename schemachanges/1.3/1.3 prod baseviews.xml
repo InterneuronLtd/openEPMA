@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-16"?><Export xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" format="Json"><Entities /><Baseviews><Baseview id="181dc94c-105c-49e0-9548-e930d0aea690" name="administeredmedhistory"><Namespace>{
+  "listsettings.baseviewnamespace": [
+    {
+      "_row_id": "954a1cf6-229d-4878-a1f4-035582bed6ab",
+      "_sequenceid": 112,
+      "_contextkey": null,
+      "_contextid": null,
+      "_createdtimestamp": "2021-01-11T05:55:48.338173",
+      "_createddate": "2021-01-11T05:55:48.338173",
+      "_createdsource": "Migration Tool",
+      "_createdchannelid": null,
+      "_createdmessageid": null,
+      "_createdby": "createdby_placeholder",
+      "_recordstatus": 1,
+      "_expirydate": null,
+      "baseviewnamespaceid": "1ea2f183-7018-4118-aed3-d90ad6ff1548",
+      "baseviewnamespace": "epma",
+      "baseviewnamespacedescription": "to store baseview for epma"
+    }
+  ]
+}</Namespace><BaseviewManager>{
+  "listsettings.baseviewmanager": [
+    {
+      "_row_id": "bc9a2a10-80f3-415e-94c9-bd44cb94d624",
+      "_sequenceid": 1919,
+      "_contextkey": null,
+      "_contextid": null,
+      "_createdtimestamp": "2022-05-30T05:13:55.650157",
+      "_createddate": "2022-05-30T06:13:55.650157",
+      "_createdsource": "Synapse Studio",
+      "_createdchannelid": null,
+      "_createdmessageid": null,
+      "_createdby": "Createdby_placeholder",
+      "_recordstatus": 1,
+      "_expirydate": null,
+      "_timezonename": null,
+      "_timezoneoffset": 0,
+      "baseview_id": "181dc94c-105c-49e0-9548-e930d0aea690",
+      "baseviewnamespaceid": "1ea2f183-7018-4118-aed3-d90ad6ff1548",
+      "baseviewnamespace": "epma",
+      "baseviewname": "administeredmedhistory",
+      "baseviewdescription": "",
+      "baseviewsqlstatement": "select * from entitystore.core_administermedication",
+      "ismaterialised": false
+    }
+  ]
+}</BaseviewManager><action>New</action></Baseview><Baseview id="6cf88990-acc4-4380-8363-08270a9ba040" name="doseeventshistory"><Namespace>{
+  "listsettings.baseviewnamespace": [
+    {
+      "_row_id": "954a1cf6-229d-4878-a1f4-035582bed6ab",
+      "_sequenceid": 112,
+      "_contextkey": null,
+      "_contextid": null,
+      "_createdtimestamp": "2021-01-11T05:55:48.338173",
+      "_createddate": "2021-01-11T05:55:48.338173",
+      "_createdsource": "Migration Tool",
+      "_createdchannelid": null,
+      "_createdmessageid": null,
+      "_createdby": "createdby_placeholder",
+      "_recordstatus": 1,
+      "_expirydate": null,
+      "baseviewnamespaceid": "1ea2f183-7018-4118-aed3-d90ad6ff1548",
+      "baseviewnamespace": "epma",
+      "baseviewnamespacedescription": "to store baseview for epma"
+    }
+  ]
+}</Namespace><BaseviewManager>{
+  "listsettings.baseviewmanager": [
+    {
+      "_row_id": "bfc9c11f-7fb4-4929-a3b6-dd7dd3df1eae",
+      "_sequenceid": 1920,
+      "_contextkey": null,
+      "_contextid": null,
+      "_createdtimestamp": "2022-05-30T05:13:55.680055",
+      "_createddate": "2022-05-30T06:13:55.680055",
+      "_createdsource": "Synapse Studio",
+      "_createdchannelid": null,
+      "_createdmessageid": null,
+      "_createdby": "Createdby_placeholder",
+      "_recordstatus": 1,
+      "_expirydate": null,
+      "_timezonename": null,
+      "_timezoneoffset": 0,
+      "baseview_id": "6cf88990-acc4-4380-8363-08270a9ba040",
+      "baseviewnamespaceid": "1ea2f183-7018-4118-aed3-d90ad6ff1548",
+      "baseviewnamespace": "epma",
+      "baseviewname": "doseeventshistory",
+      "baseviewdescription": "",
+      "baseviewsqlstatement": "select *  from entitystore.core_doseevents ",
+      "ismaterialised": false
+    }
+  ]
+}</BaseviewManager><action>New</action></Baseview><Baseview id="fbb6d9b4-6f47-4a37-b90c-27c4d98b130f" name="infusioneventshistory"><Namespace>{
+  "listsettings.baseviewnamespace": [
+    {
+      "_row_id": "954a1cf6-229d-4878-a1f4-035582bed6ab",
+      "_sequenceid": 112,
+      "_contextkey": null,
+      "_contextid": null,
+      "_createdtimestamp": "2021-01-11T05:55:48.338173",
+      "_createddate": "2021-01-11T05:55:48.338173",
+      "_createdsource": "Migration Tool",
+      "_createdchannelid": null,
+      "_createdmessageid": null,
+      "_createdby": "createdby_placeholder",
+      "_recordstatus": 1,
+      "_expirydate": null,
+      "baseviewnamespaceid": "1ea2f183-7018-4118-aed3-d90ad6ff1548",
+      "baseviewnamespace": "epma",
+      "baseviewnamespacedescription": "to store baseview for epma"
+    }
+  ]
+}</Namespace><BaseviewManager>{
+  "listsettings.baseviewmanager": [
+    {
+      "_row_id": "210c6fe7-a7f9-4cb3-a066-7ae2f5b401f7",
+      "_sequenceid": 1921,
+      "_contextkey": null,
+      "_contextid": null,
+      "_createdtimestamp": "2022-05-30T05:13:55.697868",
+      "_createddate": "2022-05-30T06:13:55.697868",
+      "_createdsource": "Synapse Studio",
+      "_createdchannelid": null,
+      "_createdmessageid": null,
+      "_createdby": "Createdby_placeholder",
+      "_recordstatus": 1,
+      "_expirydate": null,
+      "_timezonename": null,
+      "_timezoneoffset": 0,
+      "baseview_id": "fbb6d9b4-6f47-4a37-b90c-27c4d98b130f",
+      "baseviewnamespaceid": "1ea2f183-7018-4118-aed3-d90ad6ff1548",
+      "baseviewnamespace": "epma",
+      "baseviewname": "infusioneventshistory",
+      "baseviewdescription": "",
+      "baseviewsqlstatement": "select *  from entitystore.core_infusionevents ",
+      "ismaterialised": false
+    }
+  ]
+}</BaseviewManager><action>New</action></Baseview><Baseview id="d30830a7-9ead-4f0a-8151-53949281758d" name="medicationadministrationhistory"><Namespace>{
+  "listsettings.baseviewnamespace": [
+    {
+      "_row_id": "954a1cf6-229d-4878-a1f4-035582bed6ab",
+      "_sequenceid": 112,
+      "_contextkey": null,
+      "_contextid": null,
+      "_createdtimestamp": "2021-01-11T05:55:48.338173",
+      "_createddate": "2021-01-11T05:55:48.338173",
+      "_createdsource": "Migration Tool",
+      "_createdchannelid": null,
+      "_createdmessageid": null,
+      "_createdby": "createdby_placeholder",
+      "_recordstatus": 1,
+      "_expirydate": null,
+      "baseviewnamespaceid": "1ea2f183-7018-4118-aed3-d90ad6ff1548",
+      "baseviewnamespace": "epma",
+      "baseviewnamespacedescription": "to store baseview for epma"
+    }
+  ]
+}</Namespace><BaseviewManager>{
+  "listsettings.baseviewmanager": [
+    {
+      "_row_id": "03c025c6-f109-4b5c-8902-b210277bdd05",
+      "_sequenceid": 1922,
+      "_contextkey": null,
+      "_contextid": null,
+      "_createdtimestamp": "2022-05-30T05:13:55.713454",
+      "_createddate": "2022-05-30T06:13:55.713454",
+      "_createdsource": "Synapse Studio",
+      "_createdchannelid": null,
+      "_createdmessageid": null,
+      "_createdby": "Createdby_placeholder",
+      "_recordstatus": 1,
+      "_expirydate": null,
+      "_timezonename": null,
+      "_timezoneoffset": 0,
+      "baseview_id": "d30830a7-9ead-4f0a-8151-53949281758d",
+      "baseviewnamespaceid": "1ea2f183-7018-4118-aed3-d90ad6ff1548",
+      "baseviewnamespace": "epma",
+      "baseviewname": "medicationadministrationhistory",
+      "baseviewdescription": "",
+      "baseviewsqlstatement": "select * from entitystore.core_medicationadministration",
+      "ismaterialised": false
+    }
+  ]
+}</BaseviewManager><action>New</action></Baseview><Baseview id="19e621bd-f0f2-4e5b-a59e-fa1ff798a57c" name="ordersetprescription"><Namespace>{
+  "listsettings.baseviewnamespace": [
+    {
+      "_row_id": "954a1cf6-229d-4878-a1f4-035582bed6ab",
+      "_sequenceid": 112,
+      "_contextkey": null,
+      "_contextid": null,
+      "_createdtimestamp": "2021-01-11T05:55:48.338173",
+      "_createddate": "2021-01-11T05:55:48.338173",
+      "_createdsource": "Migration Tool",
+      "_createdchannelid": null,
+      "_createdmessageid": null,
+      "_createdby": "createdby_placeholder",
+      "_recordstatus": 1,
+      "_expirydate": null,
+      "baseviewnamespaceid": "1ea2f183-7018-4118-aed3-d90ad6ff1548",
+      "baseviewnamespace": "epma",
+      "baseviewnamespacedescription": "to store baseview for epma"
+    }
+  ]
+}</Namespace><BaseviewManager>{
+  "listsettings.baseviewmanager": [
+    {
+      "_row_id": "b4663aa8-cb42-4f2c-9f39-6ef5f880eca7",
+      "_sequenceid": 1923,
+      "_contextkey": null,
+      "_contextid": null,
+      "_createdtimestamp": "2022-05-30T06:49:27.573692",
+      "_createddate": "2022-05-30T07:49:27.573692",
+      "_createdsource": "Synapse Studio",
+      "_createdchannelid": null,
+      "_createdmessageid": null,
+      "_createdby": "Createdby_placeholder",
+      "_recordstatus": 1,
+      "_expirydate": null,
+      "_timezonename": null,
+      "_timezoneoffset": 0,
+      "baseview_id": "19e621bd-f0f2-4e5b-a59e-fa1ff798a57c",
+      "baseviewnamespaceid": "1ea2f183-7018-4118-aed3-d90ad6ff1548",
+      "baseviewnamespace": "epma",
+      "baseviewname": "ordersetprescription",
+      "baseviewdescription": "Get the list of ordersets and the corresponding prescriptions",
+      "baseviewsqlstatement": "SELECT\r\n\tepma_orderset_id as prescriptionorderset_id,\r\n\tprescriptionordersettype_id,\r\n\tordersetname,\r\n\tCASE\r\n\t\tWHEN defined_criteria = 'Age in years' \r\n\t\tTHEN defined_criteria || ' min. ' || inclusive_value || ' years (incl.) max. ' || exclusive_value || ' years (excl.)'\r\n\t\tWHEN defined_criteria = 'Age in months' \r\n\t\tTHEN defined_criteria || ' min. ' || inclusive_value || ' months (incl.) max. ' || exclusive_value || ' months (excl.)'\r\n\t\tWHEN defined_criteria = 'Weight' \r\n\t\tTHEN defined_criteria || ' min. ' || inclusive_value || ' kg (incl.) max. ' || exclusive_value || ' kg (excl.)'\r\n\t\tWHEN defined_criteria = 'Body Surface' \r\n\t\tTHEN defined_criteria || ' min. ' || inclusive_value || ' sq.m (incl.) max. ' || exclusive_value || ' sq.m (excl.)'\r\n\tELSE\r\n\t\tnull\r\n\tEND defined_criteria,\r\n\tperson_id,\r\n\towner,\r\n       defined_criteria  AS criteria ,inclusive_value ,exclusive_value ,groupsauthorizedtoview\r\nFROM \r\n\tentitystorematerialised.local_epma_orderset\r\nORDER BY\r\n       ordersetname;",
+      "ismaterialised": false
+    }
+  ]
+}</BaseviewManager><action>New</action></Baseview><Baseview id="e75ef508-6530-4c58-abe0-6faaa6e9f3fe" name="prescriptiondetail"><Namespace>{
+  "listsettings.baseviewnamespace": [
+    {
+      "_row_id": "954a1cf6-229d-4878-a1f4-035582bed6ab",
+      "_sequenceid": 112,
+      "_contextkey": null,
+      "_contextid": null,
+      "_createdtimestamp": "2021-01-11T05:55:48.338173",
+      "_createddate": "2021-01-11T05:55:48.338173",
+      "_createdsource": "Migration Tool",
+      "_createdchannelid": null,
+      "_createdmessageid": null,
+      "_createdby": "createdby_placeholder",
+      "_recordstatus": 1,
+      "_expirydate": null,
+      "baseviewnamespaceid": "1ea2f183-7018-4118-aed3-d90ad6ff1548",
+      "baseviewnamespace": "epma",
+      "baseviewnamespacedescription": "to store baseview for epma"
+    }
+  ]
+}</Namespace><BaseviewManager>{
+  "listsettings.baseviewmanager": [
+    {
+      "_row_id": "646b6b01-5d83-4ea4-8e62-38f945902bb5",
+      "_sequenceid": 1932,
+      "_contextkey": null,
+      "_contextid": null,
+      "_createdtimestamp": "2022-06-13T06:59:38.687718",
+      "_createddate": "2022-06-13T07:59:38.687718",
+      "_createdsource": "Synapse Studio",
+      "_createdchannelid": null,
+      "_createdmessageid": null,
+      "_createdby": "Createdby_placeholder",
+      "_recordstatus": 1,
+      "_expirydate": null,
+      "_timezonename": null,
+      "_timezoneoffset": 0,
+      "baseview_id": "e75ef508-6530-4c58-abe0-6faaa6e9f3fe",
+      "baseviewnamespaceid": "1ea2f183-7018-4118-aed3-d90ad6ff1548",
+      "baseviewnamespace": "epma",
+      "baseviewname": "prescriptiondetail",
+      "baseviewdescription": "to get the prescription detail",
+      "baseviewsqlstatement": "select prescription_id,  prescriptioncontext_id, indication, otherindications, \"comments\", heparin, heparinunit, prescriptionadditionalconditions_id, reminderdays, remindernotes, titration, titrationtype, targetinr, targetsaturation, oxygendevices_id, orderformtype, isinfusion, infusiontype_id, ismedicinalgas, prescriptionsource_id, hasbeenmodified, reasonforediting, lastmodifiedby, prescriptionstatus_id, epma_prescriptionevent_id, reasonforstopping, reasonforsuspending, allowsubstitution, substitutioncomments, person_id, encounter_id, createdon, createdby, lastmodifiedon, linkedinfusionid, titrationtargetmin, titrationtargetmax, titrationtargetunits, titrationtypecode, oxygenadditionalinfo, correlationid, dispensingfrom, ismodifiedrelease, isgastroresistant, moatoip, prescriptionsources, otherprescriptionsource, startdatetime, printingrequired, __posology,\r\n__medications,__routes from \r\n(\r\nselect\t\t\r\n       prescription_id,  prescriptioncontext_id, indication, otherindications, \"comments\", heparin, heparinunit, prescriptionadditionalconditions_id, reminderdays, remindernotes, titration, titrationtype, targetinr, targetsaturation, oxygendevices_id, orderformtype, isinfusion, infusiontype_id, ismedicinalgas, prescriptionsource_id, hasbeenmodified, reasonforediting, lastmodifiedby, prescriptionstatus_id, epma_prescriptionevent_id, reasonforstopping, reasonforsuspending, allowsubstitution, substitutioncomments, person_id, encounter_id, createdon, createdby, lastmodifiedon, linkedinfusionid, titrationtargetmin, titrationtargetmax, titrationtargetunits, titrationtypecode, oxygenadditionalinfo, correlationid, dispensingfrom, ismodifiedrelease, isgastroresistant, moatoip, prescriptionsources, otherprescriptionsource,startdatetime, printingrequired,\r\n         (\r\n            select\r\n              coalesce(array_to_json(array_agg(row_to_json(postop))), '[]') \r\n            from\r\n               (\r\n                  select\r\n                posology_id, prescription_id, prescriptionstartdate, prescriptionenddate, frequency, frequencysize, infusiontypeid, infusionrate, infusionduration, daysofweek, dosingdaysfrequency, dosingdaysfrequencysize, prescriptionduration, prescriptiodurationsize, repeatlastday, repeatprotocoltimes, doseperkg, dosepersa, antimicrobialstartdate, doctorsorder, prn, isadditionaladministration, person_id, encounter_id, TRIM(classification) as classification, dosetype, repeatlastdayuntil, totalinfusionvolume, correlationid, totalquantity, infusionrateunits, maxnumofdosesperday, titration, titrationtype, totalquantitytext, titrationtargetmin, titrationtargetmax, titrationtargetunits, titrationtypecode,iscurrent, \r\n                     (\r\n                     select\r\n              \t\t\t coalesce(array_to_json(array_agg(row_to_json(postop))), '[]') \r\n\t\t\t             from\r\n\t\t\t               (\r\n\t\t\t                  select\r\n\t\t\t                    dose_id, prescription_id, posology_id, dosestartdatetime, doseenddatatime, strengthneumerator, strengthdenominator, strengthneumeratorunit, strengthdenominatorunit, dosesize, doseunit, dosemeasure, descriptivedose, infusionrate, infusionduration, titration, titrateddoseconfirmedon, titrateddoseconfirmedby, lastmodifiedby, isadditionaladministration, person_id, encounter_id, dosetype, continuityid, isbolus, additionaladministrationcomment, correlationid, strengthneumeratorrangemax, strengthdenominatorrangemax, dosesizerangemax, dosestrength, dosestrengthunits , dosestrengthrangemax \r\n\t\t\t                  from\r\n\t\t\t                     entitystorematerialised.core_dose cd \r\n\t\t\t                  where\r\n\t\t\t                     cd.posology_id = cp2.posology_id \r\n\t\t\t               )\r\n\t\t\t               postop\r\n                     ) __dose\r\n                  from\r\n                     entitystorematerialised.core_posology cp2 \r\n                  where\r\n                     cp2.prescription_id = cp.prescription_id \r\n               )\r\n               postop\r\n         )\r\n         __posology,\r\n         (\r\n            select\r\n               coalesce(array_to_json(array_agg(row_to_json(rr))), '[]') \r\n            from\r\n               (\r\n                  select\r\n                     prescriptionroutes_id, routecode, route, routetype, isunlicensed, isdefault, prescription_id, medication_id, correlationid\r\n                  from\r\n                     entitystorematerialised.core_prescriptionroutes cp3 \r\n                  where\r\n                     cp3.prescription_id = cp.prescription_id \r\n               )\r\n               rr \r\n         )\r\n         __routes,\r\n         (\r\n            select\r\n               coalesce(array_to_json(array_agg(row_to_json(mm))), '[]') \r\n            from\r\n               (\r\n                  select\r\n                   medication_id,  prescription_id, \"name\", genericname, medicationtype, displayname, form, formcode, strengthneumerator, strengthdenominator,\r\n\t\t\t\t\t strengthneumeratorunit, strengthdenominatorunit, doseformunits, doseformsize, doseformunitofmeasure, bnf, defineddailydose, doseform, doseperweight,\r\n\t\t\t\t\t doseperweightunit, roundingfactor, actgroupcode, actgroupname, orderformtype, maxdoseperdayunit, maxdoseperday, maxdoseperweek, maxdoseperweekunit,\r\n\t\t\t\t\t titrationtype, producttype, isformulary, isblacktriangle, iscontrolled, iscritical, markedmodifier, modifiedreleasehrs, reviewreminderdays, isprimary,\r\n\t\t\t\t\t person_id, encounter_id, TRIM(classification) as classification, isclinicaltrial, isexpensive, isbloodproduct,isunlicenced, ishighalert, customgroup, correlationid, isantimicrobial, \r\n                      (\r\n\t\t\t            select\r\n\t\t\t               coalesce(array_to_json(array_agg(row_to_json(mmin))), '[]') \r\n\t\t\t            from\r\n\t\t\t               (\r\n\t\t\t                  select\r\n\t\t\t                       medicationingredients_id, medication_id, \"name\", displayname, strengthneumerator, strengthdenominator, strengthneumeratorunit, strengthdenominatorunit, isprimaryingredient, correlationid\r\n\t\t\t\t\t\t\t  from\r\n\t\t\t                     entitystorematerialised.core_medicationingredients cm2  \r\n\t\t\t                  where\r\n\t\t\t                     cm2.medication_id  = cm.medication_id \r\n\t\t\t               )\r\n\t\t\t               mmin\r\n\t\t\t         )\r\n\t\t\t         __ingredients,\r\n\t\t\t         (\r\n\t\t\t            select\r\n\t\t\t               coalesce(array_to_json(array_agg(row_to_json(cc))), '[]') \r\n\t\t\t            from\r\n\t\t\t               (\r\n\t\t\t                  select\r\n\t\t\t                       correlationid, medicationcodes_id,medication_id, code, terminology\r\n\t\t\t\t\t\t\t\tfrom\r\n\t\t\t                     \tentitystorematerialised.core_medicationcodes cm3  \r\n\t\t\t                  where\r\n\t\t\t                     \tcm3.medication_id  = cm.medication_id \r\n\t\t\t               )\r\n\t\t\t               cc\r\n\t\t\t         )\r\n\t\t\t         __codes\r\n                  from\r\n                     entitystorematerialised.core_medication cm  \r\n                  where\r\n                     cm.prescription_id = cp.prescription_id \r\n               )\r\n               mm \r\n         )\r\n         __medications\r\n      from\r\n         entitystorematerialised.core_prescription cp \r\n) t ",
+      "ismaterialised": false
+    }
+  ]
+}</BaseviewManager><action>New</action></Baseview></Baseviews><SLists /></Export>

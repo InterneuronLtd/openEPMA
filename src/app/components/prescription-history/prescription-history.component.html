@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,8 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <!--END LICENSE BLOCK--> 
-<!-- <div
-   *ngIf="appService.openPrescriptionHistory"
+<div
    class="modal fade"
    [config]="{backdrop: 'static',show: true,  keyboard: false}"
    bsModal
@@ -34,183 +33,46 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
       <div class="modal-content">
          <h3 class="popover-title popover-header">
-            Traceability
+            Administration History
             <div class="close close-history" (click)="hidePrescriptionHistory()"></div>
          </h3>
-         <div class="container pl-2 pr-2 epma-history-font" *ngIf="prescription.length>0">
-            <div class="row">
-               <div class="col-6">
-                  <div class="row epma-history-header-left">
-                     <div class="col-12 text-muted">Initial Prescription</div>
-                  </div>
-                  <div class="row">
-                     <div class="epma-history-image-section">
-                        <div class="layers-container therapy-type therapy"></div>
-                     </div>
-                     <div class="epma-history-data-section">
-                        <span *ngFor="let med of parseJSON(prescription[0].__medications)"><span class="epma-bold-text">{{med.name}} </span> </span>
-                        <br />
-
-                        <span class="epma-bule-label">DOSE</span>
-                        <span *ngIf="parseJSON(prescription[0].__posology).dosetype=='units'">
-                           <span *ngIf="parseJSON(prescription[0].__posology).frequency=='x' || parseJSON(prescription[0].__posology).frequency=='h'">
-                              <span class="bold" *ngIf="parseJSON(prescription[0].__posology).__dose.length>0">
-                                 {{parseJSON(prescription[0].__posology).__dose[0].dosesize}} {{parseJSON(prescription[0].__posology).__dose[0].doseunit}}
-                              </span>
-                           </span>
-                           <span
-                              *ngIf="parseJSON(prescription[0].__posology).frequency=='stat.' || parseJSON(prescription[0].__posology).frequency=='mor'  || parseJSON(prescription[0].__posology).frequency=='mid' || parseJSON(prescription[0].__posology).frequency=='eve'"
-                           >
-                              <span class="bold" *ngIf="parseJSON(prescription[0].__posology).__dose.length>0">
-                                 {{parseJSON(prescription[0].__posology).__dose[0].dosesize}} {{parseJSON(prescription[0].__posology).__dose[0].doseunit}}
-                              </span>
-                           </span>
-                           <span
-                              *ngIf="parseJSON(prescription[0].__posology).frequency=='variable' || parseJSON(prescription[0].__posology).frequency=='variable protocol' || parseJSON(prescription[0].__posology).frequency=='rate of infusion'"
-                           >
-                              <span class="bold">Dosing Variables</span>
-                           </span>
-                        </span>
-                        <span *ngIf="parseJSON(prescription[0].__posology).dosetype=='strength'">
-                           <span class="bold" *ngIf="parseJSON(prescription[0].__posology.__dose).length>0">
-                              {{parseJSON(prescription[0].__posology).__dose[0].strengthneumerator}}{{parseJSON(prescription[0].__posology).__dose[0].strengthneumeratorunit}} /
-                              {{parseJSON(prescription[0].__posology).__dose[0].strengthdenominator}}{{parseJSON(prescription[0].__posology).__dose[0].strengthdenominatorunit}}
-                           </span>
-                        </span>
-                        <span *ngIf="parseJSON(prescription[0].__posology).dosetype=='descriptive'">
-                           <span class="bold">{{parseJSON(prescription[0].__posology).__dose[0].descriptivedose}}</span>
-                        </span>
-
-                        <span
-                           class="dose-text"
-                           *ngIf="parseJSON(prescription[0].__posology).frequency=='mor' || parseJSON(prescription[0].__posology).frequency=='mid' || parseJSON(prescription[0].__posology).frequency=='eve' || parseJSON(prescription[0].__posology).frequency=='stat.'"
-                        >
-                           - {{parseJSON(prescription[0].__posology).frequency.toUpperCase()}}
-                        </span>
-                        <span class="dose-text" *ngIf="parseJSON(prescription[0].__posology).frequency=='x' || parseJSON(prescription[0].__posology).frequency=='h'">
-                           - {{parseJSON(prescription[0].__posology).frequencysize}}{{parseJSON(prescription[0].__posology).frequency.toUpperCase()}}
-                        </span>
-
-                        <span class="dose-text" *ngIf="prescription[0].__posology.daysofweek"> Every {{prescription[0].__posology.daysofweek}}</span>
-                        <span class="dose-text" *ngIf="prescription[0].__posology.dosingdaysfrequency"> Every {{prescription[0].__posology.dosingdaysfrequencysize}} {{prescription[0].__posology.dosingdaysfrequency}}</span>
-                        <span class="dose-text" *ngIf="getAdditionalcondition(prescription[0].prescriptionadditionalconditions_id)!='No additional criteria'">
-                           – {{getAdditionalcondition(prescription[0].prescriptionadditionalconditions_id)}}
-                        </span>
-                        <span class="dose-text" *ngIf="prescription[0].__routes && parseJSON(prescription[0].__routes).length>0"> <span> - {{route(prescription[0].__routes)}} </span></span>
-                        <br />
-                        <span *ngIf="prescription[0].__posology.prescriptionstartdate">
-                           <span class="epma-bule-label">FROM </span> <span class="dose-text">{{prescription[0].__posology.prescriptionstartdate | date : "dd-MMM-yyyy hh:mm"}} </span>
-                        </span>
-                        <span *ngIf="prescription[0].indication"><span class="epma-bule-label">INDICATION </span> <span class="dose-text">{{prescription[0].indication}} </span></span>
-                        <span *ngIf="prescription[0].comments"><span class="epma-bule-label">COMMENTS </span> <span class="dose-text">{{prescription[0].comments}} </span></span>
-                     </div>
-                  </div>
-               </div>
-               <div class="col-6" style="border-left: 1px solid darkgrey;">
-                  <div class="row epma-history-header-right">
-                     <div class="col-12 text-muted">Actual Prescription</div>
-                  </div>
-                  <div class="row">
-                     <div class="epma-history-image-section">
-                        <div class="layers-container therapy-type therapy"></div>
-                     </div>
-                     <div class="epma-history-data-section">
-                        <span *ngFor="let med of parseJSON(prescription[prescription.length-1].__medications)"><span class="epma-bold-text">{{med.name}} </span> </span>
-                        <br />
-                        <span>DOSE</span>
-                        <span *ngIf="parseJSON(prescription[prescription.length-1].__posology).dosetype=='units'">
-                           <span *ngIf="parseJSON(prescription[prescription.length-1].__posology).frequency=='x' || parseJSON(prescription[prescription.length-1].__posology).frequency=='h'">
-                              <span class="bold" *ngIf="parseJSON(prescription[prescription.length-1].__posology).__dose.length>0">
-                                 {{parseJSON(prescription[prescription.length-1].__posology).__dose[prescription.length-1].dosesize}} {{parseJSON(prescription[prescription.length-1].__posology).__dose[prescription.length-1].doseunit}}
-                              </span>
-                           </span>
-                           <span
-                              *ngIf="parseJSON(prescription[prescription.length-1].__posology).frequency=='stat.' || parseJSON(prescription[prescription.length-1].__posology).frequency=='mor'  || parseJSON(prescription[prescription.length-1].__posology).frequency=='mid' || parseJSON(prescription[prescription.length-1].__posology).frequency=='eve'"
-                           >
-                              <span class="bold" *ngIf="parseJSON(prescription[prescription.length-1].__posology).__dose.length>0">
-                                 {{parseJSON(prescription[prescription.length-1].__posology).__dose[prescription.length-1].dosesize}} {{parseJSON(prescription[prescription.length-1].__posology).__dose[prescription.length-1].doseunit}}
-                              </span>
-                           </span>
-                           <span
-                              *ngIf="parseJSON(prescription[prescription.length-1].__posology).frequency=='variable' || parseJSON(prescription[prescription.length-1].__posology).frequency=='variable protocol' || parseJSON(prescription[prescription.length-1].__posology).frequency=='rate of infusion'"
-                           >
-                              <span class="bold">Dosing Variables</span>
-                           </span>
-                        </span>
-                        <span *ngIf="parseJSON(prescription[prescription.length-1].__posology).dosetype=='strength'">
-                           <span class="bold" *ngIf="parseJSON(prescription[prescription.length-1].__posology.__dose).length>0">
-                              {{parseJSON(prescription[prescription.length-1].__posology).__dose[prescription.length-1].strengthneumerator}}{{parseJSON(prescription[prescription.length-1].__posology).__dose[prescription.length-1].strengthneumeratorunit}}
-                              /
-                              {{parseJSON(prescription[prescription.length-1].__posology).__dose[prescription.length-1].strengthdenominator}}{{parseJSON(prescription[prescription.length-1].__posology).__dose[prescription.length-1].strengthdenominatorunit}}
-                           </span>
-                        </span>
-                        <span *ngIf="parseJSON(prescription[prescription.length-1].__posology).dosetype=='descriptive'">
-                           <span class="bold">{{parseJSON(prescription[prescription.length-1].__posology).__dose[prescription.length-1].descriptivedose}}</span>
-                        </span>
-
-                        <span
-                           class="dose-text"
-                           *ngIf="parseJSON(prescription[prescription.length-1].__posology).frequency=='mor' || parseJSON(prescription[prescription.length-1].__posology).frequency=='mid' || parseJSON(prescription[prescription.length-1].__posology).frequency=='eve' || parseJSON(prescription[prescription.length-1].__posology).frequency=='stat.'"
-                        >
-                           - {{parseJSON(prescription[prescription.length-1].__posology).frequency.toUpperCase()}}
-                        </span>
-                        <span class="dose-text" *ngIf="parseJSON(prescription[prescription.length-1].__posology).frequency=='x' || parseJSON(prescription[prescription.length-1].__posology).frequency=='h'">
-                           - {{parseJSON(prescription[prescription.length-1].__posology).frequencysize}}{{parseJSON(prescription[prescription.length-1].__posology).frequency.toUpperCase()}}
-                        </span>
-
-                        <span class="dose-text" *ngIf="prescription[prescription.length-1].__posology.daysofweek"> Every {{prescription[prescription.length-1].__posology.daysofweek}}</span>
-                        <span class="dose-text" *ngIf="prescription[prescription.length-1].__posology.dosingdaysfrequency">
-                           Every {{prescription[prescription.length-1].__posology.dosingdaysfrequencysize}} {{prescription[prescription.length-1].__posology.dosingdaysfrequency}}
-                        </span>
-                        <span class="dose-text" *ngIf="getAdditionalcondition(prescription[prescription.length-1].prescriptionadditionalconditions_id)!='No additional criteria'">
-                           – {{getAdditionalcondition(prescription[prescription.length-1].prescriptionadditionalconditions_id)}}
-                        </span>
-                        <span class="dose-text" *ngIf="prescription[prescription.length-1].__routes && parseJSON(prescription[prescription.length-1].__routes).length>0">
-                           <span> - {{route(prescription[prescription.length-1].__routes)}} </span>
-                        </span>
-                        <br />
-                        <span *ngIf="prescription[prescription.length-1].__posology.prescriptionstartdate">
-                           <span class="epma-bule-label">FROM </span> <span class="dose-text">{{prescription[prescription.length-1].__posology.prescriptionstartdate | date : "dd-MMM-yyyy hh:mm"}} </span>
-                        </span>
-                        <span *ngIf="prescription[prescription.length-1].indication"><span class="epma-bule-label">INDICATION </span> <span class="dose-text">{{prescription[prescription.length-1].indication}} </span></span>
-                        <span *ngIf="prescription[prescription.length-1].comments"><span class="epma-bule-label">COMMENTS </span> <span class="dose-text">{{prescription[prescription.length-1].comments}} </span></span>
-                     </div>
-                  </div>
-               </div>
-            </div>
+         <div class="modal-body">
+            <div class="row" *ngIf="prescriptionHistory.length>0">
+               <div class="col">
+                   <table class="table">
+                       <thead>
+                            <th>DATE</th>
+                            <th>Time</th>
+                            <th>Dose</th>
+                            <th>Name</th>
+                       </thead>
+                       <tbody>
+                           <tr *ngFor="let p of prescriptionHistory">                               
+                               <td>{{p.administrationstartime | date : 'dd-MMM-yyyy'}}</td>
+                               <td>{{p.administrationstartime | date : 'HH:mm'}}</td>                                                      
+                               <td *ngIf="!p.isdifferentproductadministered && p.administreddosesize && !p.administredinfusionrate">{{p.administreddosesize}} {{p.administreddoseunit}}</td>
+                               <td *ngIf="!p.isdifferentproductadministered && p.administeredstrengthneumerator  && !p.administredinfusionrate">{{p.administeredstrengthneumerator}} {{p.administeredstrengthneumeratorunits}}/{{p.administeredstrengthdenominator}} {{p.administeredstrengthdenominatorunits}}</td>
+                               <td *ngIf="p.isdifferentproductadministered && p.administreddoseunit && !p.administredinfusionrate" [innerHTML]="p.administreddoseunit + '</br>' + p.administeredstrengthneumeratorunits"></td>
  
-            <div class="row" *ngFor="let pres of prescription">
-               <div class="col-12">
-                  <div class="row epma-history-date-row">
-                     <div class="text-muted">{{pres.createdon | date : "dd.MM.yyyy"}}</div>
-                  </div>
-                  <div class="row">
-                     <div class="epma-history-time-row text-muted">{{pres.createdon | date : "HH:mm"}}</div>
-                     <div class="epma-history-time-data-row"><span class="epma-bold-text">{{getPrescriptionStatus(pres.prescriptionstatus_id)}}</span> - <span class="text-muted">{{pres.createdby}}</span></div>
-                  </div>
-                  <div class="row" *ngIf="getPrescriptionStatus(pres.prescriptionstatus_id)=='modified'">
-                     <div class="epma-history-time-row"></div>
-                     <div class="epma-history-time-data-row">
-                        <div class="row">
-                           <div class="col-4">DOSE</div>
-                           <div class="col-8">Dosing Variables</div>
-                        </div>
-                        <div class="row">
-                           <div class="col-4">DOSE</div>
-                           <div class="col-8">Dosing Variables</div>
-                        </div>
-                        <div class="row">
-                           <div class="col-4">MODIFICATION COMES INTO FORCE</div>
-                           <div class="col-8">Dosing Variables</div>
-                        </div>
-                     </div>
-                  </div>
+
+                               <td *ngIf="p.administereddescriptivedose">{{p.administereddescriptivedose}}</td>
+                               <td *ngIf="p.administredinfusionrate">{{p.administredinfusionrate}} ml/h</td>
+                               <td>{{p.administredby}}</td>
+                           </tr>
+                       </tbody>
+                   </table>
                </div>
-            </div>
+               
+           </div>
+           <div class="row border-top"*ngIf="prescriptionHistory.length==0">
+               <div class="col" style="text-align: center;">
+                   <span>No Data</span>
+               </div>
+           </div>
          </div>
          <div class="modal-footer">
             <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal" (click)="hidePrescriptionHistory()">Cancel</button>
          </div>
       </div>
    </div>
-</div> -->
+</div>

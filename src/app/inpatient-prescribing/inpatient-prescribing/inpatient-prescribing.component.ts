@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -32,6 +32,8 @@ import { v4 as uuid } from 'uuid';
 import { ComponentModuleData } from 'src/app/directives/warnings-loader.directive';
 import { WarningContext, WarningContexts, WarningService } from 'src/app/models/WarningServiceModal';
 import moment from 'moment';
+import { AudienceType, NotificationClientContext, publishSenderNotificationWithParams, subscribeToSenderNotification } from 'src/app/notification/lib/notification.observable.util';
+import { receiveMessageOnPort } from 'worker_threads';
 
 
 @Component({
@@ -102,6 +104,7 @@ export class InpatientPrescribingComponent implements OnInit, OnDestroy, AfterVi
 
   ngOnInit(): void {
     this.canSelectNewMedication = !this.cloningExternally;
+    // this.dr.RefreshIfDataVersionChanged(()=>{});
   }
 
   onmedicationselected(e) {
@@ -128,7 +131,28 @@ export class InpatientPrescribingComponent implements OnInit, OnDestroy, AfterVi
     this.editingFromBasket = false;
     this.isEditingfromOrderset = false;
     this.GetwarningsForBasket();
+    this.UpdateCurrentBasketClone();
+
+    this.publishNotificationForDraftPrescriptionEvent(prescription);
   }
+
+  publishNotificationForDraftPrescriptionEvent(prescription: Prescription) {
+    if (!prescription || !this.appService.appConfig.AppSettings.can_send_notification) return;
+
+    let primaryDMDCode = prescription.__medications?.find(med => med.isprimary)?.__codes?.find(cd => cd?.terminology?.toLowerCase() === 'formulary');
+
+    const { prescription_id } = prescription;
+    let contextsForNotification: NotificationClientContext[] = [
+      { name: 'prescriptionid', value: prescription_id }
+    ];
+
+    if (primaryDMDCode)
+      contextsForNotification.push({ name: 'dmdcode', value: primaryDMDCode.code });
+
+    publishSenderNotificationWithParams('MED_PRESCRIBE_DRAFT', contextsForNotification,
+      null, AudienceType.ALL_SESSIONS_EXCEPT_CURRENT_SESSION);
+  }
+
   GetwarningsForBasket() {
     if (this.ws) {
       if (this.PrescriptionBasket.length == 0) {
@@ -138,7 +162,7 @@ export class InpatientPrescribingComponent implements OnInit, OnDestroy, AfterVi
         if (this.appService.isTCI && !this.appService.encounter.sortdate) {
           let minposologystartdateexisting;
           let minposologystartdatenew = moment.min([].concat(...this.PrescriptionBasket.map(p => p.__posology)).map(pos => moment((<Posology>pos).prescriptionstartdate)));
-          let existingposologydates = [].concat(...this.appService.GetCurrentPrescriptionsForWarnings().map(p => p.__posology.filter(pp => pp.prescriptionstartdate))).map(pos => (<Posology>pos).prescriptionstartdate);
+          let existingposologydates = [].concat(...this.appService.GetCurrentPrescriptionsForWarnings().map(p => p.__posology.filter(pp => pp.prescriptionstartdate))).map(pos => moment((<Posology>pos).prescriptionstartdate));
           if (existingposologydates.length != 0) {
             minposologystartdateexisting = moment.min(existingposologydates);
           }
@@ -162,6 +186,22 @@ export class InpatientPrescribingComponent implements OnInit, OnDestroy, AfterVi
       clone.push(this.ClonePrescription(p));
     });
     return clone;
+  }
+
+  SaveMedicationUsageStats() {
+    let t = [];
+    this.PrescriptionBasket.forEach(p => {
+      let primarymed = p.__medications.find(x => x.isprimary);
+      if (primarymed && primarymed.producttype != 'custom') {
+        t.push({
+          "name": primarymed.name,
+          "code": primarymed.__codes.find(c => c.terminology == "formulary").code,
+          "source": "epma"
+        });
+      }
+    });
+    if (t.length != 0)
+      this.apiRequest.postRequest(this.appService.appConfig.uris.terminologybaseuri + "/Formulary/saveusagestat", JSON.stringify(t));
   }
 
   SaveAllPrescriptions(isEdit = false) {
@@ -194,8 +234,14 @@ export class InpatientPrescribingComponent implements OnInit, OnDestroy, AfterVi
                   }
                 }
               });
+
+              this.publishNotificationForMedPrescriptionEvent();
+
+              //save usage stats
+              this.SaveMedicationUsageStats();
             }
             this.dr.getAllPrescription(() => {
+              this.appService.Prescription.forEach(p => this.appService.UpdatePrescriptionCompletedStatus(p));
               this.dr.getPharmacyReviewStatus(() => {
                 this.dr.getReminders(() => {
                   this.subjects.movePatientDrugs.next(this.PrescriptionBasket);
@@ -208,6 +254,9 @@ export class InpatientPrescribingComponent implements OnInit, OnDestroy, AfterVi
                       //   this.subjects.showWarnings.next();
                       // }
                       this.subjects.showWarnings.next();
+                      if (isEdit) {
+                        this.subjects.refreshDrugChart.next();
+                      }
                     })
                   }
                   this.PrescriptionBasket = [];
@@ -223,6 +272,19 @@ export class InpatientPrescribingComponent implements OnInit, OnDestroy, AfterVi
       ));
     }
   }
+  publishNotificationForMedPrescriptionEvent() {
+    if (!this.appService.appConfig.AppSettings.can_send_notification) return;
+
+    const prescriptionsNotificationClientContext: NotificationClientContext[] = [];
+
+    this.PrescriptionBasket?.forEach(pres => {
+      const { prescription_id, encounter_id } = pres;
+      prescriptionsNotificationClientContext.push({ name: 'prescription_id', value: prescription_id });
+      prescriptionsNotificationClientContext.push({ name: 'encounter_id', value: encounter_id });
+    });
+    if (prescriptionsNotificationClientContext)
+      publishSenderNotificationWithParams('MED_PRESCRIBED', prescriptionsNotificationClientContext, null, AudienceType.ALL_SESSIONS_EXCEPT_CURRENT_SESSION);
+  }
 
 
   BasketAction(e) {
@@ -232,6 +294,7 @@ export class InpatientPrescribingComponent implements OnInit, OnDestroy, AfterVi
       if ((<string>e.action).toLowerCase() == "delete") {
         this.PrescriptionBasket.splice(index, 1);
         this.GetwarningsForBasket();
+        this.UpdateCurrentBasketClone();
       }
       else if ((<string>e.action).toLowerCase() == "orderset") {
         var op = this.ClonePrescription(this.PrescriptionBasket[index], true);
@@ -246,9 +309,15 @@ export class InpatientPrescribingComponent implements OnInit, OnDestroy, AfterVi
         this.clonePrescription = true;
         this.editingFromBasket = true;
         this.openInpatientPrescribingModal();
-
       }
     }
+  }
+
+  UpdateCurrentBasketClone() {
+    this.appService.currentBasket = [];
+    this.PrescriptionBasket.forEach(p => {
+      this.appService.currentBasket.push(this.ClonePrescription(p, true));
+    });
   }
 
   OpenOrderSetModal() {
@@ -259,7 +328,8 @@ export class InpatientPrescribingComponent implements OnInit, OnDestroy, AfterVi
   CloseOrderSetModal() {
     this.showaddtoorderset = false;
     this.closeordersetbtn.nativeElement.click();
-    this.reloadorderset.nativeElement.click();
+    if (this.canSelectNewMedication)
+      this.reloadorderset.nativeElement.click();
   }
 
   OnOrderSetCancelled() {
@@ -369,6 +439,9 @@ export class InpatientPrescribingComponent implements OnInit, OnDestroy, AfterVi
         p1.__customWarning.push(<any>FormSettings.CleanAndCloneObject(cw));
       });
 
+    if (p.__GpConnect) {
+      p1.__GpConnect = Object.assign(p.__GpConnect);
+    }
     this.appService.logToConsole(p);
     this.appService.logToConsole(p1);
 
@@ -434,17 +507,28 @@ export class InpatientPrescribingComponent implements OnInit, OnDestroy, AfterVi
       for (let pres of event) {
         this.PrescriptionBasket.push(this.ClonePrescription(pres));
         this.GetwarningsForBasket();
+        this.UpdateCurrentBasketClone();
       }
     });
     this.SortList();
   }
 
   EditOrderSetPrescription(e: Prescription) {
-    this.editingPrescription = this.ClonePrescription(e);
-    this.clonePrescription = true;
-    this.editingFromBasket = false;
-    this.isEditingfromOrderset = true;
-    this.openInpatientPrescribingModal();
+    if (e.__GpConnect && e.__medications[0].producttype.toLowerCase() == "custom") {
+      let config = this.appService.appConfig.AppSettings;
+      let msg = config.prescribeUncodedMedWarning;
+      if (!msg) {
+        msg = "This is an uncoded medication. Please use the search box to find and prescribe this medication."
+      }
+      alert(msg);
+    }
+    else {
+      this.editingPrescription = this.ClonePrescription(e);
+      this.clonePrescription = true;
+      this.editingFromBasket = false;
+      this.isEditingfromOrderset = true;
+      this.openInpatientPrescribingModal();
+    }
   }
 
   clearBasket(): void {

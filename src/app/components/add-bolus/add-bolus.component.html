@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -69,7 +69,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                             <div class="col-8">
                                  <span class="float-right">
                                     <input [minDate]="currDate" onkeydown="event.preventDefault()" type="text"   [(ngModel)]="expirydate"  class="epma-adminstration-form-control" style="width:120px"  bsDatepicker
-                                    [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'bg-light' }" />
+                                    [bsConfig]="{showWeekNumbers:false, dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'alert-info' }" />
                                  </span>   
                             </div>
                         </div>
@@ -101,7 +101,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                             <div class="col-5">
                                 <span class="float-right" style="display: flex;">
                                     <input onkeydown="event.preventDefault()" type="text" [minDate]="minDate" [maxDate]="maxDate"  [(ngModel)]="stardate"  placeholder="Start Date" class="epma-adminstration-form-control" style="width:120px"  bsDatepicker
-                                   [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true, customTodayClass:'bg-light' }" />                                 
+                                   [bsConfig]="{  showWeekNumbers:false, dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true, customTodayClass:'alert-info' }" />                                 
                                    <input type="text" name="startime" [(ngModel)]="startime" style="width:80px;" class="epma-adminstration-form-control" placeholder="HH:mm" [appTimepicker]="timepicker1">
                                     <app-time-picker #timepicker1 (onTimeSelected)="onTimeSelected($event)"></app-time-picker>
                                 </span>

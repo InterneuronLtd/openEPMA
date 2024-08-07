@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -86,29 +86,60 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
         <div class="row">
             <div class="col"><span class="field-heading">DEFINED CRITERIA</span></div>
         </div>
-        <div class="row form-group">
+
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" id="inlineCheckbox3" (click)="onDefinedCriteriaChange($event)" value="Age in years" [(ngModel)]="therapyOrderSet.agedefinedCriteria"  name="age">
+            <label class="form-check-label" for="inlineCheckbox3">Age in years</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input"  (click)="onDefinedCriteriaChange($event)" type="radio" id="inlineCheckbox4" value="Age in months" [(ngModel)]="therapyOrderSet.agedefinedCriteria"   name="age">
+            <label class="form-check-label" for="inlineCheckbox4">Age in months</label>
+          </div>
+        <!-- //////// -->
+        <!-- <div class="row form-group">
             <div class="col">
                 <select class="form-control form-control-sm" name="definedcriteria"
-                    (change)="onDefinedCriteriaChange($event)" [(ngModel)]="therapyOrderSet.definedCriteria">
+                    (change)="onDefinedCriteriaChange($event)" [(ngModel)]="therapyOrderSet.agedefinedCriteria">
                     <option value="" selected>Please Select</option>
                     <option value="Age in years">Age in years</option>
                     <option value="Age in months">Age in months</option>
-                    <option value="Weight">Weight</option>
-                    <option value="Body Surface">Body Surface</option>
+                   
                 </select>
             </div>
-        </div>
+        </div> -->
         <div class="row form-group">
             <div class="col form-row">
-                <input type="number" class="form-control form-control-sm" [(ngModel)]="therapyOrderSet.inclusiveValue"
+                <input type="number" class="form-control form-control-sm" [(ngModel)]="therapyOrderSet.ageinclusiveValue" [disabled]="!therapyOrderSet.agedefinedCriteria"  [ngClass]="therapyOrderSet.ageinclusiveValue > therapyOrderSet.ageexclusiveValue ? 'error' : ''"
                     name="inclusiveValue" style="width: 4rem;">
                 &nbsp;&nbsp;
                 <label class="field-heading">{{inclusiveLabelText}}</label>
                 &nbsp;&nbsp;&nbsp;&nbsp;
-                <input type="number" class="form-control form-control-sm" [(ngModel)]="therapyOrderSet.exclusiveValue"
+                <input type="number" class="form-control form-control-sm" [(ngModel)]="therapyOrderSet.ageexclusiveValue" [disabled]="!therapyOrderSet.agedefinedCriteria"  [ngClass]="therapyOrderSet.ageinclusiveValue > therapyOrderSet.ageexclusiveValue ? 'error' : ''"
                     name="exclusiveValue" style="width: 4rem;">
                 &nbsp;&nbsp;
                 <label class="field-heading">{{exclusiveLabelText}}</label>
+            </div>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" id="inlineCheckbox1" (click)="onDefinedCriteriaChange($event)" value="Weight" [(ngModel)]="therapyOrderSet.weightdefinedCriteria"  name="weight">
+            <label class="form-check-label" for="inlineCheckbox1">Weight</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input"  (click)="onDefinedCriteriaChange($event)" type="radio" id="inlineCheckbox2" value="Body Surface" [(ngModel)]="therapyOrderSet.weightdefinedCriteria"   name="weight">
+            <label class="form-check-label" for="inlineCheckbox2">Body Surface</label>
+          </div>
+          <!-- //----------------------------------------------------- -->
+          <div class="row form-group">
+            <div class="col form-row">
+                <input type="number" class="form-control form-control-sm" [(ngModel)]="therapyOrderSet.weightinclusiveValue" [disabled]="!therapyOrderSet.weightdefinedCriteria" [ngClass]="therapyOrderSet.weightinclusiveValue > therapyOrderSet.weightexclusiveValue ? 'error' : ''"
+                    name="weightinclusiveValue" style="width: 4rem;">
+                &nbsp;&nbsp;
+                <label class="field-heading">{{weightInclusiveLabelText}}</label>
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                <input type="number" class="form-control form-control-sm"  [(ngModel)]="therapyOrderSet.weightexclusiveValue" [disabled]="!therapyOrderSet.weightdefinedCriteria"  [ngClass]="therapyOrderSet.weightinclusiveValue > therapyOrderSet.weightexclusiveValue ? 'error' : ''"
+                    name="weightexclusiveValue" style="width: 4rem;">
+                &nbsp;&nbsp;
+                <label class="field-heading">{{weightexclusiveLabelText}}</label>
             </div>
         </div>
         <div class="row form-group" [hidden] = "!appService.AuthoriseAction('epma_create_org_orderset')">

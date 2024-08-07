@@ -1,0 +1,69 @@
+Release 1.4
+
+----------Baseview-----------
+medicationadministrationhistory
+administeredmedhistory
+epma_medicationsupplyhistory
+epma_prescriptionmeta
+epma_outpatientnoteshistory
+epma_perscriptiondetail
+empa_administrationwitnesshistory
+epma_medicationsupplyhistory
+administrationwitnesshistory
+infusioneventshistory
+doseeventshistory
+
+
+------------Entity-----------
+administermedication
+administermedicationcodes
+administermedicationingredients
+medicationadministration
+epma_opnotes
+prescription
+posology -- 21st june - new column - prnmaxdose
+local_epma_prescriptionreviewstatus
+epma_administrationwitness
+epma_personawayperiod
+ 
+epma_prescriptionmedicaitonsupply
+infusionevents
+doseevents
+
+
+--------------sql queries --------------------
+
+update entitystorematerialised.local_epma_prescriptionreviewstatus 
+set modifieddatetime = cast(to_char(modifiedon , 'YYYY-MM-DD HH24:MI:SS.MS') as timestamp)
+
+update entitystore.local_epma_prescriptionreviewstatus 
+set modifieddatetime = cast(to_char(modifiedon , 'YYYY-MM-DD HH24:MI:SS.MS') as timestamp)
+
+-- Need to back fill data for medicationadministration,infusionevents,doseevents
+createdon
+modifiedon
+
+update entitystorematerialised.core_medicationadministration  
+set modifiedon  = "_createddate"  
+
+update entitystore.core_medicationadministration  
+set createdon  = "_createddate"   
+
+update entitystorematerialised.core_infusionevents  
+set modifiedon  = "_createddate"  
+
+update entitystore.core_infusionevents  
+set createdon  = "_createddate"   
+
+
+update entitystorematerialised.core_doseevents  
+set modifiedon  = "_createddate"  
+
+update entitystore.core_doseevents  
+set createdon  = "_createddate"   
+
+
+-----------------27th june---------
+Baseviews
+---------------------------------------
+prescriptiondetail

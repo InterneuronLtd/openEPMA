@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-16"?><Export xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" format="Json"><Entities /><Baseviews><Baseview id="5dd96072-042c-4a54-b7c8-5af4cdb8f7c8" name="encounters"><Namespace>{
+  "listsettings.baseviewnamespace": [
+    {
+      "_row_id": "954a1cf6-229d-4878-a1f4-035582bed6ab",
+      "_sequenceid": 112,
+      "_contextkey": null,
+      "_contextid": null,
+      "_createdtimestamp": "2021-01-11T05:55:48.338173",
+      "_createddate": "2021-01-11T05:55:48.338173",
+      "_createdsource": "Migration Tool",
+      "_createdchannelid": null,
+      "_createdmessageid": null,
+      "_createdby": "createdby_placeholder",
+      "_recordstatus": 1,
+      "_expirydate": null,
+      "baseviewnamespaceid": "1ea2f183-7018-4118-aed3-d90ad6ff1548",
+      "baseviewnamespace": "epma",
+      "baseviewnamespacedescription": "to store baseview for epma"
+    }
+  ]
+}</Namespace><BaseviewManager>{
+  "listsettings.baseviewmanager": [
+    {
+      "_row_id": "9ecf4969-f4b5-4082-aa2c-95eb0bfc7f12",
+      "_sequenceid": 2017,
+      "_contextkey": null,
+      "_contextid": null,
+      "_createdtimestamp": "2022-07-12T17:35:57.997026",
+      "_createddate": "2022-07-12T18:35:57.997026",
+      "_createdsource": "Synapse Studio",
+      "_createdchannelid": null,
+      "_createdmessageid": null,
+      "_createdby": "Wayne Gibson",
+      "_recordstatus": 1,
+      "_expirydate": null,
+      "_timezonename": null,
+      "_timezoneoffset": 0,
+      "baseview_id": "5dd96072-042c-4a54-b7c8-5af4cdb8f7c8",
+      "baseviewnamespaceid": "1ea2f183-7018-4118-aed3-d90ad6ff1548",
+      "baseviewnamespace": "epma",
+      "baseviewname": "encounters",
+      "baseviewdescription": "returns all encounters for a patient",
+      "baseviewsqlstatement": "select\r\nepisodestatuscode,\r\n\r\nCASE\r\n\tWHEN patientclasscode = 'I' THEN 'INPATIENT ADMISSION - ' || to_char(admitdatetime AT TIME ZONE 'UTC' AT TIME ZONE 'Europe/London', 'dd/mm/yyyy') || ' (' || COALESCE(assignedpatientlocationpointofcare, 'Location not specified') || ' - ' || COALESCE(consultingdoctortext,'Consultant not specified') || ')'\r\n\tWHEN patientclasscode = 'T' THEN 'TCI - ' || to_char(intendedadmissiondate AT TIME ZONE 'UTC' AT TIME ZONE 'Europe/London', 'dd/mm/yyyy') || ' (' || COALESCE(specialtytext, 'Specialty not specified') || ' - ' || COALESCE(consultingdoctortext, 'Consultant not specified') || ')'\r\n\tWHEN patientclasscode = 'O' THEN 'OUTPATIENT ADMISSION - ' || to_char(admitdatetime AT TIME ZONE 'UTC' AT TIME ZONE 'Europe/London', 'dd/mm/yyyy') || ' (' || COALESCE(assignedpatientlocationpointofcare, 'Location not specified') || ' - ' || COALESCE(consultingdoctortext,'Consultant not specified') || ')'\r\n\tWHEN patientclasscode = 'W' THEN 'WAITING LIST ' || '(' || COALESCE(hospitalservicetext , 'Specialty not specified') || ' - ' || COALESCE(consultingdoctortext, 'Consultant not specified') || ')'\r\n\tEND AS summary,\r\nperson_id, \r\nce.encounter_id, \r\nassignedpatientlocationpointofcare, \r\nadmitdatetime, \r\ndischargedatetime,\r\nconsultingdoctorid, \r\nconsultingdoctortext, \r\nepisodestatustext, \r\npatientclasscode, \r\npatientclasstext,\r\nee.tcidate,\r\nee.intendedadmissiondate,\r\nee.intendedward,\r\nee.specialtytext,\r\nce.hospitalservicetext ,\r\nce.hospitalservicecode,\r\nee.originaldateonlist, \r\ncase when patientclasscode = 'T' then ee.intendedadmissiondate \r\nwhen patientclasscode = 'I' then ce.admitdatetime \r\nwhen patientclasscode = 'W' then ee.originaldateonlist  \r\nwhen patientclasscode = 'O' then ce.admitdatetime \r\nend as sortdate,\r\nCOALESCE(assignedpatientlocationlocationtypetext,'') || ' (' || COALESCE(consultingdoctortext,'') || ' - ' || COALESCE(assignedpatientlocationpointofcare,'') || ')' as defaultopclinicname\r\nFROM entitystorematerialised.core_encounter ce\r\nLEFT JOIN entitystorematerialised.extended_encounter ee\r\nON ce.encounter_id = ee.encounter_id\r\n\r\nWHERE patientclasscode IN ('I','T','W','O')\r\n\r\nAND CASE\r\n\t\tWHEN patientclasscode = 'W' AND UPPER(episodestatuscode) LIKE '%CANCEL%' THEN 0\r\n\t\tELSE 1\r\nEND = 1\r\n\r\nORDER BY \r\n\tCASE\r\n\t\tWHEN patientclasscode = 'I' THEN admitdatetime\r\n\t\tWHEN patientclasscode = 'T' THEN intendedadmissiondate\r\n\t\tWHEN patientclasscode = 'W' THEN originaldateonlist\r\n\t\tWHEN patientclasscode = 'O' THEN admitdatetime\r\n\tEND desc\r\n\t\r\n\t",
+      "ismaterialised": false
+    }
+  ]
+}</BaseviewManager><action>New</action></Baseview></Baseviews><SLists /></Export>

@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -123,7 +123,7 @@ export class PharmacyReviewComponent implements OnInit, OnDestroy {
       this.showActionButton = true;
     }
     if (Prescription.prescriptioncontext_id == this.appService.MetaPrescriptioncontext.find(x => x.context == PrescriptionContext.Inpatient).prescriptioncontext_id
-      && Prescription.infusiontype_id != InfusionType.ci && Prescription.infusiontype_id != InfusionType.rate) {
+      && Prescription.infusiontype_id != InfusionType.ci && Prescription.infusiontype_id != InfusionType.pca  && Prescription.infusiontype_id != InfusionType.rate) {
       this.showEditPrescription = true;
     }
     else {
@@ -290,6 +290,7 @@ export class PharmacyReviewComponent implements OnInit, OnDestroy {
 
               let statusid = this.appService.prescriptionEvent.find(x => x.epma_prescriptionevent_id == r.epma_prescriptionevent_id)
               r.reviewcomments = statusid.comments;
+              r.modifieddatetime = statusid.datetime;
               r.__prescriptionEventStatus =
                 this.appService.MetaPrescriptionstatus.find(
                   (x) => x.prescriptionstatus_id == statusid.prescriptionstatusid
@@ -370,8 +371,9 @@ export class PharmacyReviewComponent implements OnInit, OnDestroy {
                 (x) => r.newcorrelationid == x.correlationid
               ).__medications[0].name;
             }
-
-
+            if(!r.modifieddatetime){
+            r.modifieddatetime = r.modifiedon;
+            }
             this.prescriptionreviewstatus.push(<Prescriptionreviewstatus>r);
           }
           this.currentreviewstatus = "d219dd6d-aafc-4aa3-bad0-5ffcc87d0134";
@@ -386,7 +388,16 @@ export class PharmacyReviewComponent implements OnInit, OnDestroy {
         })
     );
   }
-
+prescriptionstatuscheck(reviewid){
+  if(reviewid){
+   
+  let prescriptionStatus = this.appService.MetaPrescriptionstatus.find(x => x.prescriptionstatus_id == this.appService.prescriptionEvent.find(x => x.epma_prescriptionevent_id ==reviewid).prescriptionstatusid).status;
+  if (prescriptionStatus == "suspended" || prescriptionStatus == "stopped" || prescriptionStatus == "cancelled" || prescriptionStatus == "restarted") {
+    return "Prescription "+prescriptionStatus
+  }
+ }
+  return "";
+}
   getDiscription(id: any) {
     return this.appService.MetaReviewstatus.find((x) => x.reviewstatus_id == id)
       .description;
@@ -546,6 +557,11 @@ export class PharmacyReviewComponent implements OnInit, OnDestroy {
   }
 
   currentreviewstatuschange() {
+    if (this.presCreatedMessage == "MOA Added"  &&
+    this.pharmacyComments.trim() == '') {
+      this.errormesage = 'Please Enter comments';
+      return;
+    }
     if (
       this.currentreviewstatus == '8fb36f43-4b5f-487b-aa79-ed95d34ea70e' &&
       this.pharmacyComments.trim() == ''
@@ -611,9 +627,9 @@ export class PharmacyReviewComponent implements OnInit, OnDestroy {
         upsertManager.destroy();
 
         if (this.appService.IsDataVersionStaleError(error)) {
-          this.subjects.ShowRefreshPageMessage.next(error);
+          this.appService.RefreshPageWithStaleError(error);
         }
-      }
+      }, false
     );
 
   }

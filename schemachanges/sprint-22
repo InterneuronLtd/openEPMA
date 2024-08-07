@@ -1,0 +1,11 @@
+Release 1.4.1 sprint 22
+
+----------Entity--------------
+epma_supplyrequest
+medicationadministration
+personwarningupdate (new column)
+local_terminus_moduledataversion (new column)
+
+--------Baseview-------------
+epma_medicationadministrationhistory
+epma_encounters

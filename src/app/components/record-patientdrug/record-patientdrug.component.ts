@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -52,9 +52,10 @@ export class RecordPatientdrugComponent implements OnInit {
   medicationCode: string;
   therapyType: string;
   medicationFullName: string;
-  //startime: string = moment().format('HH:mm');
+  startime: string = moment().format('HH:mm');
   startdate: string = moment().format('DD-MM-YYYY HH:mm');
-  @Input('event') event: any
+  @Input('event') event: any;
+  prescription: any;
 
   constructor(
     private apiRequest: ApirequestService,
@@ -83,6 +84,7 @@ export class RecordPatientdrugComponent implements OnInit {
     this.appService.checkMedicineTypeForMoa(preEvent.prescription) ? this.typeOfMedicine = 'Continued Medicine' : this.typeOfMedicine = 'New Medicine';
     this.doseType = this.appService.GetCurrentPosology(preEvent.prescription).dosetype;
     this.prescriptionId = preEvent.prescription.prescription_id;
+    this.prescription = preEvent.prescription;
     this.medicationCode = preEvent.prescription.__medications[0].__codes.find(x => x.terminology == "formulary").code;
     if (preEvent.prescription.isinfusion || preEvent.prescription.ismedicinalgas) {
       this.isInfusion = true;
@@ -113,7 +115,6 @@ export class RecordPatientdrugComponent implements OnInit {
     } else {
       this.therapyType = 'therapy';
     }
-    this.getComplianceAidList();
     this.getLatestDrugRecord();
   }
 
@@ -121,7 +122,7 @@ export class RecordPatientdrugComponent implements OnInit {
     this.validationMessage = '';
     this.isSaving = false;
     this.informationMessage = '';
-    if (!this.isInfusion && this.productType != 'VTM' && this.frequency != 'protocol' && this.doseType != 'descriptive') {
+    if (!this.prescription.titration && !this.isInfusion && this.productType != 'VTM' && this.frequency != 'protocol' && this.doseType != 'descriptive') {
       if (this.patientDrugs.noofdays==null || this.patientDrugs.noofdays<0) {
         this.validationMessage = 'Invalid days.';
         return;
@@ -137,17 +138,23 @@ export class RecordPatientdrugComponent implements OnInit {
         return;
       }
     }
-    if (typeof this.patientDrugs.resupplyfrom === 'undefined' || this.patientDrugs.resupplyfrom == null) {
-      this.validationMessage = 'Please select the resupply from.';
-    }
+    // if (typeof this.patientDrugs.resupplyfrom === 'undefined' || this.patientDrugs.resupplyfrom == null) {
+    //   this.validationMessage = 'Please select the resupply from.';
+    // }
     if (this.validationMessage == '') {
       this.isSaving = true;
       if (this.patientDrugs.epma_prescriptionmedicaitonsupply_id == "") {
         this.patientDrugs.epma_prescriptionmedicaitonsupply_id = uuid();
+        this.patientDrugs.lastmodifiedby = this.appService.loggedInUserName;
+        this.patientDrugs.createdby = this.appService.loggedInUserName;
+        this.patientDrugs.createdon = this.appService.getDateTimeinISOFormat(moment().toDate());
+        this.patientDrugs.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
       } else {
         this.patientDrugs.lastmodifiedby = this.appService.loggedInUserName;
+        this.patientDrugs.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
       }      
-      this.patientDrugs.quantityentrydate = this.appService.getDateTimeinISOFormat(moment().toDate());
+      let entrydate =  moment(this.startdate, "DD-MM-YYYY").format("YYYY-MM-DD") + " " + this.startime;
+      this.patientDrugs.quantityentrydate = this.appService.getDateTimeinISOFormat(moment(entrydate,'YYYY-MM-DD HH:mm').toDate());
       this.patientDrugs.prescriptionid = this.prescriptionId;
       this.patientDrugs.prescribedmedicationid = this.medicationCode;
       this.patientDrugs.selectedproductcode = '';
@@ -156,25 +163,31 @@ export class RecordPatientdrugComponent implements OnInit {
       this.patientDrugs.person_id = this.appService.personId;
       this.patientDrugs.encounter_id = this.appService.encounter.encounter_id;
       this.subscriptions.add(this.apiRequest.postRequest(this.appService.baseURI +
-        "/PostObject?synapsenamespace=local&synapseentityname=epma_prescriptionmedicaitonsupply", JSON.stringify(this.patientDrugs))
+        "/PostObject?synapsenamespace=local&synapseentityname=epma_prescriptionmedicaitonsupply", JSON.stringify(this.patientDrugs), false)
         .subscribe((saveResponse) => {
           this.appService.UpdateDataVersionNumber(saveResponse);
           this.informationMessage = 'Patient drugs updated.';
           this.isSaving = false;
           this.dr.GetMedicationSupply(() => {
+            this.dr.GetMedicationSupplyHistory(this.patientDrugs.prescriptionid ,(data)=>{});
             this.subjects.refreshTemplate.next();
             setTimeout(() => {
               this.subjects.closeAppComponentPopover.next();
             }, 1500);
           });
-        }
-        )
+        },(error) => {
+          this.isSaving = false;
+          this.subjects.closeAppComponentPopover.next();
+          if (this.appService.IsDataVersionStaleError(error)) {
+            this.appService.RefreshPageWithStaleError(error);
+          }
+        })
       )
     }
   }
-  // onTimeSelected(startime) {
-  //   this.startime = startime;
-  // }
+  onTimeSelected(startime) {
+    this.startime = startime;
+  }
   /* Calculate the available quantity for the days */
   daysChange(event): void {
     let doseArray = [].concat(...this.appService.Prescription.map(p => this.appService.GetCurrentPosology(p).__dose)).filter(dos => dos.prescription_id == this.prescriptionId);
@@ -216,26 +229,7 @@ export class RecordPatientdrugComponent implements OnInit {
     }
     this.patientDrugs.noofdays = +(event.target.value / this.totalDose).toFixed(1);
   }
-  /* To get the list of compliance aid */
-  private getComplianceAidList(): void {
-    this.complianceAidList = [];
-    this.subscriptions.add(
-      this.apiRequest
-        .getRequest(
-          this.appService.baseURI +
-          '/GetList?synapsenamespace=meta&synapseentityname=complianceaid'
-        )
-        .subscribe((response) => {
-          let responseArray = JSON.parse(response);
-
-          for (let resp of responseArray) {
-            this.complianceAidList.push(resp);
-          }
-        })
-    );
-
-  }
-
+  
   /* To get the drug details for the prescription and medication id */
   private getLatestDrugRecord(): void {
     this.totalDose = 0;

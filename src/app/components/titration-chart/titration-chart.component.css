@@ -159,3 +159,32 @@
 ::ng-deep .vis-line-graph text {
   font-size: 10px;
 }
+
+::-webkit-scrollbar {
+  -webkit-appearance: none;
+  width: 5px;
+  height: 3px;
+  -webkit-overflow-scrolling: auto;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background-color: rgba(0, 0, 0, .5);
+  -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .5);
+}
+
+::ng-deep .vis-graph-group0:not(.vis-point) {
+  fill: none;
+  stroke-width: 3px;
+  stroke: none;
+  fill-opacity: 0;
+}
+::ng-deep #labresult .vis-graph-group0 {
+  fill: gray;
+  stroke: gray;
+}
+::ng-deep .vis-graph-group0 {
+  fill: gray;
+  stroke: gray;
+}
+ 

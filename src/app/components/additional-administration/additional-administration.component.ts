@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@ import { DataRequest } from 'src/app/services/datarequest';
 import { AdministrationStatus, AdministrationStatusReason, LevelOfSelfAdmin, AdministrationType, DoseType } from 'src/app/services/enum';
 import { SubjectsService } from 'src/app/services/subjects.service';
 import { v4 as uuid } from 'uuid';
+import { InfusionEvents } from '../../models/EPMA';
 @Component({
   selector: 'app-additional-administration',
   templateUrl: './additional-administration.component.html',
@@ -54,6 +55,7 @@ export class AdditionalAdministrationComponent implements OnInit {
   public administrationStatus: typeof AdministrationStatus = AdministrationStatus;
   public administrationStatusReason: typeof AdministrationStatusReason = AdministrationStatusReason;
   public levelOfSelfAdmin: typeof LevelOfSelfAdmin = LevelOfSelfAdmin;
+  vtm_dose_units: unknown[];
   constructor(public subjects: SubjectsService, public appService: AppService, public apiRequest: ApirequestService, public dr: DataRequest) {
     this.appService.logToConsole("Subscribed additional");
 
@@ -78,6 +80,7 @@ export class AdditionalAdministrationComponent implements OnInit {
       return;
     }
 
+    let correlationid = uuid();
     this.dose.dose_id = uuid();
     this.dose.dosestartdatetime = this.appService.getDateTimeinISOFormat(moment(this.dose.dosestartdatetime, 'DD-MM-YYYY HH:mm').toDate());
     this.dose.doseenddatatime = this.dose.dosestartdatetime;
@@ -112,15 +115,21 @@ export class AdditionalAdministrationComponent implements OnInit {
             this.subjects.closeAppComponentPopover.next();
 
             if (this.appService.IsDataVersionStaleError(error)) {
-              this.subjects.ShowRefreshPageMessage.next(error);
+              this.appService.RefreshPageWithStaleError(error);
             }
           })
       )
     }
 
     if (this.adminstrationType == AdministrationType.record) {
-      this.administration.logicalid = logicalid;
+      if(this.currentposology.infusiontypeid=="bolus") {
+        this.administration.logicalid = "start_" + logicalid;
+      } else {
+        this.administration.logicalid = logicalid;
+      }
       this.administration.medicationadministration_id = uuid();
+      this.administration.createdon = this.appService.getDateTimeinISOFormat(moment().toDate());
+      this.administration.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
       this.administration.dose_id = this.dose.dose_id;
       this.administration.prescription_id = this.prescription.prescription_id;
       this.administration.posology_id = this.currentposology.posology_id;
@@ -130,10 +139,15 @@ export class AdditionalAdministrationComponent implements OnInit {
       this.administration.prescriptionroutesid = this.prescription.__routes[0].prescriptionroutes_id;
       this.administration.requestresupply = false;
       this.administration.planneddatetime = this.dose.dosestartdatetime;
+      this.administration.routename = this.prescription.__routes.find(e => e.isdefault).route;
       this.administration.administrationstartime = this.administration.planneddatetime;
       this.administration.adminstrationstatus = AdministrationStatus.given;
       this.administration.comments = this.dose.additionaladministrationcomment;
+      this.administration.correlationid = correlationid;
+      this.administration.administredby = this.appService.loggedInUserName;
 
+      this.administration.isadhoc = true;
+      this.administration.isenterinerror =false;
       if (this.currentposology.dosetype == DoseType.units) {
         this.administration.planneddosesize = this.dose.dosesize;
         this.administration.planneddoseunit = this.dose.doseunit;
@@ -156,14 +170,30 @@ export class AdditionalAdministrationComponent implements OnInit {
         this.administration.administeredstrengthdenominatorunits = this.dose.strengthdenominatorunit;
       }
       if (this.currentposology.dosetype == DoseType.descriptive) {
-
+        this.administration.administereddescriptivedose = this.dose.descriptivedose;
       }
+     
+
       Object.keys(this.dose).map((e) => { if (e.startsWith("_")) delete this.dose[e]; })
       Object.keys(this.administration).map((e) => { if (e.startsWith("_")) delete this.administration[e]; })
       this.appService.logToConsole(this.administration);
       var upsertManager = new UpsertTransactionManager();
       upsertManager.beginTran(this.appService.baseURI, this.apiRequest);
       //upsertManager.addEntity('core', 'dose', JSON.parse(JSON.stringify(this.dose)));
+      if(this.currentposology.infusiontypeid=="bolus") {
+        let infusionEvents = new InfusionEvents();
+        infusionEvents.infusionevents_id = uuid();
+        infusionEvents.dose_id = this.administration.dose_id;
+        infusionEvents.eventdatetime = this.administration.administrationstartime;
+        infusionEvents.planneddatetime = this.administration.planneddatetime;
+        infusionEvents.logicalid = this.administration.logicalid;
+        infusionEvents.posology_id = this.currentposology.posology_id;
+        infusionEvents.comments = this.administration.comments;
+        infusionEvents.correlationid = correlationid;
+        infusionEvents.eventtype = "administered";
+        Object.keys(infusionEvents).map((e) => { if (e.startsWith("_")) delete infusionEvents[e]; })
+        upsertManager.addEntity('core', "infusionevents", JSON.parse(JSON.stringify(infusionEvents)));
+      }
       upsertManager.addEntity('core', "medicationadministration", JSON.parse(JSON.stringify(this.administration)));
       upsertManager.save((resp) => {
         this.appService.logToConsole(resp);
@@ -190,7 +220,7 @@ export class AdditionalAdministrationComponent implements OnInit {
           this.subjects.closeAppComponentPopover.next();
 
           if (this.appService.IsDataVersionStaleError(error)) {
-            this.subjects.ShowRefreshPageMessage.next(error);
+            this.appService.RefreshPageWithStaleError(error);
           }
         }
       );
@@ -234,7 +264,16 @@ export class AdditionalAdministrationComponent implements OnInit {
       this.minDate = new Date();
       this.maxDate = null;
     }
-
+    this.vtm_dose_units = [...new Set(this.medication.__ingredients.map(ig => ig.strengthneumeratorunit))];
+    this.vtm_dose_units.sort();
+    if(!this.medication.name.startsWith("Warfarin")) {
+      this.dr.SetUnits(this.medication.__codes[0].code, (data)=> {
+        this.dose.doseunit = data;
+      });  
+    }
+    if(this.medication.name.startsWith("Warfarin") && this.prescription.titration) {
+      this.dose.doseunit = "mg";
+    }
 
   }
   additionalValidation() {

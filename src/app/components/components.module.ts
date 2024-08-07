@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -84,7 +84,10 @@ import { BannerWarningsComponent } from './banner-warnings/banner-warnings.compo
 import { DemoAdmissionRecordComponent } from './demo-admission-record/demo-admission-record.component';
 import { WarningsOpComponent } from './warnings-op/warnings-op.component';
 import { ManageListsComponent } from './manage-therapy-lists/manage-lists.component';
-
+import { AwayPeriodComponent } from './away-period/away-period.component';
+import { PrescriptionInfusionPrintTemplateComponent } from './prescription-infusion-print-template/prescription-infusion-print-template.component';
+import { PrescriptionNonInfusionPrintTemplateComponent } from './prescription-non-infusion-print-template/prescription-non-infusion-print-template.component';
+import { TabsModule } from 'ngx-bootstrap/tabs';
 @NgModule({
   declarations: [
     SearchMedicationComponent,
@@ -141,7 +144,10 @@ import { ManageListsComponent } from './manage-therapy-lists/manage-lists.compon
     BannerWarningsComponent,
     DemoAdmissionRecordComponent,
     WarningsOpComponent,
-    ManageListsComponent
+    ManageListsComponent,
+    AwayPeriodComponent,
+    PrescriptionInfusionPrintTemplateComponent,
+    PrescriptionNonInfusionPrintTemplateComponent,
   ],
   imports: [
     PopoverModule.forRoot(),
@@ -150,6 +156,7 @@ import { ManageListsComponent } from './manage-therapy-lists/manage-lists.compon
     BsDatepickerModule.forRoot(),
     CommonModule, FormsModule, ModalModule.forRoot(), ReactiveFormsModule,
     TypeaheadModule.forRoot(),
+    TabsModule.forRoot(),
   ],
   exports: [
     CompleteReconciliationComponent,
@@ -194,7 +201,9 @@ import { ManageListsComponent } from './manage-therapy-lists/manage-lists.compon
     TitrationChartComponent,
     EndInfusionComponent,
     DemoAdmissionRecordComponent,
-    ManageListsComponent
+    ManageListsComponent,
+    AwayPeriodComponent,
+    PrescriptionHistoryComponent
   ]
 })
 export class ComponentsModule { }

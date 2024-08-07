@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -19,6 +19,8 @@
 //along with this program.If not, see<http://www.gnu.org/licenses/>.
 //END LICENSE BLOCK 
 import { Injectable } from "@angular/core";
+import moment from "moment";
+import { TimeerHelper } from "../components/drug-chart/timer-helper";
 import { Dose, Prescription } from "../models/EPMA";
 import { AppService } from "./app.service";
 import { DoseType } from "./enum";
@@ -40,6 +42,15 @@ export interface MarRecord {
   ciDose?: string;
   ciDate?: string;
   doseId?: string;
+  date?: string;
+  logicalId?: string;
+  administrationStatus?: string;
+  content?: string;
+  posologyId?: string;
+  titration?: boolean;
+  doctorsorder?: boolean;
+  startDate?: string;
+  prescription_id?: string;
 }
 
 
@@ -48,7 +59,7 @@ export interface MarRecord {
 })
 export class HelperService {
 
-  constructor(private appService: AppService) {
+  constructor(private appService: AppService, public timeerHelper: TimeerHelper) {
 
   }
   marRecords: Array<MarRecord> = [];
@@ -74,7 +85,14 @@ export class HelperService {
         let endDate = this.appService.GetCurrentPosology(pres).prescriptionenddate ? this.appService.GetCurrentPosology(pres).prescriptionenddate.split('T')[0] : null;
         obj.endDate = endDate ? this.changeDateFormat(endDate) : null;
         if (obj.frequency === 'protocol' || obj.ciDose) {
-          obj.protocolCount = this.protocolCount + 1;
+          if(protocolDays == 2)
+          {
+            obj.protocolCount = this.protocolCount;
+          }
+          else {
+            obj.protocolCount = this.protocolCount + 1;
+          }
+          
           obj.protocolDays = protocolDays;
         }
       })
@@ -111,12 +129,13 @@ export class HelperService {
   createDosesForTemplate(prescriptions) {
     let doseToShow = '';
     let posology = this.appService.GetCurrentPosology(prescriptions);
-    if (posology.frequency == 'variable' && posology.infusiontypeid !== 'ci') {
+    if (posology.frequency == 'variable' && posology.infusiontypeid !== 'ci' && posology.infusiontypeid !== 'pca') {
       // check dose type for strength unit ......
 
       posology.__dose.forEach(dose => {
         let date = dose.dosestartdatetime.split('T')[0];
         let time = dose.dosestartdatetime.split('T')[1].slice(0, 5);
+        let changeTimeFormat = time.split(':')
         if (dose.dosetype == DoseType.descriptive) {
 
           let x = time + ' - ' + dose.descriptivedose + ',';
@@ -138,11 +157,12 @@ export class HelperService {
           dose: dose.dosesize,
           doseunit: dose.strengthdenominatorunit || dose.doseunit,
           ciDose: dose.infusionrate + ' ' + dose.strengthdenominatorunit,
-          doseId: dose.dose_id
+          doseId: dose.dose_id,
+          logicalId: moment(new Date).format('YYYYMMDD') + changeTimeFormat[0] + changeTimeFormat[1] + "_" + dose.dose_id.toString()
         });
       });
 
-    } else if (posology.frequency == 'protocol' || posology.infusiontypeid === 'ci') {
+    } else if (posology.frequency == 'protocol' || posology.infusiontypeid === 'ci' || posology.infusiontypeid === 'pca') {
       let currDoses = [];
       let currDose = '';
       let currDate = '';
@@ -151,6 +171,7 @@ export class HelperService {
         let dateTime = dose.dosestartdatetime.split('T');
         let date = dateTime[0];
         let time = dateTime[1].slice(0, 5);
+        let changeTimeFormat = time.split(':')
         let doseDescription;
         if (dose.dosetype == DoseType.descriptive) {
           doseDescription = dose.descriptivedose;
@@ -181,10 +202,10 @@ export class HelperService {
           frequency: posology.frequency,
           dose: dose.dosesize,
           doseunit: dose.strengthdenominatorunit || dose.doseunit,
-          ciDose: posology.infusiontypeid === 'ci' ? dose.infusionrate + ' ' + dose.strengthdenominatorunit : '',
+          ciDose: (posology.infusiontypeid === 'ci'|| posology.infusiontypeid === 'pca') ? dose.infusionrate + ' ' + posology.infusionrateunits : '',
           ciDate: date,
-          doseId: dose.dose_id
-
+          doseId: dose.dose_id,
+          logicalId: 'start_' + moment(new Date).format('YYYYMMDD') + changeTimeFormat[0] + changeTimeFormat[1] + "_" + dose.dose_id.toString()
         });
 
       });
@@ -203,7 +224,74 @@ export class HelperService {
       }
       currDoses[currDoses.length - 1] = currDoses[currDoses.length - 1] + (presAdditionalCondition != ' '?' - ':' ') + presAdditionalCondition + ' - ' + ((prescriptions.__routes.length > 0) ? prescriptions.__routes[0].route : '');
       return currDoses;
-    } else {
+    }
+    else if(posology.infusiontypeid == "rate") {
+      const activeStartDate = moment().add(-1, 'd');
+      activeStartDate.set({'hour':23,'minute': 59,'second':59})
+      const dateTo = moment().add(3, 'd');
+      dateTo.set({'hour':23,'minute': 59,'second':59})
+      this.timeerHelper.createEvents(activeStartDate,dateTo, true);
+      this.appService.reportData = this.appService.reportData.filter(function( element ) {
+        return element !== undefined;
+      });
+      var todayDate = moment();
+      todayDate.set({'hour':0,'minute': 0,'second':0});
+      const next5DayIntermittedData = this.appService.reportData.filter(e => {
+        return !e.dose_id.includes("dur") && !e.dose_id.includes("pause") && !e.dose_id.includes("flowrate") && !e.dose_id.includes("infusionevent")
+        && moment(e.eventStart).isBetween(moment(activeStartDate),dateTo) && prescriptions.prescription_id == e.prescription_id
+      });
+      next5DayIntermittedData.sort(function (left, right) {
+        return moment.utc(left.eventStart).diff(moment.utc(right.eventStart))
+      });
+
+      
+
+      next5DayIntermittedData.forEach(element => {
+        let administeredIntermittedDose = this.appService.Medicationadministration.find(x => x.logicalid == element.dose_id);
+        let splitDoseID = element.dose_id.split('_');
+        let intermittedPosology = prescriptions.__posology.find(x => x.posology_id == element.posology_id);
+        let intermittedDose;
+        if(intermittedPosology)
+        {
+          intermittedDose = intermittedPosology.__dose.find(x => x.dose_id == splitDoseID[splitDoseID.length - 1])
+        }
+        
+        let dose;
+        let doseunit = posology.infusionrateunits;
+        if(administeredIntermittedDose != undefined)
+        {
+          dose = administeredIntermittedDose.administredinfusionrate +" "+posology.infusionrateunits;
+        }
+        else {
+          if(intermittedDose != undefined)
+          {
+            dose = intermittedDose.infusionrate+" "+posology.infusionrateunits;
+          }
+          
+        }
+        this.marRecords.push({
+          time: moment(element.eventStart).format("HH:mm"),
+          date: moment(element.eventStart).format("YYYYMMDD"),
+          administrationStatus: (administeredIntermittedDose != undefined)?(administeredIntermittedDose.adminstrationstatus ? 'started':""):"",
+          content: element.content,
+          // descriptiveDose: dose.descriptivedose,
+          // doseType: dose.dosetype,
+          // frequency: posology.frequency,
+          dose: dose,
+          doseunit: doseunit,
+          // bolusDose: (posology.dosetype == 'strength') ? dose.strengthdenominator + ' ' + dose.strengthdenominatorunit : (posology.dosetype == 'units') ? dose.dosesize + ' ' + dose.doseunit : '' ,
+          // rateDose: dose.infusionrate + ' ' +  posology.infusionrateunits,
+          // ciDose: dose.infusionrate + ' ' + posology.infusionrateunits,
+          // ciDate: date,
+          startDate: element.eventStart,
+          prescription_id: element.prescription_id,
+          posologyId: element.posology_id,
+          doseId: splitDoseID[splitDoseID.length - 1],
+          logicalId: element.dose_id
+        });
+      });
+    }
+    else {
       if (posology.dosetype == DoseType.units) {
           if(this.appService.GetCurrentPosology(prescriptions, prescriptions.posologyid).frequency=='' || this.appService.GetCurrentPosology(prescriptions, prescriptions.posologyid).frequency=='x' || this.appService.GetCurrentPosology(prescriptions, prescriptions.posologyid).frequency=='h' || this.appService.GetCurrentPosology(prescriptions, prescriptions.posologyid).frequency=='stat' || this.appService.GetCurrentPosology(prescriptions, prescriptions.posologyid).frequency=='mor'  || this.appService.GetCurrentPosology(prescriptions, prescriptions.posologyid).frequency=='mid' || this.appService.GetCurrentPosology(prescriptions, prescriptions.posologyid).frequency=='eve'  || this.appService.GetCurrentPosology(prescriptions, prescriptions.posologyid).frequency=='night') {
             if(this.appService.GetCurrentPosology(prescriptions, prescriptions.posologyid).__dose.length>0 && !this.appService.GetCurrentPosology(prescriptions, prescriptions.posologyid).__dose[0].dosestrength) {
@@ -230,20 +318,25 @@ export class HelperService {
       posology.__dose.forEach(dose => {
         let date = dose.dosestartdatetime.split('T')[0];
         let time = dose.dosestartdatetime.split('T')[1].slice(0, 5);
+        let changeTimeFormat = time.split(':');
 
         doseToShow = doseToShow + ' ' + time + ',';
         this.marRecords.push({
           time,
           descriptiveDose: dose.descriptivedose,
-          doseType: dose.dosetype,
+          doseType: dose.dosetype != null ? dose.dosetype : posology.dosetype,
           frequency: posology.frequency,
-          dose: dose.dosesize,
+          posologyId: posology.posology_id,
+          dose: (posology.dosetype == 'strength') ? dose.strengthdenominator + ' ' + dose.strengthdenominatorunit : posology.titration == true ? posology.titrationtargetmax + ' ' + posology.titrationtargetmin :dose.dosesize,
           doseunit: dose.strengthdenominatorunit || dose.doseunit,
-          bolusDose: dose.strengthdenominator + ' ' + dose.strengthdenominatorunit,
-          rateDose: dose.infusionrate + ' ' + dose.strengthdenominatorunit + '/' + dose.infusionduration + ' hrs',
-          ciDose: dose.infusionrate + ' ' + dose.strengthdenominatorunit,
+          bolusDose: (posology.dosetype == 'strength') ? dose.strengthdenominator + ' ' + dose.strengthdenominatorunit : (posology.dosetype == 'units') ? dose.dosesize + ' ' + (dose.doseunit == 'suppository'? 'supp': dose.doseunit) : '' ,
+          rateDose: dose.infusionrate + ' ' +  posology.infusionrateunits,
+          ciDose: dose.infusionrate + ' ' + posology.infusionrateunits,
           ciDate: date,
-          doseId: dose.dose_id
+          doseId: dose.dose_id,
+          titration: posology.titration,
+          doctorsorder: posology.doctorsorder,
+          logicalId: (posology.infusiontypeid === 'bolus') ? 'start_' + moment(new Date).format('YYYYMMDD') + changeTimeFormat[0] + changeTimeFormat[1] + "_" + dose.dose_id.toString() : moment(new Date).format('YYYYMMDD') + changeTimeFormat[0] + changeTimeFormat[1] + "_" + dose.dose_id.toString()
         });
 
       });

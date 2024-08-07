@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -31,15 +31,23 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
 
             <div class="modal-body">
-              
+                All patients should be referred to the GP, unless: <br>
+                1. Treatment must start immediately, or <br>
+
+                2. Medication is <b>Red Listed</b>, or <br>
+                3. Patient needs a specialist medication. <br> <br>
+
+                Please confirm you have read the above <input type="checkbox" [checked]="checkedcondetion"
+                    (change)="checkedcondetion = !checkedcondetion" /><br>
+                <hr>
                 <div class="mb-3 row">
                     <div class="col-3 mt-1">
                         Date
                     </div>
                     <div class="col-3">
-                        <input type="text"  class="form-control" [bsValue]="Choosenfilterdate"
-                            style="width:120px" bsDatepicker [(ngModel)]="Choosenfilterdate"
-                            [bsConfig]="{ dateInputFormat: 'DD/MM/YYYY', containerClass: 'theme-default', adaptivePosition: true }" />
+                        <input type="text" class="form-control" [bsValue]="Choosenfilterdate" style="width:120px"
+                            bsDatepicker [(ngModel)]="Choosenfilterdate"
+                            [bsConfig]="{ showWeekNumbers:false, dateInputFormat: 'DD/MM/YYYY', containerClass: 'theme-default', adaptivePosition: true }" />
                     </div>
                     <div class="col-6">
                         <input type="text" name="time" [(ngModel)]="timeselected" style="width:93px;"
@@ -51,33 +59,97 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                 </div>
                 <div class="mb-3 row">
 
-                    <label class="col-sm-3 col-form-label">Location</label>
-                   
-
-                    <div class="col-9">
-                        <select class="form-control"(change)="onChangeOfLocation($event)" style="width:216px;" name="existingordersets" [(ngModel)]="locationselected">
+                    <label class="col-sm-3 col-form-label">Prescription Type</label>
 
 
-                            <option *ngFor="let locationl of locationlst" [ngValue]="locationl">
-                                {{locationl}}
+                    <div class="col-8">
+
+                        <!-- <input type="text" class="form-control" [(ngModel)]="locationselected" (ngModelChange)="valuechange($event)"  id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"/> -->
+
+                        <select class="form-control form-control" name="selectedopPrescriptionType"
+                            [(ngModel)]="selectedopPrescriptionType">
+                            <option [ngValue]="">Please Select</option>
+                            <option *ngFor="let opType of opPrescriptionType" [ngValue]="opType">
+                                {{opType}}
                             </option>
                         </select>
-                     
-                        <div *ngIf="showothereLocation" >
-                            <br/>
-                            <input  type="text" name="time"  [(ngModel)]="othereLocation" style="width:216px;"
-                            class="form-control" >
-                        </div>
-                        
+
+
+
                     </div>
                 </div>
                 <div class="mb-3 row">
 
-                 
+                    <label class="col-sm-3 col-form-label">Prescription Category</label>
+
+
+                    <div class="col-8">
+
+                        <!-- <input type="text" class="form-control" [(ngModel)]="locationselected" (ngModelChange)="valuechange($event)"  id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"/> -->
+
+                        <select class="form-control form-control" name="selectedprescriptioncategory"
+                           [(ngModel)]="selectedprescriptioncategory">
+                            <!-- <option value="" selected>Please Select</option> -->
+                            <option *ngFor="let opcate of OpPrescriptionCategory" [ngValue]="opcate">
+                                {{opcate}}
+                            </option>
+                        </select>
+
+
+
+                    </div>
+                </div>
+                <div class="mb-3 row">
+
+                    <label class="col-sm-3 col-form-label">Dispensing To</label>
+
+
+                    <div class="col-8">
+
+                        <!-- <input type="text" class="form-control" [(ngModel)]="locationselected" (ngModelChange)="valuechange($event)"  id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"/> -->
+
+                        <select class="form-control form-control" name="selectedopPrescriptionType" 
+                            [(ngModel)]="selectedispensing">
+                            <!-- <option value="" selected>Please Select</option> -->
+                            <option *ngFor="let dispensing of opDispensing" [ngValue]="dispensing">
+                                {{dispensing}}
+                            </option>
+                        </select>
+
+
+
+                    </div>
+                </div>
+                <div class="mb-3 row" *ngIf="hidelocation">
+
+                    <label class="col-sm-3 col-form-label">Location</label>
+
+
+                    <div class="col-8">
+                        <div class="dropdown">
+                            <input type="text" style="width:336px;" class="form-control" [(ngModel)]="locationselected"
+                                (ngModelChange)="valuechange($event)" id="dropdownMenu2" data-toggle="dropdown"
+                                aria-haspopup="true" aria-expanded="false" />
+
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenu2">
+                                <option *ngFor="let locationl of filterlocationlst"
+                                    (click)="locationSelected(locationl.code)" [ngValue]="locationselected">
+                                    {{locationl.name}}
+                                </option>
+
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+                <div class="mb-3 row">
+
+
                     <div class="col-3">
                         Prescriber
                     </div>
-                    <div class="col-9">
+                    <div class="col-8">
                         {{prescriber | titlecase}}
                     </div>
                 </div>
@@ -85,7 +157,8 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
             <div class="modal-footer">
                 <p class="text-danger">{{error}}</p>
-                <button type="button" (click)="SavePrescription()" class="btn btn-info">Save</button>
+                <button type="button" [disabled]="!checkedcondetion" (click)="SavePrescription()"
+                    class="btn btn-info">Save</button>
                 <button type="button" (click)="closepopup()" class="btn btn-secondary"
                     data-dismiss="modal">Close</button>
             </div>
@@ -94,8 +167,13 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 </div>
 
 <div class="row mt-1">
+    <div *ngIf="isLoading" id="pause" class="d-flex align-items-center justify-content-center">
+        <div id="spinner"></div>
+    </div>
+
     <div class="col-3 border-right border-bottom">
-        <div title="Add Prescription" (click)="showAddPrescription()" class="plusicon float-left"></div>
+        <div title="Add Script" *ngIf="appService.AuthoriseAction('epma_add_newscript_op')"
+            (click)="showAddPrescription()" class="plusicon float-left"></div>
 
 
     </div>
@@ -103,34 +181,123 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
         <div class="pr-5">
             <div class="float-left pl-1">
                 <h4> {{selectedobj.locationtext | titlecase}}<span *ngIf="selectedobj.locationtext">,
-                    </span>{{selectedobj.prescriptiondate | date: 'd-MMM-y h:mm:ss a' }}</h4>
+                    </span>{{selectedobj.prescriptiondate | date: 'd-MMM-y HH:mm' }}</h4>
             </div>
-           
-            <div *ngIf="selectedItem" (click)="addOutpatient()" 
-                class="mt-n2 edit_therapy float-right"></div>
+            <!-- <div *ngIf="prescriptions.length > 0" (click)="printOutpatient()" id="automation-printouterdiv" title="Print" class="Print_medication_record button-dropdown mt-n2 edit_therapy float-right">
+            </div> -->
+
+            <div *ngIf="prescriptions.length > 0 && appService.AuthoriseAction('epma_access_print_op') && !selectedobj.isdeleted "
+                id="automation-printouterdiv" title="Print">
+                <button class="Print_medication_record button-dropdown mt-n2 edit_therapy float-right" type="button"
+                    [disabled]="printing" id="automation-printmenutogglebutton" data-toggle="dropdown"
+                    aria-haspopup="true" aria-expanded="false">
+                </button>
+                <div id="automation-printsubmenudiv" class="dropdown-menu options-width"
+                    aria-labelledby="automation-printmenutogglebutton" (click)="printing = true">
+                    <a id="automation-printrecordanchor" class="dropdown-item Print_medication_record dropdown-options"
+                        href="javascript:void(0)" (click)="openAllPrescriptionPrintingTemplate()">Print Script</a>
+                    <a id="automation-printrecordreportanchor"
+                        class="dropdown-item Print_medication_record dropdown-options" href="javascript:void(0)"
+                        (click)="openCDPrintingTemplate()">Print Controlled Drugs</a>
+                    <a id="automation-printrecordreportanchor"
+                        class="dropdown-item Print_medication_record dropdown-options" href="javascript:void(0)"
+                        (click)="openGPPrintingTemplate()">Print letter to GP</a>
+                </div>
+            </div>
+
+            <div *ngIf="showOpnotes && selectedItem && appService.AuthoriseAction('epma_access_addprescription_op') && !selectedobj.isdeleted"
+                (click)="addOutpatient()" class="mt-n2 edit_therapy float-right"></div>
+            <button *ngIf="prescriptions.length > 0 && appService.AuthoriseAction('epma_access_notes_op')"
+                (click)="showOpNotespop()" class="btn btn-link mt-n2 float-right">Pharmacy Notes</button>
         </div>
     </div>
 </div>
+
 <div class="row">
     <div class="col-3 border-right" style="min-height:100vw">
 
-        <div (click)="prescriptionchange(outpre.epma_outpatientprescriptions_id)"
-            *ngFor="let outpre of Outpatientprescriptionslist">
-            <div
-                [ngClass]="{'row border-bottom': true, 'active': selectedItem == outpre.epma_outpatientprescriptions_id}">
-                <div class="col-3">
-                    <div title="Prescribe" class="form-group mb-2 Prescribe_medication p-3">
+        <div (click)="prescriptionchange(outpre.epma_outpatientprescriptions_id)"     
+            *ngFor="let outpre of Outpatientprescriptionslist" >
+        
+            <div  *ngIf="!outpre.isdeleted" [ngClass]="{'row border-bottom': true, 'active': selectedItem == outpre.epma_outpatientprescriptions_id}" >
+                <div class="col-2" style="
+                width: 49px;
+                min-width: 51px;
+                min-height: auto;
+                height: auto;
+            ">
+                    <div title="Prescribe"  class="form-group mb-2 Prescribe_medication p-3">
                     </div>
                 </div>
-                <div class="col-9">
+                <div class="col-6">
+
                     <div>
-                        {{outpre.prescriptiondate | date: 'd-MMM-y h:mm:ss a'}}
+                        {{outpre.prescriptiondate | date: 'd-MMM-y HH:mm'}}
                     </div>
                     <div>
                         {{outpre.prescriber | titlecase}}
                     </div>
                     <div>
                         {{outpre.locationtext | titlecase}}
+                    </div>
+                </div>
+                <div class="col-2 ml-auto">
+                    <div tabindex="-1" tm-element="true">
+                        <div class="btn-group" container="body" dropdown placement="right top">
+                            <span id="button-basic" dropdownToggle type="button" class="btn-flat btn-menu menu-icon"
+                                aria-controls="dropdown-basic">
+                        </span>
+                            <ul id="dropdown-basic" *dropdownMenu class="dropdown-menu dropdown-menu-right" role="menu"
+                                aria-labelledby="button-basic">
+                                <li  *ngIf="appService.AuthoriseAction('epma_delete_script_op')" role="menuitem"  (click)="deletePresClick()"><a class="dropdown-item" href="javascript:void(0)">
+                                        <div><span class="dc-icon-menu-text">Delete</span></div>
+                                    </a>
+                                </li>
+                              
+
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div  *ngIf="outpre.isdeleted"  [ngClass]="{'row border-bottom deletedprescription': true, 'active': selectedItem == outpre.epma_outpatientprescriptions_id}"  >
+                <div class="col-2" style="
+                width: 49px;
+                min-width: 51px;
+                min-height: auto;
+                height: auto;
+            ">
+                    <div title="Prescribe" class="form-group mb-2 Prescribe_medication p-3">
+                    </div>
+                </div>
+                <div class="col-6">
+
+                    <div>
+                        {{outpre.prescriptiondate | date: 'd-MMM-y HH:mm'}}
+                    </div>
+                    <div>
+                        {{outpre.prescriber | titlecase}}
+                    </div>
+                    <div>
+                        {{outpre.locationtext | titlecase}}
+                    </div>
+                </div>
+                <div class="col-2 ml-auto">
+                    <div tabindex="-1" tm-element="true">
+                        <div class="btn-group" container="body" dropdown placement="right top">
+                            <span id="button-basic" dropdownToggle type="button" class="btn-flat btn-menu menu-icon"
+                                aria-controls="dropdown-basic">
+                        </span>
+                            <ul id="dropdown-basic" *dropdownMenu class="dropdown-menu dropdown-menu-right" role="menu"
+                                aria-labelledby="button-basic">
+                             
+                                <li role="menuitem"  (click)="deletePresClick()"><a class="dropdown-item" href="javascript:void(0)">
+                                    <div><span class="dc-icon-menu-text">Reason for deletion</span></div>
+                                </a>
+                                </li>
+
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -146,7 +313,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
         </div>
         <div *ngIf="showprescriptionlist" style="padding-right: 3em;">
 
-            <div *ngFor="let pres of prescriptions" class="card">
+            <div *ngFor="let pres of prescriptions" class="card" [ngClass]="pres.isdeleted == true ? 'deletedprescription' : ''" >
                 <div class="card-body">
                     <app-prescription-template [prescription]="pres" componenttype="OP">
                     </app-prescription-template>
@@ -156,7 +323,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
         <!-- <div *ngIf="!showmanagelist && prescriptions && prescriptions.length == 0"><h6>Click <span  (click)="addOutpatient()" class="add_therapy"></span> to add a thepary.</h6></div> -->
 
         <div class="font-weight-bold" *ngIf="!showmanagelist && prescriptions && prescriptions.length == 0">
-          
+
 
         </div>
 
@@ -169,3 +336,143 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
         [editpopuptypetype]="editpopuptypetype" (hideAdministrationForm)="hideAdministrationForm($event)">
     </app-medication-administration>
 </div>
+
+
+<div *ngIf="showNotespopup" class="modal fade bd-example-modal-lg"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
+    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel2"
+    aria-hidden="true">
+    <div class="modal-dialog  modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="padding: 0.3rem 1rem; background-color: #E6E6E6">
+                <b>Prescription Notes</b>
+
+            </div>
+
+
+            <div class="modal-body" style="max-height: 630px; overflow-y: scroll;">
+                <div *ngIf="!selectedobj.isdeleted">
+                <b> <span>Note : </span> </b>
+
+
+                <ckeditor [(ngModel)]="latestNotes" [editor]="Editor" id="classic-editor" name="classic-editor">
+                </ckeditor>
+              </div>
+                <!-- <textarea [disabled]="!appService.isCurrentEncouner" class="form-control" rows="15"
+                    [(ngModel)]="latestNotes"></textarea> -->
+                <span *ngIf="opnoteserror" style="color: red;">Please Enter Notes</span>
+                <div class="row">
+                    <div class="col-12" style="max-height: 100px;overflow-y: scroll;">
+
+                        <div class="row" *ngFor="let model of OpnotesHistory; let i = index;">
+                            <div class=" col-4">{{model.modifiedon| date:"dd-MMM-yyyy"}}</div>
+                            <div class=" col-4">{{model.modifiedby}}</div>
+                            <div class=" col-4"><button type="button" data-toggle="modal"
+                                    (click)="sethistorynotes(model.notes)" data-target="#exampleModalnotesOPNotes"
+                                    class="btn btn-link">version {{OpnotesHistory.length - i}}</button></div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <p class="text-danger">{{error}}</p>
+                <button type="button"  *ngIf="!selectedobj.isdeleted" (click)="SavePrescriptionNotes()" class="btn btn-info">Save</button>
+                <button type="button" (click)="closepopupNotes()" class="btn btn-secondary"
+                    data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div *ngIf="showDeletepopup" class="modal fade bd-example-modal-lg"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
+    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel2"
+    aria-hidden="true">
+    <div class="modal-dialog  modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="padding: 0.3rem 1rem; background-color: #E6E6E6">
+                <h6 class="modal-title" id="lblRecordHeight">Reason for deletion</h6>
+                        <button type="button" class="close" (click)="showDeletepopup = false" aria-label="Close">
+                             <span aria-hidden="true">&times;</span>
+                         </button>                
+            </div>
+            <div class="modal-body">
+                <div class="form-check" style="padding-bottom: 4px;">
+                    <input class="form-check-input" type="radio" (change)="showerrormessage = false" name="exampleRadios" [(ngModel)]="reasonofdelete" id="exampleRadios1" value="Entered in error" checked [disabled]="selectedobj.isdeleted">
+                    <label class="form-check-label" [ngClass]="{'font-weight-bold': reasonofdelete === 'Entered in error'}" for="exampleRadios1">
+                     Entered in error
+                    </label>
+                  </div>
+                  <div class="form-check" style="padding-bottom: 4px;">
+                    <input class="form-check-input" type="radio" (change)="showerrormessage = false"  name="exampleRadios" [(ngModel)]="reasonofdelete" id="exampleRadios2" value="Prescribed for the wrong patient" [disabled]="selectedobj.isdeleted">
+                    <label class="form-check-label" [ngClass]="{'font-weight-bold': reasonofdelete === 'Prescribed for the wrong patient'}" for="exampleRadios2">
+                      Prescribed for the wrong patient
+                    </label>
+                  </div>
+                  <div class="form-check" style="padding-bottom: 25px;">
+                    <input class="form-check-input" type="radio"  name="exampleRadios" [(ngModel)]="reasonofdelete" id="exampleRadios3" value="Other" [disabled]="selectedobj.isdeleted">
+                    <label class="form-check-label" [ngClass]="{'font-weight-bold': reasonofdelete === 'Other'}" for="exampleRadios3">
+                     Other
+                    </label>
+                  </div>
+                  <textarea  *ngIf="reasonofdelete == 'Other'" class="form-control" [(ngModel)]="othereReason" id="exampleFormControlTextarea1" rows="3" [disabled]="selectedobj.isdeleted"></textarea>
+                  <div  *ngIf="showerrormessage" class="alert-danger" role="alert">
+                    Please enter a reason.
+                  </div>
+            </div>
+            <div  *ngIf="!selectedobj.isdeleted" class="modal-footer">
+                <button type="button" class="btn btn-secondary" (click)="showDeletepopup = false" >Cancel</button>
+                <button type="button" class="btn btn-primary" (click)="deleteConformation()">Confirm</button>
+              </div>
+        </div>
+    </div>
+</div>
+<div *ngIf="showDeletepopupConform" class="modal fade bd-example-modal-sm"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
+    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel2"
+    aria-hidden="true">
+    <div class="modal-dialog  modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="padding: 0.3rem 1rem; background-color: #E6E6E6">
+                <b>Confirm</b>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+               Are you sure?<br/>
+               This cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" (click)="deletePresc()" >Yes</button>
+                <button type="button" class="btn btn-primary" (click)="showDeletepopupConform = false">No</button>
+              </div>
+        </div>
+    </div>
+</div>
+
+
+    <div class="modal fade" id="exampleModalnotesOPNotes" tabindex="-1" role="dialog"
+        aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Notes</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p [innerHTML]="historynotes"></p>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="pdfUseOnly table-dimensions">
+        <app-print-op-prescribing [clinicDate]="selectedobj" *ngIf="printOPTemplate" [printOPTemplate]="printOPTemplate"
+            (destroyTemplate)="destroyRecordsTemplate()"></app-print-op-prescribing>
+    </div>

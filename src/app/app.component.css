@@ -10,6 +10,7 @@
     height: 24px;
     background-repeat: no-repeat;
     background-image: url("/assets/images/epma/Medication_administration_record.svg");
+    background-position: center;
 }
 
 .Medication_reconciliation {
@@ -17,6 +18,7 @@
     height: 24px;
     background-repeat: no-repeat;
     background-image: url("/assets/images/epma/Medication_reconciliation.svg");
+    background-position: center;
 }
 
 .empa-thepay-overview {
@@ -24,6 +26,7 @@
     height: 24px;
     background-repeat: no-repeat;
     background-image: url("/assets/images/epma/Therapy_overview.svg");
+    background-position: center;
 }
 
 .Pharmacy_Reviewed_Medrec_Done{
@@ -103,6 +106,7 @@
     height: 24px;
     background-repeat: no-repeat;
     background-image: url("/assets/images/epma/Prescribe_medication.svg");
+    background-position: center;
 }
 
 .Rx_Prescribe_medication {
@@ -110,6 +114,7 @@
     height: 24px;
     background-repeat: no-repeat;
     background-image: url(/assets/images/epma/op/rx_prescription.svg);
+    background-position: center;
 }
 
 .Print_medication_record {
@@ -124,6 +129,7 @@
     height: 24px;
     background-repeat: no-repeat;
     background-image: url("/assets/images/epma/Reference_weight.svg");
+    background-position: center;
 }
 
 .Reference_height {
@@ -131,6 +137,7 @@
     height: 24px;
     background-repeat: no-repeat;
     background-image: url("/assets/images/epma/Reference_height.svg");
+    background-position: center;
 }
 
 .Print_Medication_administration_record {
@@ -140,18 +147,12 @@
     background-image: url("/assets/images/epma/Print_Medication_administration_record.svg");
 }
 
-.Reference_weight {
-    width: 40px;
-    height: 24px;
-    background-repeat: no-repeat;
-    background-image: url("/assets/images/epma/Reference_weight.svg");
-}
-
 .Menu {
     width: 40px;
     height: 24px;
     background-repeat: no-repeat;
     background-image: url("/assets/images/epma/therapy/Menu.svg");
+    background-position: center;
 }
 
 .Sort_Icon {
@@ -193,6 +194,7 @@
     height: 24px;
     background-repeat: no-repeat;
     background-image: url("/assets/images/epma/Therapy_overview.svg");
+    background-position: center;
 }
 
 #Efilterbuttons .btn:focus {
@@ -268,4 +270,18 @@
 	bottom: 0;
 	left: 0;
 	z-index: 1000;
+}
+
+.epma-way-period {
+    width: 20px;
+    height: 20px;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-image: url(/assets/images/epma/Patient_Leave.svg);
+    cursor: pointer;
+    margin-top: -6px;
+}
+
+.menuselected {
+    background-color:#d9d9d9 ;
 }

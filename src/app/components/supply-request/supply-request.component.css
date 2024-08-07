@@ -181,3 +181,12 @@ input[type=number] {
     background-image: url("/assets/images/epma/therapy/Stop_Or_Remove.svg");
     margin-left: 12px; 
 }
+
+.edit-patient-drug {
+    width: 1.5em;
+    height: 1.5em;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-image: url(/assets/images/epma/op/edit_therapy.svg);
+    cursor: pointer;
+}

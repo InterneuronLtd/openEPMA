@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -94,7 +94,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                   Prescriber to confirm
                 </div>
                 <div
-                  *ngIf="pres && pres.infusiontype_id === 'ci' && appService.GetCurrentPosology(pres).frequency !== 'variable' && appService.GetCurrentPosology(pres).prescriptionenddate">
+                  *ngIf="pres && (pres.infusiontype_id === 'ci' || pres.infusiontype_id === 'pca') && appService.GetCurrentPosology(pres).frequency !== 'variable' && appService.GetCurrentPosology(pres).prescriptionenddate">
                   <div>
                     {{'Treatment End Date: ' + appService.GetCurrentPosology(pres).prescriptionenddate?.split('T')[0]}}
                   </div>
@@ -158,13 +158,13 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                 <div class="col-2 remove-border">
                   <div class="row">
                     <div class="col-5 remove-double-border-right remove-double-border-top date-time-padding">
-                      <div *ngIf="pres && pres.infusiontype_id !== 'ci' && appService.GetCurrentPosology(pres).frequency !== 'protocol'">
+                      <div *ngIf="pres && pres.infusiontype_id !== 'ci' && pres.infusiontype_id !== 'pca' && appService.GetCurrentPosology(pres).frequency !== 'protocol'">
                         <div *ngIf="pres">
                           {{returnTimeDose('x',i,j,k, pres, dates[j])}}
                         </div>
                       </div>
 
-                      <div *ngIf="pres && pres.infusiontype_id === 'ci'">
+                      <div *ngIf="pres && (pres.infusiontype_id === 'ci' ||  pres.infusiontype_id === 'pca')">
                         {{returnTimeDose('x',i,j,k,pres, dates[j])}}
                       </div>
 
@@ -177,12 +177,12 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
                     </div>
                     <div class="col-7 remove-double-border-right remove-double-border-top dose-padding">
-                      <div *ngIf="pres && appService.GetCurrentPosology(pres).frequency !== 'protocol' && pres.infusiontype_id !== 'ci'">
+                      <div *ngIf="pres && appService.GetCurrentPosology(pres).frequency !== 'protocol' && pres.infusiontype_id !== 'ci' &&  pres.infusiontype_id !== 'pca'">
                         <div *ngIf="pres">
                           {{returnTimeDose('x',i,j,k,pres, dates[j],'dose')}}
                         </div>
                       </div>
-                      <div *ngIf="pres && pres.infusiontype_id === 'ci'">
+                      <div *ngIf="pres && (pres.infusiontype_id === 'ci' ||  pres.infusiontype_id === 'pca')">
                         {{returnTimeDose('x',i, j, k, pres ,dates[j], 'dose')}}
                       </div>
                       <div *ngIf="pres && appService.GetCurrentPosology(pres).frequency === 'protocol'">
@@ -199,14 +199,14 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                 <div class="col-2 remove-border">
                   <div class="row">
                     <div class="col-5 remove-double-border-right remove-double-border-top">
-                      <div *ngIf="pres && appService.GetCurrentPosology(pres).frequency !== 'protocol' && pres.infusiontype_id !== 'ci'">
+                      <div *ngIf="pres && appService.GetCurrentPosology(pres).frequency !== 'protocol' && pres.infusiontype_id !== 'ci' &&  pres.infusiontype_id !== 'pca'">
                         <div *ngIf="pres" class="given-checked">
                           {{returnTimeDose('x',i,j,k,pres, dates[j],'administered')}}
 
 
                         </div>
                       </div>
-                      <div *ngIf="pres && pres.infusiontype_id === 'ci'" class="given-checked">
+                      <div *ngIf="pres && (pres.infusiontype_id === 'ci' ||  pres.infusiontype_id === 'pca')" class="given-checked">
                         {{returnTimeDose('x',i, j, k, pres ,dates[j], 'administered')}}
                       </div>
                       <div *ngIf="pres && appService.GetCurrentPosology(pres).frequency === 'protocol'" class="given-checked">
@@ -219,12 +219,12 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                     </div>
                     <div class="col-7 remove-double-border-right remove-double-border-top"
                       [ngClass]="{'add-right-border': j === repeatArray.length - 1}">
-                      <div *ngIf="pres && appService.GetCurrentPosology(pres).frequency !== 'protocol' && pres.infusiontype_id !== 'ci'">
+                      <div *ngIf="pres && appService.GetCurrentPosology(pres).frequency !== 'protocol' && pres.infusiontype_id !== 'ci' &&  pres.infusiontype_id !== 'pca'">
                         <div *ngIf="pres">
                           {{returnTimeDose('x',i,j,k,pres, dates[j],'administered')}}
                         </div>
                       </div>
-                      <div *ngIf="pres && pres.infusiontype_id === 'ci'">
+                      <div *ngIf="pres && (pres.infusiontype_id === 'ci' ||  pres.infusiontype_id === 'pca')">
                         {{returnTimeDose('x',i, j, k, pres ,dates[j], 'administered')}}
                       </div>
                       <div *ngIf="pres && appService.GetCurrentPosology(pres).frequency === 'protocol'">

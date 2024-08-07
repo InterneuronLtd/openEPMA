@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-16"?><Export xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" format="Json"><Entities /><Baseviews><Baseview id="c6f7ef12-54b6-4da1-b355-bcf9b4c67187" name="administeredmedhistory"><Namespace>{
+  "listsettings.baseviewnamespace": [
+    {
+      "_row_id": "aae8897c-614c-4370-ad2f-c0691bc55618",
+      "_sequenceid": 30,
+      "_contextkey": null,
+      "_contextid": null,
+      "_createdtimestamp": "2020-09-21T08:28:10.02473",
+      "_createddate": "2020-09-21T08:28:10.02473",
+      "_createdsource": "Synapse Studio",
+      "_createdchannelid": null,
+      "_createdmessageid": null,
+      "_createdby": "Singh Manoj",
+      "_recordstatus": 1,
+      "_expirydate": null,
+      "baseviewnamespaceid": "1ea2f183-7018-4118-aed3-d90ad6ff1548",
+      "baseviewnamespace": "epma",
+      "baseviewnamespacedescription": "to store baseview for epma"
+    }
+  ]
+}</Namespace><BaseviewManager>{
+  "listsettings.baseviewmanager": [
+    {
+      "_row_id": "f7987c81-8ce6-4633-8afa-b9d6d2752ba9",
+      "_sequenceid": 1478,
+      "_contextkey": null,
+      "_contextid": null,
+      "_createdtimestamp": "2022-06-03T07:37:33.117756",
+      "_createddate": "2022-06-03T07:37:33.117756",
+      "_createdsource": "Synapse Studio",
+      "_createdchannelid": null,
+      "_createdmessageid": null,
+      "_createdby": "Singh Manoj",
+      "_recordstatus": 1,
+      "_expirydate": null,
+      "_timezonename": null,
+      "_timezoneoffset": 0,
+      "baseview_id": "c6f7ef12-54b6-4da1-b355-bcf9b4c67187",
+      "baseviewnamespaceid": "1ea2f183-7018-4118-aed3-d90ad6ff1548",
+      "baseviewnamespace": "epma",
+      "baseviewname": "administeredmedhistory",
+      "baseviewdescription": "",
+      "baseviewsqlstatement": "select * from entitystore.core_administermedication",
+      "ismaterialised": false
+    }
+  ]
+}</BaseviewManager><action>New</action></Baseview></Baseviews><SLists /></Export>

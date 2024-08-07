@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                     Refresh
                   </button>
                 <button type="button"  *ngIf="appService.warningService && appService.warningServiceMODContext  && !appService.warningServiceMODContext.loader" (click)="RefreshWarningsFromApi()" class="btn btn-primary">Refresh</button>
-                <button type="button"  class="btn btn-secondary" data-dismiss="modal" #close_warningsmod>Close</button>
+                <button (click)="HideWarning()"  type="button"  class="btn btn-secondary" data-dismiss="modal" #close_warningsmod>Close</button>
             </div>
         </div>
     </div>

@@ -1,0 +1,17 @@
+List Changes 
+-----------------------------------------
+OutpatientSupplyRequest
+Global Suppy request 
+
+Baseviews
+-----------------------------------------
+epma_encounter
+
+Entity
+-----------------------------------------------
+epma_outpatientprescriptions
+
+Actions
+-------------------------------------
+epma_display_dose_as_quantity  (assign to role - EPMA Regestered Nurse)
+

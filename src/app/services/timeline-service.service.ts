@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -62,8 +62,9 @@ export class TimelineServiceService {
     this.groups = new DataSet();
     this.items = new DataSet();
     this.configureOptions("none");
-
+  
     for (var val of this.appService.FilteredPrescription) {
+      let med =val.__medications.find(x => x.prescription_id === val.prescription_id && x.isprimary == true)
       if (option == "Basic") {
 
         if (!this.appService.dcgroupadded.find(x => x.prescriptionid == val.prescription_id && x.group == filterValue)) {
@@ -73,16 +74,26 @@ export class TimelineServiceService {
 
       }
       else if (option == "custom group") {
-        if (val.__medications.find(x => x.prescription_id === val.prescription_id && x.isprimary == true).customgroup != filterValue) {
+        if (med.customgroup != filterValue) {
           continue;
         }
 
       }
-      else if (option == "Base") {
-        if (val.__medications.find(x => x.prescription_id === val.prescription_id && x.isprimary == true).classification != filterValue) {
-          continue;
+      else if (option == "Base") {     
+        if (this.appService.appConfig.AppSettings.UseStoredClassification) {
+          let cl = med.classification ? med.classification : "Others"
+          if (cl != filterValue) {
+            continue;
+          }
         }
-
+        else
+        {
+          let cl = (val.__drugcodes??[]).filter(x => x.additionalCodeSystem == "FDB");
+          cl = (cl.length > 0 && cl[0].additionalCodeDesc) ? cl[0].additionalCodeDesc : "Others"
+          if (cl != filterValue) {
+            continue;
+          }
+        } 
       }
       else if (option == "Route") {
         // if (this.appService.Prescriptionroutes.find(x => x.prescription_id === val.prescription_id && x.isdefault == true).route != filterValue) {
@@ -103,7 +114,14 @@ export class TimelineServiceService {
   }
 
   loadEvents(filterValue: any, option: any) {
+   
+    for(var arr of this.appService.PersonAwayPeriod){
 
+      if(arr.isenabled){
+     
+      this.items.update( {id: arr.epma_personawayperiod_id, content: this.appService.appConfig.AppSettings.personAwayHeading, start: moment(arr.awayfrom).format("YYYY-MM-DD HH:mm"), end: moment(arr.awayto).format("YYYY-MM-DD HH:mm"), type: 'background', className: 'negative', tooltip: ''})
+      }
+    }
     for (var dose of this.appService.events) {
 
       if (option == "Basic") {
@@ -114,7 +132,10 @@ export class TimelineServiceService {
 
       }
       else if (option == "Base") {
-        if ([].concat(...this.appService.Prescription.map(p => p.__medications)).find((x: Medication) => x.prescription_id === dose.prescription_id && x.isprimary == true).classification != filterValue) {
+        let cl = (this.appService.Prescription.find(p=>p.prescription_id == dose.prescription_id).__drugcodes??[]).filter(x => x.additionalCodeSystem == "FDB");
+        cl = (cl.length > 0 && cl[0].additionalCodeDesc) ? cl[0].additionalCodeDesc : "Others"
+        
+        if (cl != filterValue) {
           continue;
         }
 
@@ -124,25 +145,27 @@ export class TimelineServiceService {
           continue;
         }
       }
-
+      
       //  need to change not in if condetion
       if (this.appService.Prescription.find(x => x.prescription_id === dose.prescription_id).isinfusion) {
         if (dose.eventEnd) {
           dose.eventEnd = moment(dose.eventEnd);
-          this.items.update({
-            id: dose.dose_id, content: '', start: dose.eventStart, end: dose.eventEnd, group: dose.prescription_id
-          })
+          // this.items.update({
+          //   id: dose.dose_id, content: dose.content, start: dose.eventStart, end: dose.eventEnd, group: dose.prescription_id
+          // })
+          this.addUpdateItem(dose.dose_id, dose.content,  dose.opacityclass, dose.eventStart, dose.eventEnd, dose.prescription_id, dose.title)
 
         }
         else {
-          this.addUpdateItem(dose.dose_id, dose.content, "", dose.eventStart, dose.eventEnd, dose.prescription_id, dose.title)
+          this.addUpdateItem(dose.dose_id, dose.content,  dose.opacityclass, dose.eventStart, dose.eventEnd, dose.prescription_id, dose.title)
         }
 
       }
       else {
-        this.addUpdateItem(dose.dose_id, dose.content, "transparant", dose.eventStart, dose.eventEnd, dose.prescription_id, dose.title)
+        this.addUpdateItem(dose.dose_id, dose.content, dose.opacityclass, dose.eventStart, dose.eventEnd, dose.prescription_id, dose.title)
 
         // if (dose.iscancelled) {
+
         //   this.addUpdateItem(dose.doseventEnde_id, contents.Administration_withheld_by_doctor, "transparant", dose.dosestartdatetime, dose.dosestartdatetime, dose.prescription_id, "title")
         // }
         // else {
@@ -150,6 +173,17 @@ export class TimelineServiceService {
         // }
       }
     }
+    for (var arrp of this.appService.CurrentReminderevents) {
+      this.items.add({
+        id: arrp.dose_id, content: arrp.content,
+        className: "transparant" + arrp.opacityclass, start: arrp.eventStart, end: arrp.eventEnd, group: arrp.prescription_id, title: arrp.title
+      })
+   }
+    for (var arrp of this.appService.arrPrescriptionCurrentFlowRate) {
+      
+      this.items.update({ id: "status"+arrp.prescriptionid, content: arrp.content, start: moment(arrp.start).format("YYYY-MM-DD HH:mm"), end: moment(arrp.end).format("YYYY-MM-DD HH:mm"), type: 'background', className: 'transbackground', tooltip: '', group: arrp.prescriptionid, })
+   
+  }
 
   }
 
@@ -181,24 +215,36 @@ export class TimelineServiceService {
       if (val.__posology.find(x => x.iscurrent == true).frequency == "stat") {
         this.appService.dcgroupadded.push({ group: "Stat", prescriptionid: val.prescription_id })
       }
-      else {
-        let codematteched = false;
+
         let Presindecation = JSON.parse(val.indication)
         let drug_bnf = "";
+        let drug_fdb = "";
         if (val.__drugcodes) {
           const bnfrow = val.__drugcodes.filter(x => x.additionalCodeSystem == "BNF");
           if (bnfrow.length > 0)
             drug_bnf = bnfrow[0].additionalCode;
+
+            const fdbfow = val.__drugcodes.filter(x => x.additionalCodeSystem == "FDB");
+            if (fdbfow.length > 0)
+            drug_fdb = fdbfow[0].additionalCode;
         }
 
        
         drug_bnf.padEnd(10, "0");
+        drug_fdb.padEnd(10, "0");
 
         for (let group of this.appService.DCGroups) {
           let isbnfmatch = false
           for (let arrcode of group.MatchConditions.ClassificationCodes) {
-            let bnf = (arrcode.Code ?? "").replace(/\./g, "");
-            if (bnf == drug_bnf.substring(0, bnf.length)) {
+            let drugMatchCode = "";
+            let configMatchCode = (arrcode.Code ?? "").replace(/\./g, "");
+            if(arrcode.CodeType.toLowerCase() == "bnf"){
+              drugMatchCode = (drug_bnf ?? "").replace(/\./g, "").substring(0, configMatchCode.length)
+            }
+            else if(arrcode.CodeType.toLowerCase() == "fdb"){
+              drugMatchCode = (drug_fdb ?? "").replace(/\./g, "").substring(0, configMatchCode.length)
+            }
+            if (drugMatchCode == configMatchCode) {
               isbnfmatch = true;
             }
           }
@@ -211,25 +257,41 @@ export class TimelineServiceService {
               }
             }
           }
-          let Indications = group.MatchConditions.Indications;
+
           if (group.MatchType == "AND") {
 
             if (isindecationmatch && isbnfmatch) {
+              const isSkipStat = group.SkipStatGroup && group.SkipStatGroup == true;
+              let isInStat = this.appService.dcgroupadded.find(x => x.prescriptionid == val.prescription_id && x.group == "Stat");
+
+             if(isSkipStat == true && isInStat){
+                isInStat.group = group.GroupName;
+             }
+              else{
               if (!this.appService.dcgroupadded.find(x => x.prescriptionid == val.prescription_id)) {// checking is allready add this pres 47  4.0.1.0
                 this.appService.dcgroupadded.push({ group: group.GroupName, prescriptionid: val.prescription_id })
               }
             }
+            }
           }
           else {
             if (isindecationmatch || isbnfmatch) {
-              if (!this.appService.dcgroupadded.find(x => x.prescriptionid == val.prescription_id)) {// checking is allready add this pres
+              const isSkipStat = group.SkipStatGroup && group.SkipStatGroup == true;
+              let isInStat = this.appService.dcgroupadded.find(x => x.prescriptionid == val.prescription_id && x.group == "Stat");
+
+             if(isSkipStat == true && isInStat){
+                isInStat.group = group.GroupName;
+             }
+              else{
+              if (!this.appService.dcgroupadded.find(x => x.prescriptionid == val.prescription_id)) {// checking is allready add this pres 47  4.0.1.0
                 this.appService.dcgroupadded.push({ group: group.GroupName, prescriptionid: val.prescription_id })
               }
             }
+            }
           }
         }
-        
-        if (val.__posology.find(x => x.iscurrent == true).infusiontypeid == 'ci' || (val.__posology.find(x => x.iscurrent == true).infusiontypeid == 'rate' && val.__posology.find(x => x.iscurrent == true).frequency == "variable")) {
+
+        if (val.__posology.find(x => x.iscurrent == true).infusiontypeid == 'ci' || val.__posology.find(x => x.iscurrent == true).infusiontypeid == 'pca' || (val.__posology.find(x => x.iscurrent == true).infusiontypeid == 'rate' && val.__posology.find(x => x.iscurrent == true).frequency == "variable")) {
           if (!this.appService.dcgroupadded.find(x => x.prescriptionid == val.prescription_id)) {// checking is allready add this pres
             this.appService.dcgroupadded.push({ group: "Variable/Continuous infusion", prescriptionid: val.prescription_id })
           }
@@ -240,37 +302,46 @@ export class TimelineServiceService {
           }
         }
         else if (isIvFluid) {
+
+          let i = this.appService.DCGroups.find(x=>x.GroupName =="IV Fluid");
+          let isInStat = this.appService.dcgroupadded.find(x => x.prescriptionid == val.prescription_id && x.group == "Stat");
+          if(i && i.SkipStatGroup && i.SkipStatGroup == "true")
+          {  
+              isInStat.group = "IV Fluid";
+          }
+          else{
           if (!this.appService.dcgroupadded.find(x => x.prescriptionid == val.prescription_id)) {// checking is allready add this pres
             this.appService.dcgroupadded.push({ group: "IV Fluid", prescriptionid: val.prescription_id })
           }
+        }
         }
         else {
           if (!this.appService.dcgroupadded.find(x => x.prescriptionid == val.prescription_id)) {// checking is allready add this pres
             this.appService.dcgroupadded.push({ group: "Regular drugs", prescriptionid: val.prescription_id })
           }
         }
-
-
-
-      }
-
-
     }
-
-
   }
   addUpdateItem(id: any, content: any, className: any, start: any, end: any = null, groupid: any, title: any) {
-    if (content.indexOf("myDIVPRN") >= 0) {
+    
+    if (content.indexOf("divPRN") >= 0) {
       this.items.update({
         id: id, content: content,
-        className: "PRNRange", start: start, end: end, group: groupid,title:title
+        className: "PRNRange"+className, start: start, end: end, group: groupid,title:title
+
+      })
+    }
+   else if (content.indexOf("PauseDurline") >= 0) {
+      this.items.update({
+        id: id, content: content,
+        className: "PauseDurline"+className, start: start, end: end, group: groupid,title:title
 
       })
     }
     else {
       this.items.update({
         id: id, content: content,
-        className: "transparant", start: start, end: end, group: groupid ,title:title
+        className: "transparant" +className, start: start, end: end, group: groupid ,title:title
 
 
       })

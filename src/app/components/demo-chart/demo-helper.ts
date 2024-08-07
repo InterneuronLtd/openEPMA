@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 //along with this program.If not, see<http://www.gnu.org/licenses/>.
 //END LICENSE BLOCK 
 
-import { contents } from "../../services/enum"
+import { contents, InfusionType } from "../../services/enum"
 import { AppService } from "../../services/app.service"
 import moment from 'moment';
 import { Dose, Prescription } from '../../models/EPMA';
@@ -445,7 +445,7 @@ export class DemoHelper {
                         + "</div>")
                     }
                     ///////////////////////// 
-                    if (administeredevent && prescription.infusiontype_id == "ci") {
+                    if (administeredevent && (prescription.infusiontype_id == "ci" || prescription.infusiontype_id == InfusionType.pca)) {
                         if (!this.appService.InfusionEvents.find(x => x.posology_id == prescription.__posology[0].posology_id && x.eventtype == "endinfusion")) {
                             this.addevents(prescription.prescription_id, "infusionevent" + prescription.prescription_id, new Date(), null, prescription.__posology[0].posology_id, prescription.__posology[0].prn,
                                 false, false, false, contents.Recordadditionaladministration)
@@ -515,7 +515,7 @@ export class DemoHelper {
                             }
                         }
 
-                        if (EndDosetime == null && prescription.__posology[0].prescriptionenddate == null && prescription.__posology[0].infusiontypeid == 'ci') {
+                        if (EndDosetime == null && prescription.__posology[0].prescriptionenddate == null && (prescription.__posology[0].infusiontypeid == 'ci' || prescription.__posology[0].infusiontypeid == InfusionType.pca)) {
                             let enddate = this.MaxEventDate;
                             if (infusionEndEvent) {
                                 enddate = infusionEndEvent.eventdatetime;

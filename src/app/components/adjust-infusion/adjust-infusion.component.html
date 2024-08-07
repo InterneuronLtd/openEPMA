@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
 
             <div class="row">
                 <div class="col-12">
-                    <app-prescription-template [prescription]="prescription"  componenttype="additional">
+                    <app-prescription-template [prescription]="prescription"  componenttype="adjustinfusion">
                     </app-prescription-template>
                 </div>
                 
@@ -42,6 +42,15 @@ aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
         
             <div class="card">
                 <div class="card-body">
+                    <div class="row border-bottom  pb-1">
+                       
+                        <div class="col">
+                             <span class="float-left">
+                                <input type="checkbox" [(ngModel)]="Infusionkitchange" id="enabledid">
+                                <label class="ml-1" for="enabledid">Change Infusion/Infusion Kit</label> 
+                             </span>   
+                        </div>
+                    </div>
                     <div class="row border-bottom  pb-1">
                         <div class="col-4">
                             MEDICATION
@@ -69,7 +78,7 @@ aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
                         <div class="col-8">
                              <span class="float-right">
                                 <input [minDate]="currDate" onkeydown="event.preventDefault()" type="text"   [(ngModel)]="expirydate"  class="epma-adminstration-form-control" style="width:120px"  bsDatepicker
-                                [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'bg-light' }" />
+                                [bsConfig]="{ showWeekNumbers:false, dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'alert-info' }" />
                              </span>   
                         </div>
                     </div>
@@ -91,14 +100,25 @@ aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
                         <div class="col-5">
                             <span class="float-right" style="display: flex;">
                                 <input onkeydown="event.preventDefault()" type="text" [minDate]="minDate" [maxDate]="maxDate"  [(ngModel)]="stardate"  placeholder="Start Date" class="epma-adminstration-form-control" style="width:120px"  bsDatepicker
-                               [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true }" />                                 
+                               [bsConfig]="{ showWeekNumbers:false, dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true }" />                                 
                                <input type="text" name="startime" [(ngModel)]="startime" style="width:80px;" class="epma-adminstration-form-control" placeholder="HH:mm" [appTimepicker]="timepicker1">
                                 <app-time-picker #timepicker1 (onTimeSelected)="onTimeSelected($event)"></app-time-picker>
                             </span>
                               
                         </div>
                     </div>
-                    
+                    <div class="row border-bottom  pb-1 pt-1">
+                        <div class="col-4">
+                            <span [ngClass]="iswitnessRequired ? 'required-field': ''">WITNESS</span>
+                        </div>
+                        <div class="col-8">
+
+                            <span class="float-right">
+                                <span class="mr-2">{{witnessDisplayName}}</span>
+                                <input type="button" (click)="openWitnessAuthnication()"
+                                    class="btn btn-sm btn-outline-primary" [value]="witnessBtnValue" /></span>
+                        </div>
+                    </div>
                     <div class="row pb-1 pt-1">
                         <div class="col-12">
                             COMMENTS
@@ -143,4 +163,64 @@ aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
        
     </div>
 </div>
+</div>
+
+<div *ngIf="isWitnessAuthenticate">
+    <div class="modal fade bd-example-modal-lg" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal
+        tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+        aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+            <div class="modal-content" style="height: 30%">
+                <h3 class="popover-title popover-header">
+                    Witness authentication
+                    <div class="close close-adminstration" (click)="closeWitnessAuthentication()"></div>
+                </h3>
+                <div class="modal-body">
+                    <div class="row">
+
+                        <div class="col-3 text-right">
+                            <span class="text-muted empa-label">Username</span>
+
+                        </div>
+                        <div class="col-8">
+                            <input type="text" (keydown.enter)="authenticateUser()" class="form-control" name="username"
+                                [(ngModel)]="username">
+                        </div>
+                    </div>
+
+                    <div class="row mt-1">
+
+                        <div class="col-3 text-right">
+                            <span class="text-muted empa-label">Password</span>
+
+                        </div>
+                        <div class="col-8">
+                            <input type="password" (keydown.enter)="authenticateUser()" name="password"
+                                class="form-control" [(ngModel)]="password">
+
+                            <span *ngIf="authMessage" class="text-danger">{{authMessage}}</span>
+                        </div>
+
+                    </div>
+
+                    <div class="row mt-1">
+
+                        <div class="col-3">
+
+                        </div>
+                        <div class="col-8">
+                            <button class="btn btn-primary" (click)="authenticateUser()"
+                                [disabled]="showSpinnerWitness"> <span class="spinner-border spinner-border-sm"
+                                    *ngIf="showSpinnerWitness" role="status" aria-hidden="true"></span>Save</button>
+                            <button class="btn btn-secondary ml-3"
+                                (click)="closeWitnessAuthentication()">Cancel</button>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
 </div>

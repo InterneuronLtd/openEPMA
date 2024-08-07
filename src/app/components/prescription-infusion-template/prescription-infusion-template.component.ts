@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ export class PrescriptionInfusionTemplateComponent implements OnInit {
   @Input() prescription: Prescription;
   @Input() administration: Medicationadministration;
   @Input() fromPrinting = false;
-  @Input() posologyid:string;
+  @Input() posologyid: string;
   @Input() sumstatus: string;
   showPrescriptionHistory: boolean = false;
   primaryMedication: Medication;
@@ -60,10 +60,13 @@ export class PrescriptionInfusionTemplateComponent implements OnInit {
   dischargeSummarystatus: string;
   prescription_id: string;
   prescriptionstatus: string;
+  prnmaxdosestring: string;
+  prescribedConcentration: string
 
   constructor(public appService: AppService) { }
 
   ngOnInit(): void {
+    const currentPosology = this.appService.GetCurrentPosology(this.prescription);
     this.prescription_id = this.prescription.prescription_id;
     this.prescription.__medications.sort(value => {
       return value.isprimary ? -1 : 1
@@ -80,12 +83,12 @@ export class PrescriptionInfusionTemplateComponent implements OnInit {
     }
 
     this.startDate = this.prescription.startdatetime;
-    if (moment(this.prescription.startdatetime).format("YYYYMMDDHHmm") != moment(this.appService.GetCurrentPosology(this.prescription).prescriptionstartdate).format("YYYYMMDDHHmm")) {
-      this.modifiedFrom = this.appService.GetCurrentPosology(this.prescription).prescriptionstartdate;
+    if (moment(this.prescription.startdatetime).format("YYYYMMDDHHmm") != moment(currentPosology.prescriptionstartdate).format("YYYYMMDDHHmm")) {
+      this.modifiedFrom = currentPosology.prescriptionstartdate;
     } else {
       this.modifiedFrom = null;
     }
- 
+
     this.GetRoutes();
     this.GetChoosenDays();
     this.getOxygenAditionalInformation();
@@ -99,12 +102,17 @@ export class PrescriptionInfusionTemplateComponent implements OnInit {
 
     this.GetDischargeSummaryMessage();
     this.getPrescriptionStatus();
+    if (currentPosology.prn && currentPosology.prnmaxdose) {
+      this.prnmaxdosestring = this.appService.GetPRNMaxDoseDisplayString(currentPosology.prnmaxdose);
+    }
+    this.prescribedConcentration = this.appService.CalculatePrescribedConcentration(this.prescription);
   }
+  
   GetRoutes() {
-    this.routes = this.prescription.__routes.sort((x,y)=> Number(y.isdefault) - Number(x.isdefault)).map(m => m.route).join(",");
+    this.routes = this.prescription.__routes.sort((x, y) => Number(y.isdefault) - Number(x.isdefault)).map(m => m.route).join(",");
   }
   GetChoosenDays() {
-    this.choosenDays = JSON.parse(this.appService.GetCurrentPosology(this.prescription,this.posologyid).daysofweek).join(", ");
+    this.choosenDays = JSON.parse(this.appService.GetCurrentPosology(this.prescription, this.posologyid).daysofweek).join(", ");
   }
   getOxygenAditionalInformation() {
     let arrayAdd = [];
@@ -154,7 +162,7 @@ export class PrescriptionInfusionTemplateComponent implements OnInit {
           this.dischargeSummarystatus = PrescriptionStatus.suspended;
         }
         else {
-          let allActive = allPrescription.filter(x => x.prescriptioncontext_id == this.appService.MetaPrescriptioncontext.find(y => y.context == PrescriptionContext.Inpatient).prescriptioncontext_id &&  x.prescriptionstatus_id != prescription_suspend_statusid && x.prescriptionstatus_id != prescription_stop_statusid && x.prescriptionstatus_id != prescription_cancel_statusid).slice().sort((b, a) => (moment(a.lastmodifiedon) > moment(b.lastmodifiedon)) ? 1 : ((moment(b.lastmodifiedon) > moment(a.lastmodifiedon)) ? -1 : 0));;
+          let allActive = allPrescription.filter(x => x.prescriptioncontext_id == this.appService.MetaPrescriptioncontext.find(y => y.context == PrescriptionContext.Inpatient).prescriptioncontext_id && x.prescriptionstatus_id != prescription_suspend_statusid && x.prescriptionstatus_id != prescription_stop_statusid && x.prescriptionstatus_id != prescription_cancel_statusid).slice().sort((b, a) => (moment(a.lastmodifiedon) > moment(b.lastmodifiedon)) ? 1 : ((moment(b.lastmodifiedon) > moment(a.lastmodifiedon)) ? -1 : 0));;
           if (allActive && allActive.length > 0) // added to drug chart as inpatient medicaiton but, not to discharge prescription 
           {
             this.dischargeSummaryComment = "Medicine suspended on discharge";
@@ -181,5 +189,5 @@ export class PrescriptionInfusionTemplateComponent implements OnInit {
     else
       this.prescriptionstatus = "active";
   }
-  
+
 }

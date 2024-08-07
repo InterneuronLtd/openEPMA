@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -83,7 +83,9 @@ export class WarningsModComponent implements OnInit {
 
   ngOnInit(): void {
   }
-
+  HideWarning() {
+    this.appService.HideWarning(WarningContext.mod);
+  }
   OnWarningsModuleUnLoad(e: any) {
   }
 
@@ -102,14 +104,15 @@ export class WarningsModComponent implements OnInit {
     //get current allergies,bsa and weight
     //if allergies,weight, BSA has changed from last refresh
     //if yes refresh from api
-    
+
     //change to condition on above logic
     if (this.appService.warningServiceMODContext.loader != true) {
       this.dr.TriggerWarningUpdateOnChanges(() => {
         if (this.appService.warningServiceMODContext.existingWarningsStatus == false) {
           this.refreshTemplate();
-          this.subjects.showMODWarnings.next();
-
+          if (!this.appService.AuthoriseAction("epma_supress_warningsmodalonload")) {
+            this.subjects.showMODWarnings.next();
+          }
           //reset mod complete if there is a new warning based on external changes like allergies
           this.subscriptions.add(forkJoin([
             this.apiRequest.getRequest(this.appService.baseURI + "/GetListByAttribute?synapsenamespace=local&synapseentityname=epma_medsondischarge&synapseattributename=encounterid&attributevalue=" + this.appService.encounter.encounter_id),
@@ -154,7 +157,7 @@ export class WarningsModComponent implements OnInit {
                   upsertManager.destroy();
 
                   if (this.appService.IsDataVersionStaleError(error)) {
-                    this.subjects.ShowRefreshPageMessage.next(error);
+                    this.appService.RefreshPageWithStaleError(error);
                   }
                 }
               );
@@ -165,11 +168,13 @@ export class WarningsModComponent implements OnInit {
         else {
           this.refreshTemplate();
         }
-      }, WarningContext.mod); 
+      }, WarningContext.mod);
     }
     else {
       if (this.appService.warningServiceMODContext.existingWarningsStatus == false) {
-        this.OpenWarnings();
+        if (!this.appService.AuthoriseAction("epma_supress_warningsmodalonload")) {
+          this.OpenWarnings();
+        }
       }
     }
     console.log("mod warnigns component loaded")

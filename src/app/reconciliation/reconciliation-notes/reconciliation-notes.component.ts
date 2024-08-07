@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.If not, see<http://www.gnu.org/licenses/>.
 //END LICENSE BLOCK 
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
 import { UpsertTransactionManager } from 'src/app/services/upsert-transaction-manager.service';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { Subscription } from 'rxjs';
@@ -36,12 +36,16 @@ import { CKEditor5, ChangeEvent, FocusEvent, BlurEvent } from '@ckeditor/ckedito
   templateUrl: './reconciliation-notes.component.html',
   styleUrls: ['./reconciliation-notes.component.css']
 })
-export class ReconciliationNotesComponent implements OnInit {
+export class ReconciliationNotesComponent implements OnInit, OnDestroy  {
 
   @Output() notesClose = new EventEmitter();
 
 
+  ngOnDestroy() {
 
+    this.subscriptions.unsubscribe();
+
+  }
   constructor(public subjects: SubjectsService, public appService: AppService, private apiRequest: ApirequestService) {
     this.Editor.defaultConfig = {
       toolbar: {
@@ -215,9 +219,9 @@ export class ReconciliationNotesComponent implements OnInit {
         upsertManager.destroy();
 
         if (this.appService.IsDataVersionStaleError(error)) {
-          this.subjects.ShowRefreshPageMessage.next(error);
+          this.appService.RefreshPageWithStaleError(error);
         }
-      }
+      }, false
     );
 
   }

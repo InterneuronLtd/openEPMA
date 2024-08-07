@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ export class RefWeightHeightComponent implements OnInit, OnDestroy {
   isSaving: boolean = false;
   invalidWeight = false;
   estimated = false;
-  constructor(private appService: AppService, private apiRequest: ApirequestService, private subjects: SubjectsService, public bsModalRef: BsModalRef) {
+  constructor(public appService: AppService, private apiRequest: ApirequestService, private subjects: SubjectsService, public bsModalRef: BsModalRef) {
     this.headerLabelText = "Reference weight";
     this.unitOfMeasure = "kg";
     this.init();
@@ -155,6 +155,9 @@ export class RefWeightHeightComponent implements OnInit, OnDestroy {
               }
               this.appService.setIdealBodyWeight();
 
+              this.appService.patientInfo.bsa = this.appService.bodySurfaceArea;
+              this.appService.patientInfo.weight = this.appService.refWeightValue;
+
               //this.subjects.weightChanged.next();
               this.bsModalRef.content.saveDone(true);
               this.bsModalRef.hide();
@@ -163,14 +166,14 @@ export class RefWeightHeightComponent implements OnInit, OnDestroy {
             }, (error) => {
               this.bsModalRef.hide();
               if (this.appService.IsDataVersionStaleError(error)) {
-                this.subjects.ShowRefreshPageMessage.next(error);
+                this.appService.RefreshPageWithStaleError(error);
               }
             })
           );
         }, (error) => {
           this.bsModalRef.hide();
           if (this.appService.IsDataVersionStaleError(error)) {
-            this.subjects.ShowRefreshPageMessage.next(error);
+            this.appService.RefreshPageWithStaleError(error);
           }
         })
       );

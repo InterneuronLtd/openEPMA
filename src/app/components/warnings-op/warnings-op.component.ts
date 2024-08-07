@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ import { WarningContext, WarningContexts, WarningService } from 'src/app/models/
 import { ApirequestService } from 'src/app/services/apirequest.service';
 import { AppService } from 'src/app/services/app.service';
 import { DataRequest } from 'src/app/services/datarequest';
+import { Common } from 'src/app/services/enum';
 import { SubjectsService } from 'src/app/services/subjects.service';
 
 @Component({
@@ -54,7 +55,9 @@ export class WarningsOpComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.SetComponentModuleData();
   }
-
+  HideWarning() {
+    this.appService.HideWarning(WarningContext.op);
+  }
   ngOnDestroy(): void {
     console.log("unloading warnings epma component - op")
   }
@@ -71,12 +74,12 @@ export class WarningsOpComponent implements OnInit, OnDestroy {
     this.componentModuleData = new ComponentModuleData();
     this.componentModuleData.elementTag = "app-warnings"
     this.componentModuleData.moduleContext.apiService = this.apiRequest;
-    this.componentModuleData.moduleContext.encouterId = this.appService.encounter.encounter_id;
+    this.componentModuleData.moduleContext.encouterId = Common.op_encounter_placeholder; //this.appService.encounter.encounter_id;
     this.componentModuleData.moduleContext.personId = this.appService.personId;
     this.componentModuleData.moduleContext.refreshonload = true;
     this.componentModuleData.moduleContext.existingwarnings = true;
     this.componentModuleData.moduleContext.newwarnings = false;
-    this.componentModuleData.moduleContext.enableOverride = this.appService.isCurrentEncouner;
+    this.componentModuleData.moduleContext.enableOverride = true;
     this.componentModuleData.moduleContext.warningContext =  this.warningcontext;
     this.componentModuleData.url = this.appService.appConfig.uris.warningscomponent;
   }

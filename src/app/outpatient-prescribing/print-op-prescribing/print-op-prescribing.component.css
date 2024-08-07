@@ -1,0 +1,12 @@
+tr.no-bottom-border td {
+    border-bottom: none
+  }
+
+  .table-dimensions{
+    width: 800px;
+    font-size: 15px;
+    margin-left: 30px;
+    margin-right: 30px;
+    letter-spacing: 0.25px;
+    word-spacing: 2px;
+  }

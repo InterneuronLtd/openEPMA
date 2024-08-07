@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -41,6 +41,7 @@ export class ReconciliationComponent implements OnInit, OnDestroy {
   @Input() Medsonadmission: Epma_Medsonadmission;
   @Input() Medsondischarge: Epma_Medsondischarge;
   @Input() Dischargesummarry: Epma_Dischargesummarry;
+  @Input() showDischargesummarryEncounter: boolean;
   @Input() isMedsondischargeOnce:any;
   @Output() EditType = new EventEmitter<FormContext>();
   isMOAComplete = false;
@@ -121,7 +122,7 @@ export class ReconciliationComponent implements OnInit, OnDestroy {
     this.Medsonadmission.action = "complete";
     this.Medsonadmission.modifiedon = this.appService.getDateTimeinISOFormat(new Date());
     this.Medsonadmission.modifiedby = this.appService.loggedInUserName;
-    this.Medsonadmission.notes = "";
+    
     Object.keys(this.Medsonadmission).map((e) => { if (e.startsWith("_")) delete this.Medsonadmission[e]; })
     var upsertManager = new UpsertTransactionManager();
     upsertManager.beginTran(this.appService.baseURI, this.apiRequest);
@@ -140,7 +141,7 @@ export class ReconciliationComponent implements OnInit, OnDestroy {
         upsertManager.destroy();
 
         if (this.appService.IsDataVersionStaleError(error)) {
-          this.subjects.ShowRefreshPageMessage.next(error);
+          this.appService.RefreshPageWithStaleError(error);
         }
       }
     );
@@ -172,7 +173,7 @@ export class ReconciliationComponent implements OnInit, OnDestroy {
         upsertManager.destroy();
 
         if (this.appService.IsDataVersionStaleError(error)) {
-          this.subjects.ShowRefreshPageMessage.next(error);
+          this.appService.RefreshPageWithStaleError(error);
         }
       }
     );
@@ -202,7 +203,7 @@ export class ReconciliationComponent implements OnInit, OnDestroy {
         upsertManager.destroy();
 
         if (this.appService.IsDataVersionStaleError(error)) {
-          this.subjects.ShowRefreshPageMessage.next(error);
+          this.appService.RefreshPageWithStaleError(error);
         }
       }
     );
@@ -413,7 +414,9 @@ export class ReconciliationComponent implements OnInit, OnDestroy {
     return false;
   }
 
-
+  viewDischargeSummary(){
+    this.subjects.frameworkEvent.next("LOAD_SECONDARY_MODULE_app-discharge-summary")
+  }
   startdischargesummery() {
 
     this.Dischargesummarry.epma_dischargesummarry_id = uuid();
@@ -442,7 +445,7 @@ export class ReconciliationComponent implements OnInit, OnDestroy {
         upsertManager.destroy(); 
 
         if (this.appService.IsDataVersionStaleError(error)) {
-          this.subjects.ShowRefreshPageMessage.next(error);
+          this.appService.RefreshPageWithStaleError(error);
         }
       },false
     );
@@ -488,7 +491,7 @@ export class ReconciliationComponent implements OnInit, OnDestroy {
         upsertManager.destroy();
 
         if (this.appService.IsDataVersionStaleError(error)) {
-          this.subjects.ShowRefreshPageMessage.next(error);
+          this.appService.RefreshPageWithStaleError(error);
         }
       }
     );
@@ -531,7 +534,7 @@ export class ReconciliationComponent implements OnInit, OnDestroy {
         upsertManager.destroy();
 
         if (this.appService.IsDataVersionStaleError(error)) {
-          this.subjects.ShowRefreshPageMessage.next(error);
+          this.appService.RefreshPageWithStaleError(error);
         }
       }
     );
@@ -545,6 +548,7 @@ export class ReconciliationComponent implements OnInit, OnDestroy {
     this.EditType.emit(FormContext.mod);
   }
   ngOnInit(): void {
+
     
     this.getCompletedhistory();
     if (this.Medsondischarge.epma_medsondischarge_id) {

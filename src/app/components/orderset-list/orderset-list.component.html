@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,15 +19,16 @@ You should have received a copy of the GNU General Public License
 along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <!--END LICENSE BLOCK--> 
 <div class="container" *ngIf="isDataLoaded">
-    <ng-template *ngIf="displayOrgOS" [ngTemplateOutlet]="ostemplate"
+    <ng-template *ngIf="GetordersetAccess('epma_access_org_ordersets') && displayOrgOS" [ngTemplateOutlet]="ostemplate"
         [ngTemplateOutletContext]="{ht:'O', ot:showOrganizationalOrderSets, oc:organizationalOrderSetsPrescriptions, heading:'Order sets'}">
     </ng-template>
 
-    <ng-template *ngIf="displayMyOS" [ngTemplateOutlet]="ostemplate"
+    <ng-template *ngIf="GetordersetAccess('epma_access_favourites_list') && displayMyOS" [ngTemplateOutlet]="ostemplate"
         [ngTemplateOutletContext]="{ht:'M', ot:showMyOrderSets, oc:myOrderSetsPrescriptions, heading:'My favourites'}">
     </ng-template>
 
-    <ng-template *ngIf="displayPatientOS" [ngTemplateOutlet]="ostemplate"
+    <ng-template *ngIf="GetordersetAccess('epma_access_patient_list') && displayPatientOS"
+        [ngTemplateOutlet]="ostemplate"
         [ngTemplateOutletContext]="{ht:'P', ot:showPatientOrderSet, oc:patientOrderSetsPrescriptions,heading:'Patient lists'}">
     </ng-template>
 
@@ -48,10 +49,10 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
     <div class="row">
         <div class="col">
             <div
-                [ngClass]="{'container border':headertoggle!='MOA' && headertoggle!='MOD'&& headertoggle!='POA' && headertoggle!='CM' && headertoggle!='ST'}">
+                [ngClass]="{'container border':headertoggle!='GPC' && headertoggle!='MOA' && headertoggle!='MOD'&& headertoggle!='POA' && headertoggle!='CM' && headertoggle!='ST'}">
                 <div *ngIf="headertoggle!='CM'" class="row row-header">
                     <div (click)="toggleHeader(headertoggle)"
-                        [ngClass]="{'col':true, 'ml-3':headertoggle=='MOA' || headertoggle=='MOD'|| headertoggle=='POA' || headertoggle=='CM' || headertoggle=='ST'}">
+                        [ngClass]="{'col':true, 'ml-3': headertoggle=='GPC' ||  headertoggle=='MOA' || headertoggle=='MOD'|| headertoggle=='POA' || headertoggle=='CM' || headertoggle=='ST'}">
                         <a href="javascript:void(0)"
                             style="font-size: small; font-weight: bold; color: black;text-decoration: none;">
                             <img src="assets/images/epma/down-arrow.png" style="width: 20px; height: 20px;"
@@ -63,7 +64,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                     </div>
                     <div class="col">
                         <input type="text" placeholder="Search" class="form-control"
-                            *ngIf="ordersetstoggle && heading!='Patient lists'"
+                            *ngIf="ordersetstoggle && heading!='Patient lists' && headertoggle!='GPC' && headertoggle!='CM' && headertoggle!='MOA' && headertoggle!='MOD'&& headertoggle!='POA' && headertoggle!='ST'"
                             (input)="FilterOrderSets(ordersetcontext, $event.target.value)">
 
                     </div>
@@ -73,8 +74,8 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                     <div *ngFor="let node of ordersetcontext">
                         <div class="row row-header" *ngIf="node.visible!=false">
                             <div
-                                [ngClass]="{'col-8': headertoggle!='CM' && headertoggle!='MOA' && headertoggle!='MOD'&& headertoggle!='POA' && headertoggle!='CM' && headertoggle!='ST', 'ml-3':headertoggle=='CM',
-                            'ml-5':headertoggle=='MOA' || headertoggle=='MOD'|| headertoggle=='POA'  || headertoggle=='ST'}">
+                                [ngClass]="{'col-6': headertoggle!='GPC' &&  headertoggle!='CM' && headertoggle!='MOA' && headertoggle!='MOD'&& headertoggle!='POA' && headertoggle!='CM' && headertoggle!='ST', 'ml-3':headertoggle=='CM',
+                            'ml-5': headertoggle=='GPC' || headertoggle=='MOA' || headertoggle=='MOD'|| headertoggle=='POA'  || headertoggle=='ST'}">
                                 &nbsp;&nbsp;&nbsp;
                                 <a href="javascript:void(0)" (click)="toggleChild(node)"
                                     style="font-size: small; font-weight: bold; color: black;text-decoration: none;">
@@ -84,10 +85,13 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                         *ngIf="!node.showPrescriptions">
                                     {{ node.orderSetName }}
                                 </a>
-                                
+                            </div>
+                            <div class="col-2 text-right">
+                                <a *ngIf="node.notes" href="javascript:void(0)" (click)="showMOANotespop(node.notes)">
+                                    Notes </a>
                             </div>
                             <div class="col-4 text-right">
-                               
+
                                 <a href="javascript:void(0)" *ngIf="node.defined_criteria"
                                     (click)="openModal(template, node.defined_criteria)">
                                     <img src="assets/images/epma/therapy/Drug_Information.svg" title="Information">
@@ -99,12 +103,12 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                         title="Add Order set to Prescription Basket">
                                 </a> -->
                                 &nbsp;
-                                <a *ngIf="(headertoggle=='O' && appService.AuthoriseAction('epma_create_org_orderset')) || headertoggle=='M'" href="javascript:void(0)"
-                                (click)='editOrderSet(node.prescriptionorderset_id, "P")'>
-                                Edit
-                               </a>
+                                <a *ngIf="(headertoggle=='O' && appService.AuthoriseAction('epma_create_org_orderset')) || headertoggle=='M'"
+                                    href="javascript:void(0)" (click)='editOrderSet(node.prescriptionorderset_id, "P")'>
+                                    Edit
+                                </a>
                                 &nbsp;
-                                <a *ngIf="(headertoggle!='O' && headertoggle!='MOA' && headertoggle!='MOD'&& headertoggle!='POA' && headertoggle!='CM' && headertoggle!='ST')
+                                <a *ngIf="(headertoggle!='GPC' && headertoggle!='O' && headertoggle!='MOA' && headertoggle!='MOD'&& headertoggle!='POA' && headertoggle!='CM' && headertoggle!='ST')
                                  || (headertoggle=='O' && appService.AuthoriseAction('epma_create_org_orderset'))"
                                     href="javascript:void(0)"
                                     (click)='deleteOrderSet(node.prescriptionorderset_id, "P")'>
@@ -114,14 +118,20 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                         </div>
                         <div class="row border-bottom" *ngIf="node.showPrescriptions">
                             <div class="border border-bottom-0 container-fluid" *ngFor="let pre of node.prescriptions">
-                                <div *ngIf="node.visible!=false" class="row align-items-center">
+                                <div *ngIf="node.visible!=false" [ngClass]="AddMedicationClass(pre)"
+                                    class="row align-items-center">
                                     <div class="col-10">
-                                        <app-prescription-template [prescription]="pre"
-                                            componenttype="medicationOrderSet"></app-prescription-template>
+                                        <app-prescription-template [prescription]="pre" componenttype="medicationOrderSet"></app-prescription-template>
+                                        
+                                        <!-- <div *ngIf="headertoggle == 'GPC'" style="margin-left: 60px; margin-top: -40px; ">
+                                            <p [innerHTML]="pre.__GpConnect.displayinfo"></p>
+                                        </div> -->
+                                        <div class="empa-template-label"></div>
                                     </div>
-                                    <div class="col-2">
+                                    <div class="col-2"> 
                                         <div class="row">
                                             <div class="col text-right align-text-top">
+                                                
                                                 <a href="javascript:void(0)" (click)='editPrescription(pre)'>
                                                     <img src="assets/images/epma/therapy/Edit_And_Add.svg"
                                                         title="Edit Prescription">
@@ -133,7 +143,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                                         title="Prescribe by carrying over">
                                                 </a> -->
                                                 &nbsp;
-                                                <a *ngIf="(headertoggle!='O' && headertoggle!='MOA' && headertoggle!='MOD'&& headertoggle!='POA' && headertoggle!='CM' && headertoggle!='ST')
+                                                <a *ngIf="(headertoggle!='GPC' && headertoggle!='O' && headertoggle!='MOA' && headertoggle!='MOD'&& headertoggle!='POA' && headertoggle!='CM' && headertoggle!='ST')
                                                 || (headertoggle=='O' && appService.AuthoriseAction('epma_create_org_orderset'))"
                                                     href="javascript:void(0)"
                                                     (click)="deletePrescriptionFromOrderSet(node.prescriptionorderset_id, pre.prescription_id)">
@@ -167,14 +177,70 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                         </ng-template>
 
                         <ng-template *ngIf="displaySTOS" [ngTemplateOutlet]="ostemplate"
-                            [ngTemplateOutletContext]="{ht:'ST', ot:showSTOrderSet, oc:StoppedMOAPrescriptions,heading:'Stopped Admission Therapies'}">
+                            [ngTemplateOutletContext]="{ht:'ST', ot:showSTOrderSet, oc:StoppedMOAPrescriptions,heading:'Stopped/Completed Admission Therapies'}">
                         </ng-template>
+
+                        <ng-template *ngIf="displayGPC" [ngTemplateOutlet]="ostemplate"
+                            [ngTemplateOutletContext]="{ht:'GPC', ot:showGPConnectOrderSet, oc:GPConnectPrescriptions,heading:gpconnectheading}">
+                        </ng-template>
+
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </ng-template>
+
+<div *ngIf="showNotespopup" class="modal fade bd-example-modal-lg"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
+    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel2"
+    aria-hidden="true">
+    <div class="modal-dialog  modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="padding: 0.3rem 1rem; background-color: #E6E6E6">
+                <b>MOA Notes</b>
+
+            </div>
+
+
+            <div class="modal-body" style="max-height: 630px; overflow-y: scroll;">
+
+                <b> <span>Note : </span> </b>
+
+
+                <!-- <ckeditor [(ngModel)]="latestNotes" [editor]="Editor"  id="classic-editor"
+                    name="classic-editor" >
+                </ckeditor> -->
+                <div class="border rounded" style="padding:10px; word-wrap: break-word;" [innerHTML]="latestNotes">
+                </div>
+                <!-- <textarea [disabled]="!appService.isCurrentEncouner" class="form-control" rows="15"
+                    [(ngModel)]="latestNotes"></textarea> -->
+                <!-- <span *ngIf="opnoteserror" style="color: red;">Please Enter Notes</span>
+                <div class="row">
+                    <div class="col-12" style="max-height: 100px;overflow-y: scroll;">
+
+                        <div class="row" *ngFor="let model of OpnotesHistory; let i = index;">
+                            <div class=" col-4">{{model.modifiedon| date:"dd-MMM-yyyy"}}</div>
+                            <div class=" col-4">{{model.modifiedby}}</div>
+                            <div class=" col-4"><button type="button" data-toggle="modal"
+                                    (click)="sethistorynotes(model.notes)" data-target="#exampleModalnotesOPNotes"
+                                    class="btn btn-link">version {{OpnotesHistory.length - i}}</button></div>
+
+                        </div>
+
+                    </div>
+                  
+                </div> -->
+            </div>
+
+            <div class="modal-footer">
+                <!-- <button type="button" (click)="SavePrescriptionNotes()" class="btn btn-info">Save</button> -->
+                <button type="button" (click)="closepopupNotes()" class="btn btn-secondary"
+                    data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!--Modal Window for showing Defined Criteria-->
 <ng-template #template>
@@ -218,25 +284,26 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
 
 
-<div *ngIf="showaddtoorderset" class="modal fade bd-example-modal-lg" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal
-    tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
-    aria-labelledby="myExtraLargeModalLabel2" aria-hidden="true">
+<div *ngIf="showaddtoorderset" class="modal fade bd-example-modal-lg"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
+    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel2"
+    aria-hidden="true">
     <div class="modal-dialog  modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header" style="padding: 0.5rem 1rem; background-color: #E6E6E6">
                 <b>Order Set Update</b>
-              
-            </div>
-           
-           
-<div class="modal-body">
-    <app-addto-orderset  [patientid]="patientId" [ownerid]="ownerId" [orderset_id]="orderset_id"
-        [prescriptions]="nullprescription" (Cancelled)="OnOrderSetCancelled()"
-        (Complete)="OnOrderSetComplete()" (Failed)="OnOrderSetFailed($event)">
-    </app-addto-orderset>
-</div>
 
-            
+            </div>
+
+
+            <div class="modal-body">
+                <app-addto-orderset [patientid]="patientId" [ownerid]="ownerId" [orderset_id]="orderset_id"
+                    [prescriptions]="nullprescription" (Cancelled)="OnOrderSetCancelled()"
+                    (Complete)="OnOrderSetComplete()" (Failed)="OnOrderSetFailed($event)">
+                </app-addto-orderset>
+            </div>
+
+
         </div>
     </div>
 </div>

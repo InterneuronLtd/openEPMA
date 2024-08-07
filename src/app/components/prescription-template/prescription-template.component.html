@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <!--END LICENSE BLOCK--> 
-<div [ngClass]="{'epma-bg-gray': (prescriptionstatus=='suspended'|| prescriptionstatus=='stopped' || prescriptionstatus=='cancelled' || isMOAPrescription) && componenttype!='therapyoverview'}"
+<div [ngClass]="{'epma-bg-gray': (prescriptionstatus=='suspended'|| prescriptionstatus=='stopped' || prescription.__completed == true  || prescriptionstatus=='cancelled' || isMOAPrescription) && componenttype!='therapyoverview'}"
     class="p-card-template"
     *ngIf="componenttype=='timeline' || componenttype=='therapyoverview'  || componenttype=='therapytimeline'">
     <ng-container *ngTemplateOutlet="statustemplate"></ng-container>
@@ -46,8 +46,8 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
             <div class="col-4" *ngIf="componenttype!='therapyoverview'">
                 <div style="display: flex;float:right;">
                     <button title="{{NursingInstruction }}"
-                        *ngIf="prescription.__nursinginstructions && prescription.__nursinginstructions.length >0"
-                        (click)="showNursingInstructions()" type="button"
+                        *ngIf="(prescription.__nursinginstructions && prescription.__nursinginstructions.length >0) || nursingInstruction"
+                        (click)="showNursingInstructions(componenttype)" type="button"
                         class='{{"btn-flat btn-menu pharmacist-property-icon Nursing_Instruction"}}'></button>
                     <button title="{{pharmacyreview }}" *ngIf="reviewStatusIcon" (click)="openPrescriptionHistory()"
                         type="button"
@@ -77,7 +77,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                             </div>
                         </a>
                         <ul class="dropdown-menu" [ngClass]="{'dropdown-menu-left': componenttype=='therapytimeline'}">
-                            <li *ngIf="appService.AuthoriseAction('epma_edit_ip') && prescriptionstatus!='suspended' && prescriptionstatus!='stopped'  && prescriptionstatus!='cancelled'  && !(appService.GetCurrentPosology(prescription).infusiontypeid=='ci' || appService.GetCurrentPosology(prescription).infusiontypeid=='rate' ) && appService.bannerWarningStatus && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus"
+                            <li *ngIf="appService.AuthoriseAction('epma_edit_ip') && prescriptionstatus!='suspended' && prescriptionstatus!='stopped'  && prescriptionstatus!='cancelled'  && !(appService.GetCurrentPosology(prescription).infusiontypeid=='ci' || appService.GetCurrentPosology(prescription).infusiontypeid=='pca' || appService.GetCurrentPosology(prescription).infusiontypeid=='rate' ) && appService.bannerWarningStatus && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus"
                                 role="menuitem">
                                 <a class="dropdown-item" (click)="editTherapy()" href="#">
                                     <div class="icon-edittherapy dc-icon-menu"><span class="dc-icon-menu-text">Edit
@@ -86,7 +86,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                 </a>
                             </li>
                             <li role="menuitem"
-                                *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid!='ci' && !isMOAPrescription && prescriptionstatus!='suspended' && prescriptionstatus!='stopped' && prescriptionstatus!='cancelled'">
+                                *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid!='ci' && appService.GetCurrentPosology(prescription).infusiontypeid!='pca' && !isMOAPrescription && prescriptionstatus!='suspended' && prescriptionstatus!='stopped' && prescriptionstatus!='cancelled'">
                                 <a (click)="suspendTherapy()" class="dropdown-item" href="javascript:void(0)">
                                     <div class="icon-suspendtherapy dc-icon-menu"><span
                                             class="dc-icon-menu-text">Suspend therapy</span></div>
@@ -99,88 +99,24 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                             therapy</span></div>
                                 </a>
                             </li>
-                            <li style="display: none;" role="menuitem"><a (click)="selfAdministration()"
-                                    class="dropdown-item" href="javascript:void(0)">
-                                    <div class="icon-selfadministration dc-icon-menu"> <span
-                                            class="dc-icon-menu-text">Self administration/Perfusion pump</span></div>
-                                </a>
-                            </li>
-                            <li *ngIf="appService.AuthoriseAction('epma_schedule_additionaladministration') && !appService.GetCurrentPosology(prescription).prn && !isMOAPrescription && appService.GetCurrentPosology(prescription).infusiontypeid!='ci' && appService.GetCurrentPosology(prescription).infusiontypeid!='rate' && prescriptionstatus!='suspended' && prescriptionstatus!='stopped'  && prescriptionstatus!='cancelled' && appService.bannerWarningStatus && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus"
+                            <li *ngIf="appService.AuthoriseAction('epma_schedule_additionaladministration') && !appService.GetCurrentPosology(prescription).prn && !isMOAPrescription && appService.GetCurrentPosology(prescription).infusiontypeid!='ci' && appService.GetCurrentPosology(prescription).infusiontypeid!='pca' && appService.GetCurrentPosology(prescription).infusiontypeid!='rate'  && appService.GetCurrentPosology(prescription).frequency!='stat' && prescriptionstatus!='suspended' && prescriptionstatus!='stopped'  && prescriptionstatus!='cancelled' && appService.bannerWarningStatus && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus"
                                 role="menuitem"><a (click)="scheduleAdditionalAdministration()" class="dropdown-item"
                                     href="javascript:void(0)">
                                     <div class="dc-icon-plus dc-icon-menu"> <span class="dc-icon-menu-text">Schedule
                                             additional administration</span></div>
                                 </a>
                             </li>
-                            <li *ngIf="appService.AuthoriseAction('epma_record_additionaladministration') && !appService.GetCurrentPosology(prescription).prn && !isMOAPrescription && appService.GetCurrentPosology(prescription).infusiontypeid!='ci' && appService.GetCurrentPosology(prescription).infusiontypeid!='rate' && prescriptionstatus!='suspended'  && appService.bannerWarningStatus && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus"
-                                role="menuitem"><a (click)="recordAdditionalAdministration()" class="dropdown-item"
-                                    href="javascript:void(0)">
-                                    <div class="dc-icon-plus dc-icon-menu"> <span class="dc-icon-menu-text">Record
-                                            additional administration</span></div>
-                                </a>
-                            </li>
-                            <li style="display: none;" role="menuitem"><a class="dropdown-item"
-                                    href="javascript:void(0)">
-                                    <div class="icon-preparemed dc-icon-menu"><span class="dc-icon-menu-text">Prepare
-                                            medication</span></div>
-                                </a>
-                            </li>
-                            <li style="display: none;" role="menuitem"><a
-                                    *ngIf="!isresupply && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus"
-                                    (click)="pleaseResupply()" class="dropdown-item" href="javascript:void(0)">
-                                    <div class="icon-pleaseresupply dc-icon-menu"><span class="dc-icon-menu-text">Please
-                                            resupply</span></div>
-                                </a>
-                            </li>
-
-                            <li *ngIf="!isMOAPrescription && isAdministered && appService.GetCurrentPosology(prescription).infusiontypeid && !(eventType=='pause' || eventType=='endinfusion') && prescriptionstatus!='suspended' && prescriptionstatus!='stopped'  && prescriptionstatus!='cancelled' && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus"
-                                role="menuitem"><a (click)="changeInfusion()" class="dropdown-item"
-                                    href="javascript:void(0)">
-                                    <div class="icon-changeinfusion dc-icon-menu"><span class="dc-icon-menu-text">Change
-                                            kit/device</span></div>
-                                </a>
-                            </li>
-                            <!-- <li *ngIf="!isMOAPrescription && isAdministered && appService.GetCurrentPosology(prescription).infusiontypeid=='ci' && !(eventType=='pause' || eventType=='endinfusion') && prescriptionstatus!='suspended' && prescriptionstatus!='stopped'  && prescriptionstatus!='cancelled' "
-                                role="menuitem"><a (click)="addInfusionRate()" class="dropdown-item"
-                                    href="javascript:void(0)">
-                                    <div class="dc-icon-plus dc-icon-menu"><span class="dc-icon-menu-text">Adjust
-                                            infusion
-                                            rate</span></div>
-                                </a>
-                            </li> -->
-                            <!-- <li *ngIf="!isMOAPrescription && isAdministered && appService.GetCurrentPosology(prescription).infusiontypeid=='ci' && !(eventType=='pause' || eventType=='endinfusion') && prescriptionstatus!='suspended' && prescriptionstatus!='stopped'  && prescriptionstatus!='cancelled' "
-                                role="menuitem"><a (click)="pauseInfusion()" class="dropdown-item"
-                                    href="javascript:void(0)">
-                                    <div class="dc-icon-plus dc-icon-menu"><span class="dc-icon-menu-text">Pause
-                                            infusion</span>
-                                    </div>
-                                </a>
-                            </li> -->
-                            <!-- <li *ngIf="!isMOAPrescription && isAdministered && !isPrescriptionGas && (appService.GetCurrentPosology(prescription).infusiontypeid=='ci' || appService.GetCurrentPosology(prescription).infusiontypeid=='bolus') && !(eventType=='pause' || eventType=='endinfusion') && prescriptionstatus!='suspended' && prescriptionstatus!='stopped'  && prescriptionstatus!='cancelled' "
-                                role="menuitem"><a (click)="addBolus()" class="dropdown-item" href="javascript:void(0)">
-                                    <div class="dc-icon-plus dc-icon-menu"><span class="dc-icon-menu-text">Add
-                                            bolus</span>
-                                    </div>
-                                </a>
-                            </li> -->
-                            <!-- <li *ngIf="!isMOAPrescription && isAdministered && appService.GetCurrentPosology(prescription).infusiontypeid=='ci' && eventType=='pause' && prescriptionstatus!='suspended' && prescriptionstatus!='stopped'  && prescriptionstatus!='cancelled' "
-                                role="menuitem"><a (click)="restartInfusion()" class="dropdown-item"
-                                    href="javascript:void(0)">
-                                    <div class="dc-icon-plus dc-icon-menu"><span class="dc-icon-menu-text">Restart
-                                            infusion</span></div>
-                                </a>
-                            </li> -->
                         </ul>
                     </li>
                     <li class="dropdown-submenu multi-level"
                         *ngIf="!isMOAPrescription && prescriptionstatus!='stopped' && prescriptionstatus!='cancelled' && (appService.AuthoriseAction('epma_access_patientdrugs_ip') || appService.AuthoriseAction('epma_access_supplyrequest_ip')) && appService.bannerWarningStatus && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus"
                         [ngClass]="{'dropdown-submenu-left': componenttype=='therapytimeline'}">
-                        <a (click)="$event.stopPropagation()" class="dropdown-item" tabindex="-1" href="#">
+                        <a (click)="supplyRequest(componenttype)" class="dropdown-item" tabindex="-1" href="#">
                             <div class="please-resupply dc-icon-menu">
                                 <span class="dc-icon-menu-text">Supply</span>
                             </div>
                         </a>
-                        <ul class="dropdown-menu" [ngClass]="{'dropdown-menu-left': componenttype=='therapytimeline'}">
+                        <!-- <ul class="dropdown-menu" [ngClass]="{'dropdown-menu-left': componenttype=='therapytimeline'}">
                             <li *ngIf="appService.AuthoriseAction('epma_access_patientdrugs_ip')" role="menuitem">
                                 <a class="dropdown-item" (click)="patientDrugs()" href="#">
                                     <div class="empa-p-drug dc-icon-menu"><span class="dc-icon-menu-text">Patient's
@@ -194,15 +130,15 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                             Requests</span></div>
                                 </a>
                             </li>
-                        </ul>
+                        </ul> -->
                     </li>
-                    <li *ngIf="!isMOAPrescription" role="menuitem"><a class="dropdown-item" href="javascript:void(0)"
-                            (click)="reminder()">
+                    <li *ngIf="!isMOAPrescription && appService.AuthoriseAction('epma_access_reminder_ip')"
+                        role="menuitem"><a class="dropdown-item" href="javascript:void(0)" (click)="reminder()">
                             <div class="template-reminder-icon-set dc-icon-menu"><span
                                     class="dc-icon-menu-text">Reminder</span></div>
                         </a>
                     </li>
-                    <li *ngIf="appService.isCurrentEncouner && !isMOAPrescription && appService.AuthoriseAction('epma_copy_ip') && appService.bannerWarningStatus && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus"
+                    <li *ngIf="!isMOAPrescription && appService.AuthoriseAction('epma_copy_ip') && appService.bannerWarningStatus && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus"
                         role="menuitem"><a class="dropdown-item" href="javascript:void(0)" (click)="editTherapy(true)">
                             <div class="icon-copy dc-icon-menu"><span class="dc-icon-menu-text">Copy</span></div>
                         </a>
@@ -212,11 +148,24 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                     information</span></div>
                         </a>
                     </li>
+                    <li *ngIf="appService.AuthoriseAction('epma_access_nursinginstructions_ip')" role="menuitem"><a
+                            (click)="showNursingInstructions(componenttype)" class="dropdown-item" href="javascript:void(0)">
+                            <div class="icon-nursing dc-icon-menu"><span class="dc-icon-menu-text">Nursing
+                                    instructions</span></div>
+                        </a>
+                    </li>
+                    <li *ngIf="appService.AuthoriseAction('epma_record_additionaladministration') && !appService.GetCurrentPosology(prescription).prn && !isMOAPrescription && appService.GetCurrentPosology(prescription).infusiontypeid!='ci' && appService.GetCurrentPosology(prescription).infusiontypeid!='pca' && appService.GetCurrentPosology(prescription).infusiontypeid!='rate'  && appService.GetCurrentPosology(prescription).frequency!='stat' && prescriptionstatus!='suspended'  && appService.bannerWarningStatus && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus"
+                        role="menuitem"><a (click)="recordAdditionalAdministration()" class="dropdown-item"
+                            href="javascript:void(0)">
+                            <div class="dc-icon-plus dc-icon-menu"> <span class="dc-icon-menu-text">Record
+                                    additional administration</span></div>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
         <div title={{resupply}}>
-            <button *ngIf="isresupply==true" type="button" class="btn-flat btn-menu please-resupply">
+            <button *ngIf="isresupply==true" type="button" class="btn-flat btn-menu {{supplyIcon}}">
 
             </button>
         </div>
@@ -242,14 +191,16 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
 
 <div class="p-card-template p-1"
-    *ngIf="componenttype=='medication' || componenttype=='medicationOrderSet'  || componenttype=='medication_rec' || componenttype=='medication_rec_moa'">
+    *ngIf="componenttype=='medication_op' || componenttype=='medication' || componenttype=='medicationOrderSet'  || componenttype=='medication_rec' || componenttype=='medication_rec_moa'">
+    <div class="width-s1 suspended-status-line" *ngIf="prescriptionstatus=='suspended'"> </div>
+
     <div class="width-s2">
         <div class='{{"layers-container therapy-type "  + therapyType }}'>
 
         </div>
     </div>
     <div class="width-s3">
-        <div *ngIf="!appService.GetCurrentPosology(prescription).infusiontypeid">
+        <div *ngIf="!appService.GetCurrentPosology(prescription).infusiontypeid" [style.margin-top]="prescription.__GpConnect ?  '5px' :  null">
             <app-prescription-non-infusion-template [prescription]="prescription" componenttype={{componenttype}}>
             </app-prescription-non-infusion-template>
         </div>
@@ -258,12 +209,16 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
             <app-prescription-infusion-template [prescription]="prescription" componenttype={{componenttype}}>
             </app-prescription-infusion-template>
         </div>
-        <div *ngIf="componenttype=='medication_rec' || componenttype=='medication_rec_moa'">
+        <div
+            *ngIf="componenttype=='medication' || componenttype=='medication_rec' || componenttype=='medication_rec_moa'">
             <ng-container *ngTemplateOutlet="fromuntilsection;context: { componenttype: componenttype}"></ng-container>
-        </div>   
+        </div>
+        <!-- <button title="{{pharmacyreview }}" *ngIf="reviewStatusIcon == 'MOA_Has_Notes'" (click)="openPrescriptionHistory()"
+        type="button"
+        class='{{"float-right btn-flat btn-menu pharmacist-property-icon "  + reviewStatusIcon }}'></button>  -->
     </div>
     <div class="width-s4" style="position: unset;"
-        *ngIf="componenttype=='medication'  || componenttype=='medication_rec' || componenttype=='medication_rec_moa'">
+        *ngIf="componenttype=='medication_op' || componenttype=='medication'  || componenttype=='medication_rec' || componenttype=='medication_rec_moa'">
         <div class="direction-horizontal-nowrap justify-content-flex-end align-items-flex-start align-content-center"
             tabindex="-1" tm-element="true">
             <div class="btn-group" container="body" dropdown placement="right top">
@@ -281,8 +236,15 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                             <div class="icon-stoporremove dc-icon-menu"><span class="dc-icon-menu-text">Delete</span>
                             </div>
                         </a></li>
-                    <li *ngIf="componenttype!='medication_rec' && componenttype!='medication_rec_moa'" componenttype role="menuitem"><a class="dropdown-item"
-                            href="javascript:void(0)" (click)="medicationBasketAction('orderset')">
+                    <li *ngIf="componenttype=='medication_op'" role="menuitem"><a class="dropdown-item"
+                            href="javascript:void(0)" (click)="medicationBasketAction('Copy')">
+                            <div class="icon-copy dc-icon-menu"><span class="dc-icon-menu-text">Copy</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li *ngIf="componenttype!='medication_rec' && componenttype!='medication_rec_moa' && componenttype!='medication_op'"
+                        componenttype role="menuitem"><a class="dropdown-item" href="javascript:void(0)"
+                            (click)="medicationBasketAction('orderset')">
                             <div *ngIf="!appService.AuthoriseAction('epma_create_org_orderset')"
                                 class="dc-icon-plus dc-icon-menu"><span class="dc-icon-menu-text">Add to
                                     Favourites</span></div>
@@ -294,6 +256,12 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
             </div>
         </div>
 
+    </div>
+    <div *ngIf="componenttype=='medicationOrderSet' && !appService.GetCurrentPosology(prescription).infusiontypeid"
+        class="width-s4"><br /><br />
+        <button style="vertical-align:middle;" *ngIf="reviewStatusIcon == 'MOA_Has_Notes'" title="{{pharmacyreview }}"
+            (click)="openPrescriptionHistory()" type="button"
+            class='{{"float-right btn-flat btn-menu pharmacist-property-icon "  + reviewStatusIcon }}'></button>
     </div>
 </div>
 
@@ -344,8 +312,9 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
         <div class="row">
             <div class="col">
                 <div style="display: flex;float:right;">
-                    <button *ngIf="prescription.__nursinginstructions && prescription.__nursinginstructions.length >0"
-                        (click)="showNursingInstructions()" type="button"
+                    <button
+                        *ngIf="(prescription.__nursinginstructions && prescription.__nursinginstructions.length >0) || nursingInstruction"
+                        (click)="showNursingInstructions(componenttype)" type="button"
                         class='{{"btn-flat btn-menu pharmacist-property-icon Nursing_Instruction"}}'></button>
                     <!-- <button *ngIf="reviewStatusIcon" (click)="openPrescriptionHistory()" type="button"
                         class='{{"btn-flat btn-menu pharmacist-property-icon "  + reviewStatusIcon }}'></button> -->
@@ -356,7 +325,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
 </div>
 
-<div class="p-card-template" *ngIf="componenttype=='additional'">
+<div class="p-card-template" *ngIf="componenttype=='additional' || componenttype=='adjustinfusion'">
     <div class="width-s1 active-status-line" *ngIf="prescriptionstatus=='active'"> </div>
     <div class="width-s1 stopped-status-line" *ngIf="prescriptionstatus=='stopped' || prescriptionstatus=='cancelled'">
     </div>
@@ -397,6 +366,16 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
             <button (click)="doseTitration()" type="button" class="btn-flat btn-menu line-chart"
                 aria-controls="dropdown-basic">
             </button>
+        </div>
+        <div class="row" *ngIf="componenttype=='adjustinfusion'">
+            <div class="col">
+                <div style="display: flex;float:right;">
+                    <button
+                        *ngIf="(prescription.__nursinginstructions && prescription.__nursinginstructions.length >0) || nursingInstruction"
+                        (click)="showNursingInstructions(componenttype)" type="button"
+                        class='{{"btn-flat btn-menu pharmacist-property-icon Nursing_Instruction"}}'></button>                    
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -449,7 +428,8 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
     <div class="width-s2-medrec" #poptherapy="bs-popover" container="body" [outsideClick]="true"
         [popover]="medicationDetailPopover" placement="right">
         <div class='{{"layers-container med-rec-therapy-type "  + therapyType }}'>
-            <div style="left: -8px;" *ngIf="componenttype=='MOD' || componenttype=='SUM'"
+            <div style="left: -8px;"
+                *ngIf="(componenttype=='MOD' || componenttype=='SUM') && appService.appConfig.AppSettings.ShowMOAArrowMedRec"
                 [ngClass]="'layer v-center h-left status-icon continued-therapy'">
             </div>
         </div>
@@ -467,11 +447,12 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
             <div class="col-4">
                 <div style="display: flex;float:right;">
                     <button
-                        *ngIf="componenttype=='MOA' && prescription.__nursinginstructions && prescription.__nursinginstructions.length >0"
-                        (click)="showNursingInstructions()" type="button"
+                        *ngIf="componenttype=='MOA' && ((prescription.__nursinginstructions && prescription.__nursinginstructions.length >0) || nursingInstruction)"
+                        (click)="showNursingInstructions(componenttype)" type="button"
                         class='{{"btn-flat btn-menu pharmacist-property-icon Nursing_Instruction"}}'></button>
-                    <button *ngIf="(componenttype=='MOA' || componenttype=='SUM' || componenttype=='SUMNO') && reviewStatusIcon" (click)="openPrescriptionHistory()"
-                        type="button"
+                    <button
+                        *ngIf="(componenttype=='MOA' || componenttype=='SUM' || componenttype=='SUMNO') && reviewStatusIcon"
+                        (click)="openPrescriptionHistory()" type="button"
                         class='{{"btn-flat btn-menu pharmacist-property-icon "  + reviewStatusIcon }}'></button>
                     <!-- below is dummy button only for alignment in reconcelation  -->
                     <div *ngIf="componenttype=='SUM' || componenttype=='SUMNO' || componenttype=='MOD' || componenttype=='MODNO'"
@@ -481,39 +462,33 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
         </div>
     </div>
     <div class="width-s4" style="position: unset;">
-        <div *ngIf="componenttype=='SUMNO' || componenttype=='MOA' || componenttype=='SUM' || componenttype=='OP'"
+        <div *ngIf="componenttype=='SUMNO' || componenttype=='MOD'  || componenttype=='MODNO' || componenttype=='MOA' || componenttype=='SUM' || componenttype=='OP'"
             class="direction-horizontal-nowrap justify-content-flex-end align-items-flex-start align-content-center"
             tabindex="-1" tm-element="true">
-            <div class="btn-group" container="body" dropdown placement="right top">
+            <div class="btn-group" container="body" dropdown placement="right top" *ngIf="isMedRecMenu">
                 <button id="button-basic" dropdownToggle type="button" class="btn-flat btn-menu menu-icon"
                     aria-controls="dropdown-basic">
                 </button>
-                <ul id="dropdown-basic" *dropdownMenu  class="dropdown-menu dropdown-menu-right"  role="menu" aria-labelledby="button-basic">
+                <ul id="dropdown-basic" *dropdownMenu class="dropdown-menu dropdown-menu-right" role="menu"
+                    aria-labelledby="button-basic">
                     <li role="menuitem"
-                        *ngIf="componenttype=='MOA' && appService.AuthoriseAction('epma_access_patientdrugs_moa')">
+                        *ngIf="(componenttype=='MOD'  || componenttype=='MODNO' || componenttype=='MOA') && appService.AuthoriseAction('epma_access_patientdrugs_moa')">
                         <a class="dropdown-item" (click)="patientDrugs()" href="#">
                             <div class="empa-p-drug dc-icon-menu"><span class="dc-icon-menu-text">Patient's Own
                                     Drugs</span>
                             </div>
                         </a>
                     </li>
-                    <li role="menuitem"
-                        *ngIf="componenttype=='SUM' || componenttype=='SUMNO'">
+                    <li role="menuitem" *ngIf="(componenttype=='SUM' || componenttype=='SUMNO') && appService.AuthoriseAction('epma_access_supplyrequest_mod')">
                         <a (click)="supplyRequest(componenttype)" class="dropdown-item" href="javascript:void(0)">
-                            <div class="please-resupply dc-icon-menu"><span class="dc-icon-menu-text">Discharge Supply</span>
+                            <div class="please-resupply dc-icon-menu"><span class="dc-icon-menu-text">Discharge
+                                    Supply</span>
                             </div>
                         </a>
                     </li>
-                    <li role="menuitem" 
-                        *ngIf="componenttype=='OP' && appService.bannerWarningStatus && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus">
-                        <a (click)="supplyRequest(componenttype)" class="dropdown-item" href="javascript:void(0)">
-                            <div class="please-resupply dc-icon-menu">
-                                <span class="dc-icon-menu-text">Supply</span>
-                            </div>
-                        </a>
-                    </li>
+
                     <li role="menuitem"
-                        *ngIf="!isAdministered && componenttype=='OP' && appService.bannerWarningStatus && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus">
+                        *ngIf="!isAdministered && appService.AuthoriseAction('epma_access_administer_op') && !prescription.isdeleted && componenttype=='OP' && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus">
                         <a (click)="addAdministration()" class="dropdown-item" href="javascript:void(0)">
                             <div class="please-resupply dc-icon-menu">
                                 <span class="dc-icon-menu-text">Administer</span>
@@ -521,26 +496,35 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                         </a>
                     </li>
                     <li role="menuitem"
-                        *ngIf="isAdministered && componenttype=='OP' && appService.bannerWarningStatus && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus">
+                        *ngIf="isAdministered && componenttype=='OP'  && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus">
                         <a (click)="viewAdministration()" class="dropdown-item" href="javascript:void(0)">
                             <div class="please-resupply dc-icon-menu">
                                 <span class="dc-icon-menu-text">View Administration</span>
                             </div>
                         </a>
                     </li>
+                    <li role="menuitem"
+                        *ngIf="componenttype=='OP' && appService.AuthoriseAction('epma_access_supplyrequest_op') && appService.warningServiceIPContext && appService.warningServiceIPContext.existingWarningsStatus">
+                        <a (click)="supplyRequest(componenttype)" class="dropdown-item" href="javascript:void(0)">
+                            <div class="please-resupply dc-icon-menu">
+                                <span class="dc-icon-menu-text">Supply Request</span>
+                            </div>
+                        </a>
+                    </li>
                 </ul>
             </div>
-            <div title={{resupply}}>
-                <button *ngIf="isresupply==true" type="button" class="btn-flat btn-menu please-resupply">
-    
+            <div title={{resupply}} *ngIf="componenttype!='MOD' && componenttype!='MODNO'">
+                <button *ngIf="isresupply==true" type="button" class="btn-flat btn-menu {{supplyIcon}}">
+
                 </button>
             </div>
-            <div title={{resupply}}>
-                <button  (click)="viewAdministration()"   *ngIf="isAdministered==true" type="button" class="btn-flat btn-menu {{opAdministeredCSSClass}}">
-                       
+            <div title="View Administration">
+                <button (click)="viewAdministration()" *ngIf="isAdministered==true" type="button"
+                    class="btn-flat btn-menu {{opAdministeredCSSClass}}">
+
                 </button>
             </div>
-            
+
         </div>
 
     </div>
@@ -623,37 +607,51 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
             <span *ngIf="startDate"><span class="empa-template-induction-label">FROM:
                 </span> <span class="empa-template-dose-text">{{startDate | date :
                     "dd-MMM-yyyy HH:mm"}} </span>
-                    <br /> 
+                <br />
             </span>
             <span *ngIf="modifiedFrom"><span class="empa-template-induction-label">MODIFIED FROM:
                 </span> <span class="empa-template-dose-text">{{modifiedFrom | date :
                     "dd-MMM-yyyy HH:mm"}} </span>
-                <br /> 
+                <br />
             </span>
- 
+
             <span *ngIf="appService.GetCurrentPosology(prescription).prescriptionenddate"><span
                     class="empa-template-induction-label">UNTIL:
                 </span> <span
                     class="empa-template-dose-text">{{appService.GetCurrentPosology(prescription).prescriptionenddate |
                     date :
                     "dd-MMM-yyyy HH:mm"}} </span>
-                    <br />
+                <br />
             </span>
 
         </span>
         <span *ngIf="prescription.comments"><span class="empa-template-induction-label">COMMENTS: </span> <span
                 class="empa-template-dose-text emp-card-comment-block">{{prescriptionCardComment}} </span>
-                <br />
+            <br />
         </span>
         <span *ngIf="prescription.indication"><span class="empa-template-induction-label">INDICATION: </span>
             <span class="empa-template-dose-text break-word">{{indicationstring}} </span>
             <br />
         </span>
-        <span>            
+        <span>
             <span class="empa-template-induction-label" *ngIf="!isMOAPrescription"> PRESCRIBED BY: </span>
             <span class="empa-template-induction-label" *ngIf="isMOAPrescription"> ADDED BY: </span>
-            <span>{{prescription.createdby}}</span>
+            <span>{{prescription.lastmodifiedby}}</span><span class="pl-1" *ngIf="lastmodifiedbyrole && appService.appConfig.AppSettings.IsShowUserRole">({{lastmodifiedbyrole}})</span>
+            <br />
         </span>
+        <span *ngIf="!isMOAPrescription && isPrescriptionStop">
+            <span class="empa-template-induction-label"> STOPPED BY: </span>
+            <span>{{stopSuspendUser}}</span><span class="pl-1" *ngIf="stopSuspendUserRole && appService.appConfig.AppSettings.IsShowUserRole">({{stopSuspendUserRole}})</span>
+        </span>
+        <span *ngIf="!isMOAPrescription && isPrescriptionSuspended">
+            <span class="empa-template-induction-label"> SUSPENDED BY: </span>
+            <span>{{stopSuspendUser}}</span><span class="pl-1" *ngIf="stopSuspendUserRole && appService.appConfig.AppSettings.IsShowUserRole">({{stopSuspendUserRole}})</span>
+        </span>
+        
+        <div *ngIf="componenttype=='OP' && prescription.dispensingfrom">
+            <span class="empa-template-induction-label">DISPENSING FROM: </span>
+            <span>{{prescription.dispensingfrom | titlecase}}</span>
+        </div>
     </span>
 </ng-template>
 <ng-template #medicationpropertytemp let-componenttype="componenttype">
@@ -681,7 +679,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
         <span title={{ComplianceAid}} [ngClass]="{'medication-property-icon complianceaid': showCompliance}"></span>
         <span title="Patient Own Supply at Home"
             [ngClass]="{'medication-property-icon ownsupply': showOwnSupply }"></span>
-         
+
         <span title="Supply from ward stock"
             [ngClass]="{'medication-property-icon wardstock': showWardStockIcon }"></span>
 
@@ -691,6 +689,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
             class='{{"reminder-property-icon "  + reminderIcon }}'></span>
         <span *ngIf="reminderIconIvtoOral && componenttype!='therapyoverview'"
             class='{{"reminder-property-icon "  + reminderIconIvtoOral }}'></span>
+         <span title={{lastmodifiedon}} class="badge badge-pill badge-primary" *ngIf="availableQuantity" >{{availableQuantity}}</span>   
 
     </span>
 </ng-template>
@@ -757,9 +756,9 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                         </span>
                         <span *ngIf="!med.isprimary && appService.GetCurrentPosology(prescription).infusiontypeid">
                             <span class="text-primary empa-template-bold" *ngIf="med.doseformunits">-
-                                {{med.doseformsize}} {{med.doseformunits}}</span>
+                                {{med.doseformsize | number}} {{med.doseformunits }}</span>
                             <span class="text-primary empa-template-bold" *ngIf="med.strengthdenominatorunit">-
-                                {{med.strengthdenominator}} {{med.strengthdenominatorunit}}</span>
+                                {{med.strengthdenominator | number}} {{med.strengthdenominatorunit}}</span>
                         </span>
                         <span *ngIf="prescription.ismodifiedrelease">-MR</span>
                         <span *ngIf="prescription.isgastroresistant">-GR</span>
@@ -796,7 +795,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                     <span title="Patient Own Supply at Home"
                         [ngClass]="{'medication-property-icon ownsupply': showOwnSupply }"></span>
 
-                        <span title="Supply from ward stock"
+                    <span title="Supply from ward stock"
                         [ngClass]="{'medication-property-icon wardstock': showWardStockIcon }"></span>
                     <span
                         [ngClass]="{'medication-property-icon bloodproduct':primaryMedication.isbloodproduct === true}"></span>
@@ -829,10 +828,15 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                     <span *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid=='bolus'">
                         <span>BOLUS</span>
                     </span>
-                    <span *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid=='ci'">
+                    <span
+                        *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid=='ci' || appService.GetCurrentPosology(prescription).infusiontypeid=='pca'">
                         <span *ngIf="primaryMedication">
-                            <span *ngIf="!prescription.ismedicinalgas"><span>CONTINUOUS
+                            <span
+                                *ngIf="!prescription.ismedicinalgas && appService.GetCurrentPosology(prescription).infusiontypeid=='ci'"><span>CONTINUOUS
                                     INFUSION - </span>
+                            </span>
+                            <span *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid=='pca'"><span>PCA/NCA
+                                    - </span>
                             </span>
                         </span>
 
@@ -862,7 +866,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                             <span>{{appService.GetCurrentPosology(prescription).infusionrate | number}}
                                 {{appService.GetCurrentPosology(prescription).infusionrateunits}}
                             </span> - <span>DURATION
-                            </span> {{appService.GetCurrentPosology(prescription).infusionduration}}h
+                            </span> {{appService.GetCurrentPosology(prescription).infusionduration}}h(s)
                         </span>
 
                     </span>
@@ -940,66 +944,89 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
             </div>
             <div class="p-popover-body-width-s3">
                 <span
-                    *ngIf="appService.GetCurrentPosology(prescription).__dose.length>0 && appService.GetCurrentPosology(prescription).dosetype=='units'">
-                    <span class="empa-template-bold"
-                        *ngIf="!appService.GetCurrentPosology(prescription).__dose[0].dosestrength">
-                        <span *ngIf="appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax">
-                            {{appService.GetCurrentPosology(prescription).__dose[0].dosesize|number}}{{appService.GetCurrentPosology(prescription).__dose[0].doseunit}}
-                            -
-                            {{appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax|number}}{{appService.GetCurrentPosology(prescription).__dose[0].doseunit}}
-                        </span>
-                        <span *ngIf="!appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax">
-                            {{appService.GetCurrentPosology(prescription).__dose[0].dosesize|number}}
-                            {{appService.GetCurrentPosology(prescription).__dose[0].doseunit}}
-                        </span>
-
-                    </span>
-
-                    <span class="empa-template-bold"
-                        *ngIf="appService.GetCurrentPosology(prescription).__dose[0].dosestrength">
-                        <span *ngIf="appService.GetCurrentPosology(prescription).__dose[0].dosestrengthrangemax">
-                            {{appService.GetCurrentPosology(prescription).__dose[0].dosestrength|number}}{{appService.GetCurrentPosology(prescription).__dose[0].dosestrengthunits}}
-                            -
-                            {{appService.GetCurrentPosology(prescription).__dose[0].dosestrengthrangemax|number}}{{appService.GetCurrentPosology(prescription).__dose[0].dosestrengthunits}}
-                        </span>
-                        <span *ngIf="!appService.GetCurrentPosology(prescription).__dose[0].dosestrengthrangemax">
-                            {{appService.GetCurrentPosology(prescription).__dose[0].dosestrength|number}}
-                            {{appService.GetCurrentPosology(prescription).__dose[0].dosestrengthunits}}
-                        </span>
-
-                        (<span *ngIf="appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax">
-                            {{appService.GetCurrentPosology(prescription).__dose[0].dosesize|number}}
-                            {{appService.GetCurrentPosology(prescription).__dose[0].doseunit}})
-                            -
-                            {{appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax|number}}
-                            {{appService.GetCurrentPosology(prescription).__dose[0].doseunit}})
-                        </span>
-                        <span *ngIf="!appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax">
-                            {{appService.GetCurrentPosology(prescription).__dose[0].dosesize|number}}
-                            {{appService.GetCurrentPosology(prescription).__dose[0].doseunit}})
-                        </span>
-
-                    </span>
-
-                </span>
-                <span
-                    *ngIf="appService.GetCurrentPosology(prescription).__dose.length>0 && appService.GetCurrentPosology(prescription).dosetype=='strength'">
-                    <span class="empa-template-bold">
-                        <span> {{appService.GetCurrentPosology(prescription).__dose[0].strengthneumerator |
-                            number}}{{appService.GetCurrentPosology(prescription).__dose[0].strengthneumeratorunit}}</span>
-                        <span *ngIf="prescription.__medications.length==1"> /
-                            {{appService.GetCurrentPosology(prescription).__dose[0].strengthdenominator |
-                            number}}{{appService.GetCurrentPosology(prescription).__dose[0].strengthdenominatorunit}}
-                        </span>
-                    </span>
-                </span>
-                <span
-                    *ngIf="appService.GetCurrentPosology(prescription).__dose.length>0 && appService.GetCurrentPosology(prescription).dosetype=='descriptive'">
+                    *ngIf="appService.GetCurrentPosology(prescription, posologyid).frequency=='variable' || !appService.GetCurrentPosology(prescription, posologyid).infusiondoserate">
                     <span
-                        class="empa-template-bold">{{appService.GetCurrentPosology(prescription).__dose[0].descriptivedose}}</span>
+                        *ngIf="appService.GetCurrentPosology(prescription).__dose.length>0 && appService.GetCurrentPosology(prescription).dosetype=='units'">
+                        <span class="empa-template-bold"
+                            *ngIf="!appService.GetCurrentPosology(prescription).__dose[0].dosestrength">
+                            <span *ngIf="appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax">
+                                {{appService.GetCurrentPosology(prescription).__dose[0].dosesize|number}}{{appService.GetCurrentPosology(prescription).__dose[0].doseunit}}
+                                -
+                                {{appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax|number}}{{appService.GetCurrentPosology(prescription).__dose[0].doseunit}}
+                            </span>
+                            <span *ngIf="!appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax">
+                                {{appService.GetCurrentPosology(prescription).__dose[0].dosesize|number}}
+                                {{appService.GetCurrentPosology(prescription).__dose[0].doseunit}}
+                            </span>
+
+                        </span>
+
+                        <span class="empa-template-bold"
+                            *ngIf="appService.GetCurrentPosology(prescription).__dose[0].dosestrength">
+                            <span *ngIf="appService.GetCurrentPosology(prescription).__dose[0].dosestrengthrangemax">
+                                {{appService.GetCurrentPosology(prescription).__dose[0].dosestrength|number}}{{appService.GetCurrentPosology(prescription).__dose[0].dosestrengthunits}}
+                                -
+                                {{appService.GetCurrentPosology(prescription).__dose[0].dosestrengthrangemax|number}}{{appService.GetCurrentPosology(prescription).__dose[0].dosestrengthunits}}
+                            </span>
+                            <span *ngIf="!appService.GetCurrentPosology(prescription).__dose[0].dosestrengthrangemax">
+                                {{appService.GetCurrentPosology(prescription).__dose[0].dosestrength|number}}
+                                {{appService.GetCurrentPosology(prescription).__dose[0].dosestrengthunits}}
+                            </span>
+
+                            (<span *ngIf="appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax">
+                                {{appService.GetCurrentPosology(prescription).__dose[0].dosesize|number}}
+                                {{appService.GetCurrentPosology(prescription).__dose[0].doseunit}})
+                                -
+                                {{appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax|number}}
+                                {{appService.GetCurrentPosology(prescription).__dose[0].doseunit}})
+                            </span>
+                            <span *ngIf="!appService.GetCurrentPosology(prescription).__dose[0].dosesizerangemax">
+                                {{appService.GetCurrentPosology(prescription).__dose[0].dosesize|number}}
+                                {{appService.GetCurrentPosology(prescription).__dose[0].doseunit}})
+                            </span>
+
+                        </span>
+
+                    </span>
+                    <span
+                        *ngIf="appService.GetCurrentPosology(prescription).__dose.length>0 && appService.GetCurrentPosology(prescription).dosetype=='strength'">
+                        <span class="empa-template-bold">
+                            <span> {{appService.GetCurrentPosology(prescription).__dose[0].strengthneumerator |
+                                number}}{{appService.GetCurrentPosology(prescription).__dose[0].strengthneumeratorunit}}</span>
+                            <span *ngIf="prescription.__medications.length==1"> /
+                                {{appService.GetCurrentPosology(prescription).__dose[0].strengthdenominator |
+                                number}}{{appService.GetCurrentPosology(prescription).__dose[0].strengthdenominatorunit}}
+                            </span>
+                        </span>
+                    </span>
+                    <span
+                        *ngIf="appService.GetCurrentPosology(prescription).__dose.length>0 && appService.GetCurrentPosology(prescription).dosetype=='descriptive'">
+                        <span
+                            class="empa-template-bold">{{appService.GetCurrentPosology(prescription).__dose[0].descriptivedose}}</span>
+                    </span>
+                </span>
+                <span
+                    *ngIf="appService.GetCurrentPosology(prescription, posologyid).frequency!='variable' &&  appService.GetCurrentPosology(prescription, posologyid).infusiondoserate">
+                    <span class="empa-template-bold ">{{appService.GetCurrentPosology(prescription,
+                        posologyid).infusiondoserate}} {{appService.GetCurrentPosology(prescription,
+                        posologyid).infusiondoserateunits}}</span>
                 </span>
             </div>
         </div>
+        <div class="p-popover" *ngIf="appService.GetCurrentPosology(prescription, posologyid).concentration">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">CONCENTRATION </span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <!-- <span class="empa-template-bold">{{appService.GetCurrentPosology(prescription,
+                    posologyid).concentration}}</span> -->
+                    <span class="empa-template-bold">{{prescribedConcentration}}</span>
+
+            </div>
+        </div>
+
         <div class="p-popover" *ngIf="appService.GetCurrentPosology(prescription).totalinfusionvolume">
             <div class="p-popover-body-width-s1">
             </div>
@@ -1007,7 +1034,8 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                 <span class="text-muted">TOTAL VOLUME </span>
             </div>
             <div class="p-popover-body-width-s3">
-                <span class="empa-template-bold">{{appService.GetCurrentPosology(prescription).totalinfusionvolume}}
+                <span class="empa-template-bold">{{appService.GetCurrentPosology(prescription).totalinfusionvolume |
+                    number}}
                     ml</span>
             </div>
         </div>
@@ -1023,7 +1051,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
             </div>
         </div>
         <div class="p-popover"
-            *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid!='ci' && appService.GetCurrentPosology(prescription).frequency!='variable' && appService.GetCurrentPosology(prescription).frequency!='protocol'">
+            *ngIf="appService.GetCurrentPosology(prescription).infusiontypeid!='ci' && appService.GetCurrentPosology(prescription).infusiontypeid!='pca' && appService.GetCurrentPosology(prescription).frequency!='variable' && appService.GetCurrentPosology(prescription).frequency!='protocol'">
             <div class="p-popover-body-width-s1">
             </div>
             <div class="p-popover-body-width-s2"
@@ -1052,6 +1080,9 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                 <span class="dose-text" *ngIf="appService.GetCurrentPosology(prescription).frequency=='h'">
                     - Every {{appService.GetCurrentPosology(prescription).frequencysize}} hour(s)
                 </span>
+                <span class="dose-text" *ngIf="appService.GetCurrentPosology(prescription).frequency=='m'">
+                    - Every {{appService.GetCurrentPosology(prescription).frequencysize}} min(s)
+                </span>
                 <span class="dose-text"
                     *ngIf="appService.GetCurrentPosology(prescription).daysofweek && appService.GetCurrentPosology(prescription).daysofweek.length>2">
                     - Every {{chosenDays}}</span>
@@ -1063,10 +1094,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                     – {{prescriptionAdditionalConditions}}</span>
                 <span *ngIf="appService.GetCurrentPosology(prescription).prn"> - When needed</span>
                 <br />
-                <span
-                    *ngIf="appService.GetCurrentPosology(prescription).prn && appService.GetCurrentPosology(prescription).maxnumofdosesperday">Max
-                    {{appService.GetCurrentPosology(prescription).maxnumofdosesperday}}
-                    {{appService.GetCurrentPosology(prescription).__dose[0].doseunit}} per day</span>
+                <span *ngIf="prnmaxdosestring">Max {{prnmaxdosestring}} per day</span>
                 <span *ngIf="appService.GetCurrentPosology(prescription).doctorsorder">-Prescriber to confirm</span>
             </div>
         </div>
@@ -1085,6 +1113,8 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                             <span class="empa-template-bold" style="width:100px;display: inline-flex;"
                                 *ngIf="distinctDate.length>1">{{isShowDate(dose)}} </span>
                             {{dose.dosestartdatetime | date : "HH:mm"}}
+                            <span *ngIf="dose.isadditionaladministration">(additionally scheduled)</span>
+
                             <!-- <span
                                 class="empa-template-bold">{{dose.infusionrate | number}}
                                 <span *ngIf="dose.doseunit">{{dose.doseunit}}</span>
@@ -1097,7 +1127,10 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                             {{dose.dosestartdatetime | date : "HH:mm"}} <span
                                 class="empa-template-bold">{{dose.strengthneumerator |
                                 number}}{{dose.strengthneumeratorunit}} / {{dose.strengthdenominator |
-                                number}}{{dose.strengthdenominatorunit}}</span><br />
+                                number}}{{dose.strengthdenominatorunit}}</span>
+                            <span *ngIf="dose.isadditionaladministration">(additionally scheduled)</span>
+
+                            <br />
                         </span>
 
                     </span>
@@ -1106,7 +1139,10 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                     <span *ngFor="let dose of appService.GetCurrentPosology(prescription).__dose;">
                         <span class="empa-template-bold" style="width:100px;display: inline-flex;"
                             *ngIf="distinctDate.length>1">{{isShowDate(dose)}} </span> {{dose.dosestartdatetime
-                        | date : "HH:mm"}} <br />
+                        | date : "HH:mm"}}
+                        <span *ngIf="dose.isadditionaladministration">(additionally scheduled)</span>
+
+                        <br />
                     </span>
                 </span>
 
@@ -1168,6 +1204,8 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                             *ngIf="distinctDate.length>1">{{isShowDate(dose,d)}}
                         </b> {{dose.dosestartdatetime |
                         date : "HH:mm"}} - <b>{{dose.descriptivedose}}</b>
+                        <span *ngIf="dose.isadditionaladministration">(additionally scheduled)</span>
+
                     </span>
                 </div>
             </div>
@@ -1275,14 +1313,23 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
             <div class="p-popover-body-width-s1">
             </div>
             <div class="p-popover-body-width-s2">
-                <span class="empa-template-induction-label" *ngIf="!isMOAPrescription"> PRESCRIBED BY: </span>
-                <span class="empa-template-induction-label" *ngIf="isMOAPrescription"> ADDED BY: </span>
+                <span class="text-muted" *ngIf="!isMOAPrescription">PRESCRIBED BY </span>
+                <span class="text-muted" *ngIf="isMOAPrescription">ADDED BY </span>
             </div>
             <div class="p-popover-body-width-s3">
-                <span>{{prescription.createdby}}</span>
+                <span>{{prescription.lastmodifiedby}}</span><span class="pl-1" *ngIf="lastmodifiedbyrole && appService.appConfig.AppSettings.IsShowUserRole">({{lastmodifiedbyrole}})</span>
             </div>
         </div>
-
+        <div class="p-popover" *ngIf="componenttype=='OP' && prescription.dispensingfrom">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted">DISPENSING FROM </span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span>{{prescription.dispensingfrom | titlecase}}</span>
+            </div>
+        </div>
         <div class="p-popover" *ngIf="componenttype=='MOD' ||  componenttype =='MODNO'">
             <div class="p-popover-body-width-s1">
             </div>
@@ -1400,6 +1447,18 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
             </div>
         </div>
+        <div class="p-popover" *ngIf="componenttype!='therapyoverview'">
+            <div class="p-popover-body-width-s1">
+            </div>
+            <div class="p-popover-body-width-s2">
+                <span class="text-muted"></span>
+            </div>
+            <div class="p-popover-body-width-s3">
+                <span><a href="javascript:void(0)"
+                        (click)="poptherapy.hide();poptemplate.hide();openPrescriptionAdministrationHistory()">Administration History</a></span>
+
+            </div>
+        </div>
         <hr />
         <div class="p-popover">
 
@@ -1471,7 +1530,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                     <div class="legend-medication-icon ownsupply"></div>
                     <div class="legend-medication-text">Patient own supply at home</div>
                 </div>
-                
+
                 <div class="legend-medication-display" *ngIf="showWardStockIcon">
                     <div class="legend-medication-icon wardstock"></div>
                     <div class="legend-medication-text">Resupply from ward stock</div>
@@ -1509,11 +1568,12 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                     <div class="legend-medication-text">Nursing instructions</div>
                 </div>
                 <div class="legend-medication-display"
-                    *ngIf="reviewStatusIcon=='Pharmacist_review_not_required' && componenttype!='therapyoverview' && componenttype!='OP'">
+                    *ngIf="(reviewStatusIcon=='Pharmacist_review_not_required' || reviewStatusIcon=='Waiting_for_pharmacist_review' || reviewStatusIcon=='Pharmacist_review_complete' || reviewStatusIcon=='Pharmacist_reviewed_back_to_prescriber')&& componenttype!='therapyoverview' && componenttype!='OP' ">
                     <div class="legend-medication-icon {{reviewStatusIcon}}"></div>
                     <div class="legend-medication-text">{{reviewStatusDesc}}</div>
                 </div>
-                <div class="legend-medication-display"
+
+                <!-- <div class="legend-medication-display"
                     *ngIf="reviewStatusIcon=='Waiting_for_pharmacist_review' && componenttype!='therapyoverview' && componenttype!='OP'">
                     <div class="legend-medication-icon {{reviewStatusIcon}}"></div>
                     <div class="legend-medication-text">{{reviewStatusDesc}}</div>
@@ -1528,7 +1588,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                     *ngIf="reviewStatusIcon=='Pharmacist_reviewed_back_to_prescriber' && componenttype!='therapyoverview' && componenttype!='OP'">
                     <div class="legend-medication-icon {{reviewStatusIcon}}"></div>
                     <div class="legend-medication-text">{{reviewStatusDesc}}</div>
-                </div>
+                </div> -->
 
                 <div class="legend-medication-display" *ngIf="reminderIcon && componenttype!='therapyoverview'">
                     <div class="legend-medication-icon {{reminderIcon}}"></div>

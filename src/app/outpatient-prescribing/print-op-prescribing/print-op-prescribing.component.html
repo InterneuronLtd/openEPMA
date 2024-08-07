@@ -1,0 +1,394 @@
+<!--BEGIN LICENSE BLOCK--> 
+<!--Interneuron Terminus
+
+Copyright(C) 2024  Interneuron Holdings Ltd
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.If not, see<http://www.gnu.org/licenses/>. -->
+<!--END LICENSE BLOCK--> 
+<ng-template #printBody class="table-dimensions">
+    <div class="row" style="padding-bottom: 10px; margin-bottom: 5px;">
+        <div class="col-md-7" style="vertical-align: bottom !important; ">
+            <!-- <h6 class="text-secondary" style="color: black !important;">Discharge Summary</h6> -->
+        </div>
+        <div class="col-md-5" style="text-align: right; font-size: 1.0em;">
+            <!-- <img src="assets/images/epma/rnohlogo.png" alt="RNOH Logo" style="height:50px;"> -->
+            <strong>Royal&nbsp;National&nbsp;Orthopaedic&nbsp;Hospital</strong><br />
+            <strong>Brockley Hill</strong><br />
+            <strong>Stanmore</strong><br />
+            <strong>Middlesex HA7 4LP</strong><br />
+            <strong>Tel: 020 8954 2300</strong><br />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="border border-dark text-center">
+                <strong>Royal&nbsp;National&nbsp;Orthopaedic&nbsp;Hospital</strong>
+            </div>
+            <div class="border border-dark text-center">
+                Complete&nbsp;this&nbsp;document&nbsp;in&nbsp;full - omission&nbsp;will&nbsp;delay&nbsp;dispensing&nbsp;and&nbsp;/&nbsp;or&nbsp;discharge
+            </div>
+        </div>
+    </div>
+    
+    <div class="row" style="margin-left: 0; margin-right: 0;">
+        <div class="col-md-3 border border-dark">
+            <table style="width: 100%;">
+                <tr>
+                    <td>
+                        <strong>Patient&nbsp;name</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        {{familyname | uppercase}},&nbsp;{{firstname}}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Hospital&nbsp;Number</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        {{hospitalNumber}}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>NHS&nbsp;Number</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        {{nhsNumber}}
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="col-md-2 border border-dark">
+            <table style="width: 100%;">
+                <tr>
+                    <td>
+                        <strong>Gender</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        {{gender}}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>DOB</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        {{dob}}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Age</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        {{age}}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    
+        <div class="col-md-2 border border-dark">
+            <table style="width: 100%;">
+                <tr>
+                    <td>
+                        <strong>Address</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        {{address}}
+                    </td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="col-md-5 border border-dark">
+            <table style="width: 100%;">
+                <tr>
+                    <td>
+                        <strong>Lead&nbsp;Consultant</strong>
+                    </td>
+                    <td>
+                        {{leadConsultant}}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Specialty</strong>
+                    </td>
+                    <td>
+                        <span *ngIf="specialty != undefined">{{specialty}}</span>
+                        <span *ngIf="specialty == undefined || specialty == null || specialty == ''">-</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Prescription&nbsp;Date</strong>
+                    </td>
+                    <td>
+                        {{clinicDate.prescriptiondate | date: 'dd/MM/yyyy HH:mm'}}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span style="color: red;"><b>{{prescriptionType}} Patient</b></span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <div class="row" style="margin-left: 0; margin-right: 0;">
+        <div class="col-md-8 border border-dark">
+            <table style="width: 100%;">
+                <tr>
+                    <td>
+                        <strong>Allergies</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width: 100%;">
+                        <table style="width: 100%;">
+                            <tr *ngFor="let allergy_list of allergyIntoleranceList">
+                                <td style="width: 33.33%;">
+                                    {{allergy_list.causativeagentdescription}}
+                                </td>
+                                <td style="width: 33.33%;">
+                                    {{allergy_list.criticality}}
+                                </td>
+                                <td style="width: 33.33%;">
+                                    {{allergy_list.clinicalstatusvalue}}
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="col-md-4 border border-dark">
+            <table style="width: 100%;">
+                <tr>
+                    <td colspan="2">
+                        <strong>Patient&nbsp;weight</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        {{obsDate | date : 'dd/MM/yyyy'}}
+                    </td>
+                    <td>
+                        {{obsValue}} <span *ngIf="obsValue != undefined">kg</span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div *ngIf="printOPTemplate == 'generalpractitioner'" class="row" style="margin-bottom: 10px; margin-top: 10px;">
+        <div class="col-md-12">
+            <h6>TO THE PATIENT:</h6>
+        </div>
+        <div class="col-md-12">
+            <input type="checkbox">
+            <span>
+                <b>&nbsp;TAKE THIS FORM TO YOUR GENERAL PRACTITIONER (FAMILY DOCTOR)</b><br>
+            </span>
+            <span style="margin-left: 15px;">
+                He/She will write a prescription for you in the normal way. The treatment does not need to be started immediately, so you do not need to call out the 
+            </span>
+            <span style="margin-left: 15px;">
+                doctor for this or seek an urgent appointment.
+            </span>
+        </div>
+        <!-- <div class="col-md-12">
+            <input type="checkbox">
+            <span>
+                <b>&nbsp;TAKE THIS FORM TO THE HOSPITAL PHARMACY</b><br>
+            </span>
+            <span style="margin-left: 15px;">
+                Please read notes overleaf and complete the appropriate section. If you are exempt from prescription charges you will be required to produce evidence 
+            </span>
+            <span style="margin-left: 15px;">
+                of exemption.
+            </span>
+        </div> -->
+        <div class="col-md-12">
+            <span>
+                This prescription cannot be dispensed by a community pharmacist/chemist.
+            </span>
+        </div>
+    </div>
+
+    <div *ngIf="printOPTemplate == 'generalpractitioner'" class="row" style="margin-bottom: 10px;;">
+        <div class="col-md-12">
+            <h6>TO THE GENERAL PRACTITIONER:</h6>
+        </div>
+        <div class="col-md-12">
+            <span>
+                Thank you for referring this patient who was seen in clinic today. This note is sent to avoid delay in essential information reaching you, and to request 
+            </span>
+            <span>
+                that you prescribe the medication recommended below:
+            </span>
+        </div>
+        <div class="col-md-12">
+            <span>
+                The diagnosis / clinical impression is:
+            </span>
+        </div>
+        <hr>
+        <hr>
+        <div class="col-md-12">
+            <span>
+                I have discharged the patient/asked the patient to return to the clinic in _________ weeks / months
+            </span>
+        </div>
+        <div class="col-md-12">
+            <span>
+                I recommend the following treatment:
+            </span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <table id="tblPrecription" class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>
+                            Drug&nbsp;Details
+                        </th>
+                        <th>
+                            Disp
+                        </th>
+                        <th>
+                            Check
+                        </th>
+                    </tr>
+                </thead>
+                <tbody *ngFor="let medsSum of prescriptions">
+                    <tr>
+                        <td class="border border-right-bottom" style="padding-left: 7px; font-size: 0.9em;">
+                            <strong>{{medsSum.displayname}}</strong> <br />
+                            <div *ngIf="medsSum.iscontrolleddrug"><strong class="text-danger">*&nbsp;Controlled&nbsp;Drug</strong><br /></div>       
+                            <!-- DOSE &nbsp; : {{medsSum.displaydose}} <br /> -->
+                            <span *ngIf="medsSum.protocoldose?.length == 0">DOSE: {{medsSum.displaydose}}</span>
+                            <span *ngIf="medsSum.protocoldose?.length > 0">
+                                DOSE:
+                                <span *ngFor="let protocolDose of medsSum.protocoldose; let i = index">
+                                    <span *ngIf="protocolDose.isShowDate == true" [ngStyle]="{'margin-left': i > 0 ?'45px':''}">
+                                        {{(protocolDose.date | date : 'dd-MM-yyyy HH:mm')}} - {{protocolDose.text}}
+                                    </span>
+                                    <span *ngIf="protocolDose.isShowDate == false" style="margin-left: 122px;">
+                                        {{(protocolDose.date | date : 'HH:mm')}} - {{protocolDose.text}}
+                                    </span><br/>
+                                </span>
+                            </span>
+                            <span *ngIf="medsSum.protocolmessage">{{medsSum.protocolmessage}}</span><br />
+                            <!-- <span *ngIf="medsSum.prescriptionenddate">
+                                END DATE: {{medsSum.prescriptionenddate | date : 'dd-MM-yyyy HH:mm'}}<br/>
+                            </span> -->
+                            ROUTE &nbsp; : {{medsSum.displayroute}} <br />
+                            {{medsSum.displayquantity}} <br />
+                            <!-- FROM &nbsp; : {{medsSum.startdatetime | date : "dd-MMM-yyyy HH:mm"}} <br />
+                            UNTIL &nbsp; : {{medsSum.prescriptionenddate | date : "dd-MMM-yyyy HH:mm"}} <br /> -->
+                            <div style="font-size: 0.8em; text-decoration: italic;" *ngIf="medsSum.status != null">
+                                REASON &nbsp; FOR &nbsp; STATUS &nbsp; : {{medsSum.displaystatus}}
+                                <br />
+                            </div>
+                            INDICATION: {{medsSum.indication}} <br />
+                            COMMENTS &nbsp; : {{medsSum.comments}}
+                        </td>
+                        <td>
+        
+                        </td>
+                        <td>
+                            
+                        </td>
+                        
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div *ngIf="printOPTemplate == 'generalpractitioner'" class="row" style="margin-bottom: 10px;">
+        <div class="col-md-12">
+            <span>
+                NAME______________________________SIGNATURE______________________________DATE______________________________
+            </span>
+        </div>
+    </div>
+    
+    <table *ngIf="printOPTemplate != 'generalpractitioner'" id="tblPresciber" style="width:100%;" class="table table-bordered">
+        <tr style="height:5em;">
+            <td colspan="2" style="width:100%;">
+                <strong>Prescribed&nbsp;by&nbsp;:</strong>&nbsp;{{opPrescribedBy}}<span *ngIf="opModifiedByRole">({{opModifiedByRole}})</span><br>
+                <span style="color: red;">Please Sign & PRINT IN BLOCK CAPITALS</span>
+            </td>
+        </tr>
+        <tr style="height:5em;">
+            <td style="width:50%;">
+                <strong>Professional&nbsp;Registration&nbsp;Number&nbsp;:</strong>
+            </td>
+            <td style="width:50%;">
+                <strong>Date&nbsp;Prescribed&nbsp;:</strong>
+            </td>
+        </tr>
+        <tr style="height:5em;">
+            <td style="width:50%">
+                <strong>Pharmacist&nbsp;name&nbsp;:</strong>
+            </td>
+            <td style="width:50%">
+                <strong>Pharmacist&nbsp;signature&nbsp;:</strong>
+            </td>
+        </tr>
+        <tr style="height:5em;">
+            <td colspan="2" style="width:100%">
+                <strong>Date&nbsp;:</strong>
+            </td>
+        </tr>
+        <tr style="height:5em;">
+            <td style="width:50%;">
+                <strong>Collector&nbsp;name&nbsp;:</strong>
+            </td>
+            <td style="width:50%;">
+                <strong>Collector&nbsp;signature&nbsp;:</strong>
+            </td>
+        </tr>
+        <tr style="height:5em;">
+            <td colspan="2" style="width:100%">
+                <strong>Date&nbsp;collected&nbsp;:</strong>
+            </td>
+        </tr>
+    </table>
+</ng-template>
+
+<app-generate-op-prescribing-pdf [customTemplate]="printBody" [patientDetails]="patientDetails" 
+[allergyIntoleranceList]="allergyIntoleranceList" (destroyComponent)="pdfDownloaded()"></app-generate-op-prescribing-pdf>

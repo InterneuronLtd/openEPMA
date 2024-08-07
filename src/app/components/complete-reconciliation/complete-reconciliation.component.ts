@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -148,7 +148,7 @@ export class CompleteReconciliationComponent implements OnInit, OnDestroy {
         this.showconform = false;
 
         if (this.appService.IsDataVersionStaleError(error)) {
-          this.subjects.ShowRefreshPageMessage.next(error);
+          this.appService.RefreshPageWithStaleError(error);
         }
       }
     );
@@ -180,8 +180,9 @@ export class CompleteReconciliationComponent implements OnInit, OnDestroy {
     this.medreconciliationhistoryComplete=new Medreconciliation();
     this.subscriptions.add(this.apiRequest.getRequest(this.appService.baseURI + "/GetObjectHistory?synapsenamespace=local&synapseentityname=epma_medreconciliation&id=" + this.medreconciliation.epma_medreconciliation_id).subscribe(
       (response) => {
-
+      
         this.medreconciliationhistory = <Medreconciliation[]>JSON.parse(response);
+      
         this.medreconciliationhistoryComplete = this.medreconciliationhistory.find(x=>x.status=="Medicines Reconciliation completed");
         if( this.medreconciliationhistory &&  this.medreconciliationhistoryComplete){
           this.iscomplete=true;
@@ -190,6 +191,7 @@ export class CompleteReconciliationComponent implements OnInit, OnDestroy {
           this.iscomplete=false;
         }
         this.medreconciliationhistory = this.medreconciliationhistory.filter(x=>x.status !="Medicines Reconciliation completed");
+        this.medreconciliationhistory= this.medreconciliationhistory.sort((b,a) => new Date(a.modifiedon).getTime() - new Date(b.modifiedon).getTime());
       }
     ));
   }

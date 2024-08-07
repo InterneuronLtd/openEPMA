@@ -15,6 +15,11 @@
   min-width: 40%;
 }
 
+.modal-dialog, .modal-content {
+  /* 80% of window height */
+  height: 86%;
+}
+
 ::-webkit-scrollbar {
   -webkit-appearance: none;
   width: 7px;
@@ -195,4 +200,19 @@ h6 {
 .btn-administration-history {
   text-align: right;
   float: right;
+}
+
+.plusicon {
+  width: 24px;
+  height: 24px;
+  background-repeat: no-repeat;
+  background-image: url("/assets/images/epma/op/add_prescription.svg");
+  margin-left: -12px;
+}
+
+.removeicon {
+  width: 24px;
+  height: 24px;
+  background-repeat: no-repeat;
+  background-image: url("/assets/images/epma/therapy/Stop_Or_Remove.svg");
 }

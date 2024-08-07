@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -72,10 +72,11 @@ export class DatePickerComponent implements OnInit {
     let today = new Date();
     today.setHours(0, 0, 0, 0);
     if (today < inputDate) {
-      this.errorMessage = 'Date cannot be more than today...';
+      this.errorMessage = 'Date cannot be greater than today...';
       return;
-    } else if (inputDate > endDate) {
-      this.errorMessage = 'Start Date cannot be greator than end date';
+    } else
+     if (inputDate > endDate) {
+      this.errorMessage = 'Start Date cannot be greater than end date';
       return
     }
     const start = moment(inputDate);
@@ -123,7 +124,7 @@ export class DatePickerComponent implements OnInit {
     let today = new Date();
     today.setHours(0, 0, 0, 0);
     if (today < checkDate) {
-      this.errorMessage = 'Date cannot be more than today...';
+      this.errorMessage = 'Date cannot be greater than today...';
       return;
     }
     this.errorMessage = '';

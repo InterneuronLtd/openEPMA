@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -128,11 +128,13 @@ export class AddBolusComponent implements OnInit, OnDestroy {
     if (this.validatiommessage != "") {
       return;
     }
-
+    let correctionId = uuid();
+    this.administration.correlationid = correctionId;
+    this.infusionEvents.correlationid = correctionId;
     this.administration.dose_id = this.infusionEvents.dose_id;
     this.administration.administrationstartime = this.appService.getDateTimeinISOFormat(moment(this.administration.administrationstartime, "YYYY-MM-DD HH:mm").toDate());
     this.infusionEvents.planneddatetime = this.administration.administrationstartime;
-    this.administration.logicalid = "bolus_" + this.createLogicalId(this.administration.administrationstartime, this.infusionEvents.dose_id);
+    //this.administration.logicalid = "bolus_" + this.createLogicalId(this.administration.administrationstartime, this.infusionEvents.dose_id);
     if (this.doeseType == DoseType.units) {
       this.administration.planneddosesize = this.dosesize;
       this.administration.planneddoseunit = this.currentposology.__dose[0].doseunit;
@@ -158,7 +160,8 @@ export class AddBolusComponent implements OnInit, OnDestroy {
     this.administration.encounter_id = this.appService.encounter.encounter_id;
     this.administration.medication_id = this.medication.medication_id;
     this.administration.comments = this.comments;
-
+    this.administration.administredby = this.appService.loggedInUserName;
+    
     this.infusionEvents.dose_id = this.administration.dose_id;
     this.infusionEvents.eventdatetime = this.administration.administrationstartime;
     this.infusionEvents.planneddatetime = this.administration.administrationstartime;
@@ -169,6 +172,7 @@ export class AddBolusComponent implements OnInit, OnDestroy {
     this.infusionEvents.posology_id = this.currentposology.posology_id;
     this.infusionEvents.eventtype = "bolus";
     this.infusionEvents.comments = this.comments;
+    
 
     delete this.infusionEvents._sequenceid;
     this.appService.logToConsole(this.administration);
@@ -197,7 +201,7 @@ export class AddBolusComponent implements OnInit, OnDestroy {
         this.subjects.closeAppComponentPopover.next();
 
         if (this.appService.IsDataVersionStaleError(error)) {
-          this.subjects.ShowRefreshPageMessage.next(error);
+          this.appService.RefreshPageWithStaleError(error);
         }
       }
     );
@@ -242,25 +246,12 @@ export class AddBolusComponent implements OnInit, OnDestroy {
   setMinMaxDate(event) {
     this.maxDate = new Date();
     this.minDate = new Date(this.currentposology.__dose[0].dosestartdatetime);
-    // check for exssting administration
-    if (event.administration) {
-      this.administration = event.administration;
-      if (this.doeseType == DoseType.units) {
-        this.dosesize = this.administration.administreddosesize;
-      }
-      if (this.doeseType == DoseType.strength) {
-        this.strengthneumerator = this.administration.administeredstrengthneumerator;
-        this.strengthdenominator = this.administration.administeredstrengthdenominator;
-      }
-
-    } else {
-      this.administration.medicationadministration_id = uuid();
-    }
-
+   
     // check for exisiting event
     if (event.infusionEvents) {
       this.infusionEvents = event.infusionEvents;
       this.infusionEvents.modifiedby = this.appService.loggedInUserName;
+      this.infusionEvents.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
       // for update exsiting event
       if (event.infusionEvents.expirydate) {
         this.expirydate = moment(event.infusionEvents.expirydate, "YYYY-MM-DD HH:mm").format("DD-MM-YYYY");
@@ -286,6 +277,8 @@ export class AddBolusComponent implements OnInit, OnDestroy {
       this.infusionEvents.dose_id = uuid();
       this.infusionEvents.administeredby = this.appService.loggedInUserName;
       this.infusionEvents.modifiedby = this.appService.loggedInUserName;
+      this.infusionEvents.createdon = this.appService.getDateTimeinISOFormat(moment().toDate());
+      this.infusionEvents.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
       this.dosesize = null;
       let eventRecord = this.appService.events.sort((b, a) => new Date(a.eventStart).getTime() - new Date(b.eventStart).getTime()).filter(e => e.posology_id == this.currentposology.posology_id && !e.dose_id.includes("dur") && !e.dose_id.includes("flowrate") && !e.dose_id.includes("infusionevent"));
       let doneInfusion = eventRecord.find(e => e.admitdone);
@@ -301,6 +294,24 @@ export class AddBolusComponent implements OnInit, OnDestroy {
           this.maxDate = moment(this.maxDate, 'DD-MM-YYYY HH:mm').add(-this.appService.administrationTimeDiffInMinute, 'minutes').toDate();
         }
       }
+    }
+     // check for exssting administration
+     if (event.administration) {
+      this.administration = event.administration;
+      this.administration.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
+      if (this.doeseType == DoseType.units) {
+        this.dosesize = this.administration.administreddosesize;
+      }
+      if (this.doeseType == DoseType.strength) {
+        this.strengthneumerator = this.administration.administeredstrengthneumerator;
+        this.strengthdenominator = this.administration.administeredstrengthdenominator;
+      }
+
+    } else {
+      this.administration.medicationadministration_id = uuid();
+      this.administration.createdon = this.appService.getDateTimeinISOFormat(moment().toDate());
+      this.administration.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
+      this.administration.logicalid = "bolus_" + this.createLogicalId(this.administration.administrationstartime, this.infusionEvents.dose_id);
     }
     this.minDate = moment(this.minDate, 'DD-MM-YYYY HH:mm').add(this.appService.administrationTimeDiffInMinute, 'minutes').toDate();
     this.appService.logToConsole(this.minDate);

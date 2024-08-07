@@ -18,3 +18,38 @@ medicationadministrationhistory
 doseeventshistory
 infusioneventshistory
 administeredmedhistory
+
+
+
+
+
+-----------------change on 7 jun 2022----------------
+
+Entities
+-------------------------------------------------------------------------------
+epma_opnotes
+prescription
+
+Baseviews
+-------------------------------------------------------------------------------
+epma_outpatientnoteshistory
+
+
+-----------------change on 19 Sep 2022----------------
+
+Entities
+-------------------------------------------------------------------------------
+local_epma_nursinginstructions
+
+
+--------------------change on jan 18 2024------------------------------------
+baseview EPMA-3073 added ne column in base view for outpatient isdelete
+epma_prescriptiondetail 
+
+Entity EPMA-3073 added ne column in base view for outpatient isdelete
+ core_prescription  added 1 column
+ epma_outpatientprescriptions added 2 columns
+
+ RBAck 'epma_delete_script_op' EPMA-3073 on delete 
+
+

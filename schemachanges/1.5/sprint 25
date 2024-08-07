@@ -1,0 +1,38 @@
+New Actions (EPMA-2468)
+---------------------------------
+epma_access_moanotes_save 
+  Access given to Roles
+
+    1    Registered Nurse
+
+    2    AIT / Non Medical Prescribes
+
+    3    Doctors, 
+
+    4    Pharmacist, 
+
+    5   Pharmacy Tech,
+
+    6    Super User
+--------------------------------------------
+Edit Action  (EPMA-2467)
+-------------------------------------
+epma_edit_moa
+Access given to Roles
+    1 Phrmacist,
+    2 Pahrmacy Tech,
+    3 Super User
+---------------------------
+Access Remove to Roles
+    1 Clinical User
+    2 Registered Nurse
+    3 Student Nurse
+    4 AIT / Non Medical Prescribes
+    5 Doctors
+    6 DTC approver
+    7 Order set controller
+
+
+
+
+

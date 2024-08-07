@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -19,17 +19,19 @@
 //along with this program.If not, see<http://www.gnu.org/licenses/>.
 //END LICENSE BLOCK 
 export class Encounter {
-    person_id: string;
-    encounter_id: string;
-    admitdatetime: Date;
-    dischargedatetime: Date;
-    displayText: string;
-    sortdate:Date;
-  }
+  person_id: string;
+  encounter_id: string;
+  admitdatetime: Date;
+  dischargedatetime: Date;
+  displayText: string;
+  sortdate: Date;
+  defaultopclinicname: string;
+  patienttypecode: string;
+  patienttypetext: string;
+}
 
-  export class TimelineZoomLevel {
-    start:any;
-    end:any;
-    animation:boolean=false;
-  }
-  
+export class TimelineZoomLevel {
+  start: any;
+  end: any;
+  animation: boolean = false;
+}

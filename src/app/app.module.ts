@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -31,6 +31,8 @@ import { ReconciliationModule } from './reconciliation/reconciliation.module';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { OutpatientPrescribingModule } from './outpatient-prescribing/outpatient-prescribing.module';
+import { ToastrModule } from "ngx-toastr";
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 @NgModule({
   declarations: [
@@ -44,7 +46,12 @@ import { OutpatientPrescribingModule } from './outpatient-prescribing/outpatient
     BsDatepickerModule.forRoot(),
     InpatientPrescribingModule,
     ReconciliationModule,
-    OutpatientPrescribingModule
+    OutpatientPrescribingModule,
+    BrowserAnimationsModule,
+    ToastrModule.forRoot({
+      timeOut: 10000,
+      preventDuplicates: true,
+  }),
   ],
   providers: [
     DatePipe

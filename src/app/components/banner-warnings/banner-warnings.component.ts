@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.If not, see<http://www.gnu.org/licenses/>.
 //END LICENSE BLOCK 
-import { Component, ElementRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import moment from 'moment';
 import { Subscription } from 'rxjs';
 import { Bannerwarningoverrides } from 'src/app/models/EPMA';
@@ -33,7 +33,7 @@ import { v4 as uuid } from 'uuid';
   templateUrl: './banner-warnings.component.html',
   styleUrls: ['./banner-warnings.component.css']
 })
-export class BannerWarningsComponent implements OnInit {
+export class BannerWarningsComponent implements OnInit, OnDestroy {
   @ViewChild('open_bannerwarnings') open_bannerwarnings: ElementRef;
   @ViewChild('close_bannerwarnings') close_bannerwarnings: ElementRef;
   saveerror = false;
@@ -43,17 +43,18 @@ export class BannerWarningsComponent implements OnInit {
   @Output() loadcomplete = new EventEmitter<any>();
   overriding = false;
   overridereason = "";
+  config: any;
   constructor(public appService: AppService, public apiRequest: ApirequestService, public subjects: SubjectsService) {
-    this.subjects.showBannerWarnings.subscribe((onlyrefresh) => {
+    this.subscriptions.add(this.subjects.showBannerWarnings.subscribe((onlyrefresh) => {
       if (onlyrefresh == true)
         this.OpenBannerWarnings(true);
       else
         this.OpenBannerWarnings();
-    });
+    }));
 
-    this.subjects.closeBannerWarnings.subscribe(() => {
+    this.subscriptions.add(this.subjects.closeBannerWarnings.subscribe(() => {
       this.CloseBannerWarnings();
-    });
+    }));
 
   }
 
@@ -80,9 +81,9 @@ export class BannerWarningsComponent implements OnInit {
 
   ApplyOverrideConfigurationToWarnings() {
 
-    let config = this.appService.appConfig.AppSettings.BannerWarningOverrides;
-    if (config && Array.isArray(config)) {
-      config.forEach(c => {
+    //let config = this.appService.appConfig.AppSettings.BannerWarningOverrides;
+    if (this.config && Array.isArray(this.config)) {
+      this.config.forEach(c => {
         let mw = this.mainWarnings.filter(x => x.warninggroup.toLowerCase() == c.warninggroup.toLowerCase());
 
         mw.forEach(w => {
@@ -120,7 +121,7 @@ export class BannerWarningsComponent implements OnInit {
       postobject.warningheader = warning.warningheader;
 
       this.subscriptions.add(this.apiRequest.postRequest(this.appService.baseURI +
-        "/PostObject?synapsenamespace=local&synapseentityname=epma_bannerwarningoverrides", JSON.stringify(postobject),false)
+        "/PostObject?synapsenamespace=local&synapseentityname=epma_bannerwarningoverrides", JSON.stringify(postobject), false)
         .subscribe((response) => {
           warning.__dismissmessageerror = false;
           warning.__isdismissed = true;
@@ -164,18 +165,49 @@ export class BannerWarningsComponent implements OnInit {
       }
     }
 
-     //this.appService.bannerWarningStatus = true;
+    if (this.appService.appConfig.AppSettings.allowSupressingBannerWarnings && this.appService.AuthoriseAction("epma_supress_bannerwarnings")) {
+      this.appService.bannerWarningStatus = true;
+    }
 
+    // this.appService.bannerWarningStatus = true;
   }
 
   GetBannerWarnings(cb: Function) {
     this.subscriptions.add(this.apiRequest.getRequest(`${this.appService.baseURI}/GetBaseViewListByAttribute/patientbanner_mainwarnings?synapseattributename=person_id&attributevalue=${this.appService.personId}`).subscribe(
       (response) => {
         if (response) {
+
+          response = JSON.parse(response);
+          //disabled weight not recorded for this admision warnign for tci and op
+          if (this.appService.isTCI || this.appService.isOP) {
+            response = response.filter(x => x.warningheader.toLowerCase().indexOf("patient has not had a weight recorded since admission") == -1);
+          }
+          if (!this.appService.isCurrentEncouner && !this.appService.isTCI && !this.appService.isOP) {
+            response = [];
+          }
+
+          //filter warnings as per config
+          this.config = this.appService.appConfig.AppSettings.BannerWarningOverrides;
+          if (this.appService.isCurrentEncouner) {
+            this.config = this.config.ip;
+          }
+          else if (this.appService.isTCI) {
+            this.config = this.config.tci;
+          } else if (this.appService.isOP) {
+            this.config = this.config.op;
+          }
+          if (this.config && Array.isArray(this.config)) {
+            this.config.forEach(c => {
+              if (!c.enabled) {
+                response = response.filter(x => x.warninggroup.toLowerCase() != c.warninggroup.toLowerCase());
+              }
+            });
+          }
+
           if (!this.mainWarnings)
-            this.mainWarnings = JSON.parse(response);
+            this.mainWarnings = response; //JSON.parse(response);
           else {
-            let parsed = JSON.parse(response);
+            let parsed = response; // JSON.parse(response);
 
             //delete all from main warnings that have been resolved 
             let toremove = [];
@@ -215,6 +247,11 @@ export class BannerWarningsComponent implements OnInit {
           cb();
         }
       }));
+  }
+
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 }
 

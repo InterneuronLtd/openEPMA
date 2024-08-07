@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@ import { DataRequest } from "src/app/services/datarequest";
 import { filter, filterparam, filterParams, filters, orderbystatement, selectstatement } from "src/app/models/filter.model";
 import { ApirequestService } from "src/app/services/apirequest.service";
 import { TimeerHelper } from '../drug-chart/timer-helper'
+import { InfusionType } from "src/app/services/enum";
 @Component({
   selector: 'app-records-template',
   templateUrl: './admission-records-template.component.html',
@@ -540,7 +541,7 @@ export class AdmissionRecordsTemplate implements OnInit, AfterViewInit, OnDestro
   getDose(obj: any) {
     const posology = this.appService.GetCurrentPosology(this.appService.Prescription.filter(pres => pres.prescription_id === obj.prescription_id)[0]);
     let dose;
-    if (posology.infusiontypeid === 'ci') {
+    if (posology.infusiontypeid === 'ci' || posology.infusiontypeid === InfusionType.pca) {
       dose = posology.__dose.filter(dose => dose.dose_id === obj.dose_id?.split('_')[2])[0];
     } else if (posology.infusiontypeid === 'bolus') {
       dose = posology.__dose.filter(dose => dose.dose_id === obj.dose_id?.split('_')[2])[0];
@@ -560,7 +561,7 @@ export class AdmissionRecordsTemplate implements OnInit, AfterViewInit, OnDestro
         doseUnit = dose.doseunit;
       }
       return dose.dosesize + ' ' + doseUnit;
-    } else if (posology.infusiontypeid === 'ci' && dose) {
+    } else if ((posology.infusiontypeid === 'ci' || posology.infusiontypeid === InfusionType.pca) && dose) {
       return dose.infusionrate + ' ' + dose.strengthdenominatorunit + ' / ' + 'hr';
 
 
@@ -1005,7 +1006,7 @@ export class AdmissionRecordsTemplate implements OnInit, AfterViewInit, OnDestro
         checkDate = false;
       }
     }
-    if (pres.isinfusion && pres.infusiontype_id === 'ci') {
+    if (pres.isinfusion && (pres.infusiontype_id === 'ci' || pres.infusiontype_id === InfusionType.pca)) {
       if (this.hs.prescriptionDictionary[pres.prescription_id][i]) {
         checkDate = moment(currDate.getFullYear() + '-' + (currDate.getMonth() + 1) + '-' + currDate.getDate()).isSame(this.hs.prescriptionDictionary[pres.prescription_id][i].ciDate);
       } else {
@@ -1076,7 +1077,7 @@ export class AdmissionRecordsTemplate implements OnInit, AfterViewInit, OnDestro
             return this.hs.prescriptionDictionary[pres.prescription_id][i].time;
           }
           return this.hs.prescriptionDictionary[pres.prescription_id][i].rateDose
-        } else if (pres.infusiontype_id === 'ci') {
+        } else if (pres.infusiontype_id === 'ci' || pres.infusiontype_id === InfusionType.pca) {
           if (type === 'time') {
             return this.hs.prescriptionDictionary[pres.prescription_id][i].time;
           }
@@ -1208,7 +1209,7 @@ export class AdmissionRecordsTemplate implements OnInit, AfterViewInit, OnDestro
         dose = dose.infusionrate + ' ' + dose.strengthdenominatorunit + 'hrs ' + ' / ' + dose.infusionduration + ' ' + 'hrs';
       } else if (type === 'bolus') {
         dose = dose.strengthdenominator + ' ' + dose.strengthdenominatorunit;
-      } else if (type === 'ci') {
+      } else if (type === 'ci' || type === InfusionType.pca) {
         dose = prespos.__dose[0].infusionrate + ' ' + prespos[0].__dose[0].strengthdenominatorunit;
       } else if (doseToSend.length) {
         dose = doseToSend[0].dosesize + ' ' + doseToSend[0].doseunit;

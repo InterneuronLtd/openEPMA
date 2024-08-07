@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -52,10 +52,10 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
   <div class="modal-footer">
     <div class="row" *ngIf="!isSaving">
       <div class="col-sm-6">
-        <button type="button" class="btn btn-info btn-block" (click)="saveWeightObs()">Confirm</button>
+        <button type="button" *ngIf="appService.AuthoriseAction('epma_update_weight')" class="btn btn-info btn-block" (click)="saveWeightObs()">Confirm</button>
       </div>
       <div class="col-sm-6">
-        <button type="button" class="btn btn-secondary btn-block" (click)="bsModalRef.hide()">Cancel</button>
+        <button type="button" class="btn btn-secondary" (click)="bsModalRef.hide()">Cancel</button>
       </div>
     </div>
     <div class="row" *ngIf="isSaving">

@@ -92,3 +92,31 @@
 .therapy {
   background-image: url(/assets/images/epma/therapy/Medication_Type_Not_Defined.svg);
 }
+
+.modal-body {
+  /* 100% = dialog height, 120px = header + footer */
+  max-height: calc(100% - 60px);
+  overflow-y: auto;
+}
+
+.modal-dialog-centered {
+  min-width: 40%;
+}
+
+.modal-dialog, .modal-content {
+  /* 80% of window height */
+  height: 86%;
+}
+
+::-webkit-scrollbar {
+  -webkit-appearance: none;
+  width: 7px;
+  height: 7px;
+  -webkit-overflow-scrolling: auto;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, .5);
+
+}

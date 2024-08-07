@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -94,7 +94,7 @@ export class ChangeInfusionComponent implements OnInit, OnDestroy {
     }
     this.infusionEvents.eventdatetime = this.appService.getDateTimeinISOFormat(moment(this.administrationstartime, "DD-MM-YYYY HH:mm").toDate());
     this.infusionEvents.planneddatetime = this.infusionEvents.eventdatetime;
-    this.infusionEvents.logicalid = this.infusionType + "_" + this.createLogicalId(this.infusionEvents.eventdatetime, this.infusionEvents.dose_id);
+    //this.infusionEvents.logicalid = this.infusionType + "_" + this.createLogicalId(this.infusionEvents.eventdatetime, this.infusionEvents.dose_id);
     this.infusionEvents.posology_id = this.appService.GetCurrentPosology(this.prescription).posology_id;
     this.infusionEvents.eventtype = this.infusionType;
     this.infusionEvents.comments = this.comments;
@@ -119,7 +119,7 @@ export class ChangeInfusionComponent implements OnInit, OnDestroy {
           this.subjects.closeAppComponentPopover.next();
 
           if (this.appService.IsDataVersionStaleError(error)) {
-            this.subjects.ShowRefreshPageMessage.next(error);
+            this.appService.RefreshPageWithStaleError(error);
           }
         })
     )
@@ -132,6 +132,7 @@ export class ChangeInfusionComponent implements OnInit, OnDestroy {
       this.infusionEvents = event.infusionEvents;
       this.infusionType = this.infusionEvents.eventtype;
       this.infusionEvents.modifiedby = this.appService.loggedInUserName;
+      this.infusionEvents.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
       this.comments = this.infusionEvents.comments;
       if (event.infusionEvents.expirydate) {
         this.expirydate = moment(event.infusionEvents.expirydate, "YYYY-MM-DD HH:mm").format("DD-MM-YYYY");
@@ -154,8 +155,11 @@ export class ChangeInfusionComponent implements OnInit, OnDestroy {
     } else {
       this.infusionEvents.infusionevents_id = uuid();
       this.infusionEvents.dose_id = uuid();
+      this.infusionEvents.logicalid = this.infusionType + "_" + this.createLogicalId(this.infusionEvents.eventdatetime, this.infusionEvents.dose_id);
       this.infusionEvents.modifiedby = this.appService.loggedInUserName;
       this.infusionEvents.administeredby = this.appService.loggedInUserName;
+      this.infusionEvents.createdon = this.appService.getDateTimeinISOFormat(moment().toDate());
+      this.infusionEvents.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
       let eventRecord = this.appService.events.sort((b, a) => new Date(a.eventStart).getTime() - new Date(b.eventStart).getTime()).filter(e => e.posology_id == this.appService.GetCurrentPosology(this.prescription).posology_id && !e.dose_id.includes("dur") && !e.dose_id.includes("flowrate") && !e.dose_id.includes("infusionevent"));
       let doneInfusion = eventRecord.find(e => e.admitdone);
       var index = eventRecord.indexOf(eventRecord.find(e => e.admitdone));

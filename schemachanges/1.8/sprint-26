@@ -1,0 +1,39 @@
+Entity
+---------------------------------------------------
+core Medicationadministration
+core_administermedication
+
+Baseview
+------------------------------------------------------
+administeredmedhistory
+medicationadministrationhistory
+administrationwitnesshistory
+
+
+Action
+------------------------------------------------------
+epma_access_nursinginstructions_ip(Super User,AIT / Non Medical Prescriber, Doctor, Pharmacist)
+epma_access_reminder_ip (Super User,AIT / Non Medical Prescriber, Doctor, Pharmacist)
+
+--------------------
+epma_access_org_ordersets_moa (AIT / Non Medical Prescriber , Doctor,Pharmacist,Super User)
+epma_access_org_ordersets_mod(AIT / Non Medical Prescriber , Doctor,Pharmacist,Super User)
+epma_access_org_ordersets_op(AIT / Non Medical Prescriber , Doctor,Pharmacist,Super User)	
+
+epma_access_search_medicines_moa	(AIT / Non Medical Prescriber , Doctor,Pharmacist,Super User)
+epma_access_search_medicines_mod	(AIT / Non Medical Prescriber , Doctor,Pharmacist,Super User)
+epma_access_search_medicines_op(AIT / Non Medical Prescriber , Doctor,Pharmacist,Super User)
+
+epma_access_favourites_list_moa(AIT / Non Medical Prescriber , Doctor,Pharmacist,Super User)
+epma_access_favourites_list_mod	(AIT / Non Medical Prescriber , Doctor,Pharmacist,Super User)
+epma_access_favourites_list_op	(AIT / Non Medical Prescriber , Doctor,Pharmacist,Super User)
+
+epma_access_patient_list_moa(AIT / Non Medical Prescriber , Doctor,Pharmacist,Super User)
+epma_access_patient_list_mod	(AIT / Non Medical Prescriber , Doctor,Pharmacist,Super User)
+epma_access_patient_list_op(AIT / Non Medical Prescriber , Doctor,Pharmacist,Super User)
+
+
+New Role
+-------------------------------------------
+ EPMA PGD Nurses 
+ Action mapping(epma_access_inpatientprescribing,epma_access_org_ordersets,epma_access_org_ordersets_mod)

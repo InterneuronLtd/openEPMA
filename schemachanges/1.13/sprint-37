@@ -1,0 +1,21 @@
+Actions:
+epma_supress_bannerwarnings
+epma_supress_warningsmodalonload
+
+Roles:
+EPMA BCPBOT
+
+Role mappings:
+EPMA BCPBOT
+    epma_supress_bannerwarnings
+    epma_supress_warningsmodalonload
+---------------------------------------------------------------------------------------------------------------------
+
+Baseviews:
+epma_prescriptiondetail -EPMA-3073 added ne column in base view for outpatient isdelete
+
+
+---------------------------------------------------------------------------------------------------------------------
+Entities:
+core_prescription - EPMA-3073 added ne column in base view for outpatient isdelete 
+epma_outpatientprescriptions - added 2 columns

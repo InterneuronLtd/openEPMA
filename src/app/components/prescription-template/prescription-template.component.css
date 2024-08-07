@@ -2,7 +2,7 @@
     width: 100%;
     min-width: 100%;
     height: auto;
-    min-height: 100px;
+    min-height: 135px;
     flex: 0 0 auto;
     -webkit-box-flex: 0;
     order: 0;
@@ -15,7 +15,7 @@
     font-size: 1.1em;
     line-height: 14px;
     color: #646464;
-    font-weight: bold;
+    font-weight: 800;
 }
 
 .p-card-template .width-s1 {
@@ -342,6 +342,12 @@
 .Pharmacist_review_not_required {
     background-image: url(/assets/images/epma/review/Pharmacist_Review_Not_Required.svg);
 }
+.MOA_No_Notes {
+    background-image: url(/assets/images/epma/review/MOA_No_Notes.svg);
+}
+.MOA_Has_Notes {
+    background-image: url(/assets/images/epma/review/MOA_Has_Notes.svg);
+}
 .Waiting_for_pharmacist_review {
     background-image: url(/assets/images/epma/review/Waiting_For_Pharmacist_Review.svg);
 }
@@ -459,6 +465,10 @@
 }
 .icon-druginfo {
     background-image: url(/assets/images/epma/menu/Drug_Information.svg);
+
+}
+.icon-nursing {
+    background-image: url(/assets/images/epma/Notes.svg);
 
 }
 .icon-edittherapy {
@@ -738,7 +748,7 @@
     width: 1.5em;
     height: 1.5em;
     background-size: cover;
-    background-image: url(/assets/images/epma/events/administration/Dose_Administered_Is_Different_From_Prescribed.svg);
+    background-image: url(/assets/images/epma/events/administration/Dose_Administered_Is_A_Different_Product_From_Prescribed.svg);
 }
 
 .OP_Administration_Completed_Early {
@@ -774,3 +784,71 @@
 
 
 
+::ng-deep .dropdown-menu:empty {
+    display: none;
+    border: 0 !important;
+ }
+ .Nurse_resupply_request {
+    background-image: url(/assets/images/epma/Nurse_resupply_request.svg);
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: 100%;
+    width: 16px;
+    height: 16px
+}
+.Supply_request_Pending {
+    background-image: url(/assets/images/epma/Supply_request_Pending.svg);
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: 100%;
+    width: 16px;
+    height: 16px
+}
+.Supply_request_Approved {
+    background-image: url(/assets/images/epma/Supply_request_Approved.svg);
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: 100%;
+    width: 16px;
+    height: 16px
+}
+.Supply_request_fulfilled {
+    background-image: url(/assets/images/epma/Supply_request_fulfilled.svg);
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: 100%;
+    width: 16px;
+    height: 16px
+}
+.Supply_request_rejected {
+    background-image: url(/assets/images/epma/Supply_request_rejected.svg);
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: 100%;
+    width: 16px;
+    height: 16px
+}
+
+.badge-pill {
+    border-radius: 10rem;
+  }
+  .badge {
+    display: inline-block;
+    padding: 0.25em 0.4em;
+    height: 14px;
+    font-size: 75%;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.25rem;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    .badge {
+      transition: none;
+    }
+  }
+    

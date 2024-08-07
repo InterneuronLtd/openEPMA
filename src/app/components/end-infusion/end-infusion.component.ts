@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -153,6 +153,7 @@ export class EndInfusionComponent implements OnInit, OnDestroy {
       if(linkedInfusion.length>0) {
         this.dr.getAllPrescription(() => {
           this.dr.getInfusionEvents(() => {
+            this.appService.Prescription.forEach(p => this.appService.UpdatePrescriptionCompletedStatus(p));
             this.showSpinner = false;
             this.appService.UpdatePrescriptionWarningSeverity(this.appService.Prescription, () => {
               this.subjects.reloadCurrentModule.next();
@@ -175,7 +176,7 @@ export class EndInfusionComponent implements OnInit, OnDestroy {
         upsertManager.destroy();
 
         if (this.appService.IsDataVersionStaleError(error)) {
-          this.subjects.ShowRefreshPageMessage.next(error);
+          this.appService.RefreshPageWithStaleError(error);
         }
       }
     );
@@ -187,6 +188,7 @@ export class EndInfusionComponent implements OnInit, OnDestroy {
     if (this.infusionEvents) {
       this.comments = this.infusionEvents.comments;
       this.infusionEvents.modifiedby = this.appService.loggedInUserName;
+      this.infusionEvents.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
       this.stardate = moment(this.infusionEvents.eventdatetime, "YYYY-MM-DD HH:mm").format("DD-MM-YYYY");
       this.startime = moment(this.infusionEvents.eventdatetime, "YYYY-MM-DD HH:mm").format("HH:mm");
     } else {
@@ -195,6 +197,8 @@ export class EndInfusionComponent implements OnInit, OnDestroy {
       this.infusionEvents.dose_id = uuid();
       this.infusionEvents.administeredby = this.appService.loggedInUserName;
       this.infusionEvents.modifiedby = this.appService.loggedInUserName;
+      this.infusionEvents.createdon = this.appService.getDateTimeinISOFormat(moment().toDate());
+      this.infusionEvents.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
       this.infusionEvents.planneddatetime = this.appService.getDateTimeinISOFormat(moment(moment(new Date(this.dose.eventStart)).format('YYYY-MM-DD HH:mm')).toDate());
     }
     let infusionData = this.appService.events.sort((a, b) => new Date(a.eventStart).getTime() - new Date(b.eventStart).getTime()).filter(e => e.prescription_id == this.prescription.prescription_id && !e.dose_id.includes("dur") && !e.dose_id.includes("flowrate") && !e.dose_id.includes("infusionevent"));

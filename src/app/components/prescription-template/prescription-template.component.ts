@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -25,9 +25,10 @@ import { InfusionEvents, Medication, Medicationadministration, MetaPrescriptiona
 import { Product } from 'src/app/models/productdetail';
 import { ApirequestService } from 'src/app/services/apirequest.service';
 import { AppService } from 'src/app/services/app.service';
-import { PrescriptionContext, PrescriptionStatus, title } from 'src/app/services/enum';
+import { InfusionType, PrescriptionContext, PrescriptionStatus, title } from 'src/app/services/enum';
 import { SubjectsService } from 'src/app/services/subjects.service';
 import { SupplyRequestStatus } from 'src/app/services/enum';
+import { DataRequest } from 'src/app/services/datarequest';
 @Component({
   selector: 'app-prescription-template',
   templateUrl: './prescription-template.component.html',
@@ -51,17 +52,17 @@ export class PrescriptionTemplateComponent implements OnInit, OnDestroy {
   primaryMedication: Medication;
   therapyTypeClass: string;
   isresupply: boolean = false;
-  resupply=title.resupply
-  ComplianceAid=title.ComplianceAid
-  Highalertmedication=title.Highalertmedication
-  NursingInstruction=title.NursingInstruction
-  pharmacyreview=title.pharmacyreview
-  critialdrug=title.critialdrug
-  nonformularymedication=title.nonformularymedication
-  clinicaltrialmedicine=title.clinicaltrialmedicine
-  expensivemedication=title.expensivemedication
-  highalertmedication=title.highalertmedication
-  unlicencedmedicine=title.unlicencedmedicine
+  resupply = title.resupply
+  ComplianceAid = title.ComplianceAid
+  Highalertmedication = title.Highalertmedication
+  NursingInstruction = title.NursingInstruction
+  pharmacyreview = title.pharmacyreview
+  critialdrug = title.critialdrug
+  nonformularymedication = title.nonformularymedication
+  clinicaltrialmedicine = title.clinicaltrialmedicine
+  expensivemedication = title.expensivemedication
+  highalertmedication = title.highalertmedication
+  unlicencedmedicine = title.unlicencedmedicine
   isAdministered: boolean = false;
   eventType: string;
   isDateShown = false;
@@ -102,7 +103,22 @@ export class PrescriptionTemplateComponent implements OnInit, OnDestroy {
   protocolMessage: string;
   showModifiedStatus: boolean;
   opAdministeredCSSClass: string;
-  constructor(public subjects: SubjectsService, public appService: AppService, public apiRequest: ApirequestService, public cd: ChangeDetectorRef) {
+  prnmaxdosestring: string;
+  nursingInstruction: any;
+  supplyIcon: string;
+  availableQuantity: string;
+  quantityUnits: string;
+  lastmodifiedon: any;
+  isPrescriptionStop: boolean =false;
+  isPrescriptionSuspended: boolean =false;
+  createdbyrole: any;
+  lastmodifiedbyrole: any;
+  isMedRecMenu: boolean;
+  stopSuspendUserRole: string;
+  stopSuspendUser: string;
+  prescribedConcentration: string;
+
+  constructor(public subjects: SubjectsService, public appService: AppService, public apiRequest: ApirequestService, public cd: ChangeDetectorRef, public dr: DataRequest) {
     this.subscriptions.add(this.subjects.refreshTemplate.subscribe
       ((event) => {
         if (this.prescription.prescription_id == event) {
@@ -112,7 +128,7 @@ export class PrescriptionTemplateComponent implements OnInit, OnDestroy {
         }
         this.initComponent();
         cd.detectChanges();
-      
+
       }));
   }
 
@@ -122,27 +138,56 @@ export class PrescriptionTemplateComponent implements OnInit, OnDestroy {
     this.additionalcondition = this.appService.MetaPrescriptionadditionalcondition;
     this.primaryMedication = this.prescription.__medications.find(e => e.isprimary == true);
     this.medicationadminstration = this.appService.Medicationadministration.sort((b, a) => new Date(a.administrationstartime).getTime() - new Date(b.administrationstartime).getTime()).find(e => e.prescription_id == this.prescription.prescription_id);
+    const currentPosology = this.appService.GetCurrentPosology(this.prescription);
 
-    if (this.appService.InfusionEvents.sort((b, a) => new Date(a.eventdatetime).getTime() - new Date(b.eventdatetime).getTime()).find(x => x.posology_id == this.appService.GetCurrentPosology(
-      this.prescription).posology_id)) {
+    if (this.appService.InfusionEvents.sort((b, a) => new Date(a.eventdatetime).getTime() - new Date(b.eventdatetime).getTime()).find(x => x.posology_id == currentPosology.posology_id)) {
       this.eventType = this.appService.InfusionEvents.sort((b, a) => new Date(a.eventdatetime).getTime() - new Date(b.eventdatetime).getTime()).find(x => x.posology_id == this.appService.GetCurrentPosology(
         this.prescription).posology_id).eventtype;
     }
-   
+
     // View medication supply icon
     let medicationSupply = this.appService.PrescriptionMedicaitonSupply.find(x => x.prescriptionid == this.prescription_id);
     if (medicationSupply) {
       this.showCompliance = medicationSupply.complianceaid ? true : false;
       this.showOwnSupply = medicationSupply.ownsupplyathome;
-      this.showWardStockIcon = medicationSupply.resupplyfrom=="Ward stock" ? true : false;
+      this.showWardStockIcon = medicationSupply.resupplyfrom == "Ward stock" ? true : false;
+      this.availableQuantity =medicationSupply.availablequantity;
+      this.quantityUnits= medicationSupply.quantityunits;
+      this.lastmodifiedon =  moment(medicationSupply.quantityentrydate).format("DD-MM-YYYY HH:mm");
     }
     //View Supply Request Icon
-    let supplyRequests = this.appService.SupplyRequest.filter(s => s.prescription_id == this.prescription_id &&
-      s.medication_id == this.prescription.__medications.find(x => x.isprimary).__codes.find(x => x.terminology == "formulary").code &&
-      (s.requeststatus == SupplyRequestStatus.Incomplete || s.requeststatus == SupplyRequestStatus.Pending));
+    let supplyRequests;
+    if (this.componenttype == 'OP') {
+      supplyRequests = this.appService.SupplyRequest.filter(s => s.prescription_id == this.prescription_id &&
+        s.medication_id == this.prescription.__medications.find(x => x.isprimary).__codes.find(x => x.terminology == "formulary").code 
+        //&& (s.requeststatus == SupplyRequestStatus.Incomplete || s.requeststatus == SupplyRequestStatus.Pending || s.requeststatus == SupplyRequestStatus.Approved || s.requeststatus == SupplyRequestStatus.Fulfilled)
+        ).sort((b, a) => new Date(a.lastmodifiedon).getTime() - new Date(b.lastmodifiedon).getTime());
+    } else {
+      supplyRequests = this.appService.SupplyRequest.filter(s => s.prescription_id == this.prescription_id &&
+        s.medication_id == this.prescription.__medications.find(x => x.isprimary).__codes.find(x => x.terminology == "formulary").code 
+      //  && (s.requeststatus == SupplyRequestStatus.Incomplete || s.requeststatus == SupplyRequestStatus.Pending)
+      ).sort((b, a) => new Date(a.lastmodifiedon).getTime() - new Date(b.lastmodifiedon).getTime());
+    }
 
     if (supplyRequests.length > 0) {
       this.isresupply = true;
+      this.supplyIcon="";
+      if(supplyRequests[0].requeststatus == SupplyRequestStatus.Incomplete) {
+        this.supplyIcon = "Nurse_resupply_request";
+      }
+      if(supplyRequests[0].requeststatus == SupplyRequestStatus.Pending) {
+        this.supplyIcon = "Supply_request_Pending";
+      }
+      if(supplyRequests[0].requeststatus == SupplyRequestStatus.Approved || supplyRequests[0].requeststatus == SupplyRequestStatus.OutpatientApproved) {
+        this.supplyIcon = "Supply_request_Approved";        
+      }
+      if(supplyRequests[0].requeststatus == SupplyRequestStatus.Fulfilled || supplyRequests[0].requeststatus == SupplyRequestStatus.OutpatientChecked) {
+        this.supplyIcon = "Supply_request_fulfilled";
+      }
+      if(supplyRequests[0].requeststatus == SupplyRequestStatus.Rejected) {
+        this.supplyIcon = "Supply_request_rejected";
+      }
+      
     } else {
       this.isresupply = false;
     }
@@ -160,28 +205,34 @@ export class PrescriptionTemplateComponent implements OnInit, OnDestroy {
     //   this.startDate = this.appService.GetCurrentPosology(this.prescription).prescriptionstartdate;
     // }
     this.startDate = this.prescription.startdatetime;
-    if (moment(this.prescription.startdatetime).format("YYYYMMDDHHmm") != moment(this.appService.GetCurrentPosology(this.prescription).prescriptionstartdate).format("YYYYMMDDHHmm")) {
-      this.modifiedFrom = this.appService.GetCurrentPosology(this.prescription).prescriptionstartdate;
+    if (moment(this.prescription.startdatetime).format("YYYYMMDDHHmm") != moment(currentPosology.prescriptionstartdate).format("YYYYMMDDHHmm")) {
+      this.modifiedFrom = currentPosology.prescriptionstartdate;
     } else {
       this.modifiedFrom = null;
+    }
+    if(this.modifiedFrom && moment(this.prescription.startdatetime).isAfter(moment(currentPosology.prescriptionstartdate)))
+    {
+      this.startDate = this.modifiedFrom;
     }
     this.isPrescriptionGas = false;
     if (this.primaryMedication.form) {
       this.isPrescriptionGas = this.primaryMedication.form.includes("gas");
     }
-    if (!this.appService.GetCurrentPosology(this.prescription).__dose) {
-      let d = this.appService.GetCurrentPosology(this.prescription).__dose;
-    }
-    this.appService.GetCurrentPosology(this.prescription).__dose.sort((a, b) => new Date(a.dosestartdatetime).getTime() - new Date(b.dosestartdatetime).getTime());
 
-    this.distinctDate = this.appService.GetCurrentPosology(this.prescription).__dose.filter(d => d.dosesize || d.strengthdenominator).filter(
+    currentPosology.__dose.sort((a, b) => new Date(a.dosestartdatetime).getTime() - new Date(b.dosestartdatetime).getTime());
+
+    this.distinctDate = currentPosology.__dose.filter(d => d.dosesize || d.strengthdenominator).filter(
       (thing, i, arr) => arr.findIndex(t => moment(new Date(t.dosestartdatetime)).format("DD-MM-YYYY") === moment(new Date(thing.dosestartdatetime)).format("DD-MM-YYYY")) === i
     ).map(x => x.dosestartdatetime);
     this.prescriptionEvent = this.appService.prescriptionEvent.find(e => e.prescriptionid == this.prescription_id);
     if (this.prescriptionEvent) {
       this.prescriptionEventComment = this.prescriptionEvent.comments;
     }
-
+    let userAndRole= this.appService.prescriptionEvent.sort((b, a) => (moment(a.datetime) > moment(b.datetime)) ? 1 : ((moment(b.datetime) > moment(a.datetime)) ? -1 : 0)).find(x=>x.prescriptionid== this.prescription_id && x.prescriptionstatusid==this.prescription.prescriptionstatus_id);
+    if(userAndRole) {
+      this.stopSuspendUser = userAndRole.createdby;
+      this.stopSuspendUserRole = this.appService.JSONTryParse(userAndRole.createdbyrole)??[].join(", ");
+    }
     //set max length comments
     let maxCardCommentLen = 0;
     let maxlencomments = this.appService.appConfig.AppSettings.prescriptionCardCommentsMaxLenth;
@@ -197,6 +248,19 @@ export class PrescriptionTemplateComponent implements OnInit, OnDestroy {
     } else {
       this.prescriptionCardComment = this.prescription.comments;
     }
+    let stoppedId = this.appService.MetaPrescriptionstatus.find(x => x.status.toLowerCase() == PrescriptionStatus.stopped).prescriptionstatus_id;
+    let cancelledId = this.appService.MetaPrescriptionstatus.find(x => x.status.toLowerCase() == PrescriptionStatus.cancelled).prescriptionstatus_id;
+    let suspendedId = this.appService.MetaPrescriptionstatus.find(x => x.status.toLowerCase() == PrescriptionStatus.suspended).prescriptionstatus_id;
+
+    this.isPrescriptionStop =false;
+    if(this.prescription.prescriptionstatus_id == stoppedId || this.prescription.prescriptionstatus_id == cancelledId) {
+      this.isPrescriptionStop =true;
+    }
+    this.isPrescriptionSuspended =false;
+    if(this.prescription.prescriptionstatus_id == suspendedId) {
+      this.isPrescriptionSuspended =true;
+    }
+    this.getMOAPrescription();
     this.GetDischargeSummaryMessage();
     this.getPrescriptionStatus();
     this.getdayNumber();
@@ -205,11 +269,12 @@ export class PrescriptionTemplateComponent implements OnInit, OnDestroy {
     this.GetChosenDays();
     this.GetSource();
     this.getReminderIcon();
+
     this.getPharmacistReviewStatus();
     this.getOxygenAditionalInformation();
-    this.getMOAPrescription();
+    this.getUserRoles();
     this.getProtocolMessage();
-    
+
     if (this.appService.appConfig.isMultiplelinkedinfusion) {
       this.appService.getMultilinkPrescriptionBags();
     } else {
@@ -227,19 +292,39 @@ export class PrescriptionTemplateComponent implements OnInit, OnDestroy {
     // if (this.componenttype != "therapyoverview") {
     //   this.getNursingInstructions();
     // }
+    if (currentPosology.prn && currentPosology.prnmaxdose) {
+      this.prnmaxdosestring = this.appService.GetPRNMaxDoseDisplayString(currentPosology.prnmaxdose);
+    }
+    this.nursingInstruction = this.appService.NursingInstructions.find(x=>x.prescription_id==this.prescription_id);
 
-
+    this.isMedRecMenu = ((this.componenttype=='MOD'  || this.componenttype=='MODNO' || this.componenttype=='MOA') && this.appService.AuthoriseAction('epma_access_patientdrugs_moa'))
+    || ((this.componenttype=='SUM' || this.componenttype=='SUMNO') && this.appService.AuthoriseAction('epma_access_supplyrequest_mod'))
+    || (!this.isAdministered && this.appService.AuthoriseAction('epma_access_administer_op') && this.componenttype=='OP' && this.appService.warningServiceIPContext && this.appService.warningServiceIPContext.existingWarningsStatus)
+    || (this.isAdministered && this.componenttype=='OP'  && this.appService.warningServiceIPContext && this.appService.warningServiceIPContext.existingWarningsStatus)
+    || (this.componenttype=='OP' && this.appService.AuthoriseAction('epma_access_supplyrequest_op') && this.appService.warningServiceIPContext && this.appService.warningServiceIPContext.existingWarningsStatus);
+  
+    this.prescribedConcentration = this.appService.CalculatePrescribedConcentration(this.prescription);
   }
 
   ngOnInit(): void {
     this.initComponent();
+    this.cd.detectChanges();
   }
   ngOnDestroy(): void {
     this.appService.logToConsole("destroy template pop");
     this.subscriptions.unsubscribe();
   }
   medicationBasketAction(actionType) {
-    this.basketAction.emit({ prescription_id: this.prescription.prescription_id, action: actionType });
+    if (actionType == "Delete") {
+      if (confirm("Are you sure?")) {
+        this.basketAction.emit({ prescription_id: this.prescription.prescription_id, action: actionType });
+      }
+    }
+    else {
+      this.basketAction.emit({ prescription_id: this.prescription.prescription_id, action: actionType });
+    }
+
+
   }
   getMOAPrescription() {
     if (this.prescription.prescriptioncontext_id == this.appService.MetaPrescriptioncontext.find(x => x.context == PrescriptionContext.Admission).prescriptioncontext_id) {
@@ -318,7 +403,7 @@ export class PrescriptionTemplateComponent implements OnInit, OnDestroy {
     } else if (this.primaryMedication.form.toLowerCase().indexOf("injection") != -1) {
       this.therapyType = "Injection";
     } else if (this.primaryMedication.form.toLowerCase().indexOf("infusion") != -1) {
-      if (this.prescription.infusiontype_id == "ci") {
+      if (this.prescription.infusiontype_id == "ci" || this.prescription.infusiontype_id == InfusionType.pca) {
         this.therapyType = "ContinuousInfusion";
       } else {
         this.therapyType = "Infusion";
@@ -426,6 +511,11 @@ export class PrescriptionTemplateComponent implements OnInit, OnDestroy {
       this.protocolMessage = "Repeated " + posology.repeatprotocoltimes + " time(s) until the " + (posology.prescriptionenddate == null ? "cancelled" : moment(posology.prescriptionenddate).format("Do MMM YYYY"));
     }
   }
+  getUserRoles() {
+    this.createdbyrole = this.appService.JSONTryParse(this.prescription.createdbyrole)??[].join(", ");
+    this.lastmodifiedbyrole = this.appService.JSONTryParse(this.prescription.lastmodifiedbyrole)??[].join(", ");
+
+  }
   // getLegendPrescriptionStatus(status: string) {
   //   var id = this.metaprescriptionstatus.find(x => x.status == status).prescriptionstatus_id;
   //   var psatus = this.appService.Prescription.filter(p => p.prescriptionstatus_id == id && p.prescription_id == this.prescription_id)
@@ -446,7 +536,7 @@ export class PrescriptionTemplateComponent implements OnInit, OnDestroy {
     this.reminderIconDesc = "";
     this.reminderIconIvtoOral = "";
     this.reminderIconDescIvtoOral = "";
-    let icons = this.appService.Prescriptionreminders.slice().filter(x => x.prescription_id == this.prescription_id && !x.isacknowledged);
+    let icons = this.appService.Prescriptionreminders.slice().filter(x => x.prescription_id == this.prescription_id && !x.isacknowledged && !x.enddatetime);
     icons.forEach((item) => {
       item.__calculatedactivationdatetime = null;
       if (!item.activationdatetime) {
@@ -458,45 +548,39 @@ export class PrescriptionTemplateComponent implements OnInit, OnDestroy {
         item.__calculatedactivationdatetime = moment(item.activationdatetime);
       }
     });
-    let active = icons.filter(e => e.__calculatedactivationdatetime).filter(e => moment(e.__calculatedactivationdatetime).format("YYYYMMDDHHmm") <= moment().format("YYYYMMDDHHmm"));
-    let switchtoOral = icons.find(x => x.isivtooral == true);
+    let eventReminder= this.appService.CurrentReminderevents.filter(x=>x.prescription_id==this.prescription_id);
+     
     let otherthanswitchtoOral = icons.find(x => !x.isivtooral);
     let overduetimeSwitchtoOral;
     let overduetimeOther;
-    if (icons.length > 0) {
-      if (otherthanswitchtoOral) {
-        this.reminderIcon = "template-reminder-icon-set";
-        this.reminderIconDesc = "Reminder set";
-      }
-      if (switchtoOral) {
-        this.reminderIconIvtoOral = "template-switch-to-oral-set";
-        this.reminderIconDescIvtoOral = "Switch IV to oral";
-      }
-    }
-    if (active.length > 0) {
-      let switchtoOralactive = active.find(x => x.isivtooral == true);
-      let otherthanswitchtoOralactive = active.find(x => !x.isivtooral);
+    if (eventReminder.length > 0 && otherthanswitchtoOral) {
+      this.reminderIcon = "template-reminder-icon-set";
+      this.reminderIconDesc = "Reminder set";
+      let otherthanswitchtoOralactive = eventReminder.find(x=>x.type==1); 
       if (otherthanswitchtoOralactive) {
         this.reminderIcon = "template-reminder-icon-active";
-        this.reminderIconDesc = "Reminder active";
-        overduetimeOther = moment(otherthanswitchtoOralactive.__calculatedactivationdatetime.toDate());
-        overduetimeOther.add(this.appService.appConfig.defaultOverdueTimePeriod, "hours");
+        this.reminderIconDesc = "Reminder active";       
       }
-      if (switchtoOralactive) {
-        this.reminderIconIvtoOral = "template-switch-to-oral-acive";
-        this.reminderIconDescIvtoOral = "Switch IV to oral active";
-        overduetimeSwitchtoOral = moment(switchtoOralactive.__calculatedactivationdatetime.toDate());
-        overduetimeSwitchtoOral.add(this.appService.appConfig.defaultOverdueTimePeriod, "hours");
-      }
+      overduetimeOther= eventReminder.find(x=>x.type==0);
+      if(overduetimeOther) {
+        this.reminderIcon = "template-reminder-icon-overdue";
+        this.reminderIconDesc = "Reminder overdue";
+      }    
     }
-    if (overduetimeOther) {
-      let overdue = icons.find(e => overduetimeOther.format("YYYYMMDDHHmm") < moment().format("YYYYMMDDHHmm"));
-      if (overdue) {
-        if (otherthanswitchtoOral) {
-          this.reminderIcon = "template-reminder-icon-overdue";
-          this.reminderIconDesc = "Reminder overdue";
-        }
-      }
+    
+    // SWITCH IV To ORAL
+    let active = icons.filter(e => e.__calculatedactivationdatetime).filter(e => moment(e.__calculatedactivationdatetime).format("YYYYMMDDHHmm") <= moment().format("YYYYMMDDHHmm"));
+    let switchtoOral = icons.find(x => x.isivtooral == true);
+    if (switchtoOral) {
+      this.reminderIconIvtoOral = "template-switch-to-oral-set";
+      this.reminderIconDescIvtoOral = "Switch IV to oral";
+    }
+    let switchtoOralactive = active.find(x => x.isivtooral == true);
+    if (switchtoOralactive) {
+      this.reminderIconIvtoOral = "template-switch-to-oral-acive";
+      this.reminderIconDescIvtoOral = "Switch IV to oral active";
+      overduetimeSwitchtoOral = moment(switchtoOralactive.__calculatedactivationdatetime.toDate());
+      overduetimeSwitchtoOral.add(this.appService.appConfig.defaultReminderOverdueTimePeriod, "hours");
     }
     if (overduetimeSwitchtoOral) {
       let overdue = icons.find(e => overduetimeSwitchtoOral.format("YYYYMMDDHHmm") < moment().format("YYYYMMDDHHmm"));
@@ -508,26 +592,46 @@ export class PrescriptionTemplateComponent implements OnInit, OnDestroy {
       }
     }
   }
+
   getPharmacistReviewStatus() {
     let reviewStatus = this.appService.Prescriptionreviewstatus.slice().filter(e => e.prescription_id == this.prescription.prescription_id).sort((b, a) => new Date(a.modifiedon).getTime() - new Date(b.modifiedon).getTime());
     if (reviewStatus.length > 0) {
       this.reviewStatusIcon = "";
       let status = this.appService.MetaReviewstatus.find(e => e.reviewstatus_id == reviewStatus[0].status);
       this.reviewStatusDesc = status.description;
-      if (status.status == "Grey" && (this.componenttype == "MOA" || this.componenttype == "MOANO" || this.componenttype == "MOD" || this.componenttype == "MODNO" || this.componenttype == "SUM" || this.componenttype == "SUMNO")) {
-        this.reviewStatusDesc = "Medicine comments and change history";
+      if (this.isMOAPrescription) {
+
+        let responseArray = this.appService.Prescriptionreviewstatus.filter(x => x.prescription_id == this.prescription.prescription_id)
+
+        if (responseArray.find(x => x.reviewcomments.trim() != "")) {
+          this.reviewStatusIcon = "MOA_Has_Notes";
+
+          this.reviewStatusDesc = "";
+        }
+        else {
+          this.reviewStatusIcon = "MOA_No_Notes";
+          this.reviewStatusDesc = "";
+        };
+        this.cd.detectChanges();
+
       }
-      if (status.status == "Grey") {
-        this.reviewStatusIcon = "Pharmacist_review_not_required";
-      }
-      if (status.status == "Amber") {
-        this.reviewStatusIcon = "Waiting_for_pharmacist_review";
-      }
-      if (status.status == "Green") {
-        this.reviewStatusIcon = "Pharmacist_review_complete";
-      }
-      if (status.status == "Red") {
-        this.reviewStatusIcon = "Pharmacist_reviewed_back_to_prescriber";
+
+      else {
+        if (status.status == "Grey" && (this.componenttype == "MOA" || this.componenttype == "MOANO" || this.componenttype == "MOD" || this.componenttype == "MODNO" || this.componenttype == "SUM" || this.componenttype == "SUMNO")) {
+          this.reviewStatusDesc = "Medicine comments and change history";
+        }
+        if (status.status == "Grey") {
+          this.reviewStatusIcon = "Pharmacist_review_not_required";
+        }
+        if (status.status == "Amber") {
+          this.reviewStatusIcon = "Waiting_for_pharmacist_review";
+        }
+        if (status.status == "Green") {
+          this.reviewStatusIcon = "Pharmacist_review_complete";
+        }
+        if (status.status == "Red") {
+          this.reviewStatusIcon = "Pharmacist_reviewed_back_to_prescriber";
+        }
       }
     }
   }
@@ -535,8 +639,15 @@ export class PrescriptionTemplateComponent implements OnInit, OnDestroy {
     this.appService.openPrescriptionHistory = false;
   }
   openPrescriptionHistory() {
-
     this.subjects.pharmacyReview.next(this.prescription);
+    // this.dr.RefreshIfDataVersionChanged((result) => {
+    //   if (result == false) {
+    //     this.subjects.pharmacyReview.next(this.prescription);
+    //   }
+    // })
+  }
+  openPrescriptionAdministrationHistory() {
+    this.subjects.prescriptionHistory.next(this.prescription);
   }
   suspendTherapy() {
     this.reasonStatus = PrescriptionStatus.suspended;
@@ -577,14 +688,14 @@ export class PrescriptionTemplateComponent implements OnInit, OnDestroy {
   }
 
   supplyRequest(componenttype) {
-    this.subjects.supplyRequest.next({ prescription: this.prescription, componenttype : componenttype });
+    this.subjects.supplyRequest.next({ prescription: this.prescription, componenttype: componenttype });
   }
   addAdministration() {
-    this.subjects.showopAdministration.next({ prescription: this.prescription , type: "OpAdministration" });
+    this.subjects.showopAdministration.next({ prescription: this.prescription, type: "OpAdministration" });
   }
 
   viewAdministration() {
-    this.subjects.showopAdministration.next({ prescription: this.prescription , type: "View Administration" });
+    this.subjects.showopAdministration.next({ prescription: this.prescription, type: "View Administration" });
   }
 
   reminder() {
@@ -629,36 +740,45 @@ export class PrescriptionTemplateComponent implements OnInit, OnDestroy {
   restartInfusion() {
     this.subjects.restartInfusion.next({ prescription: this.prescription });
   }
-  showNursingInstructions() {
+  showNursingInstructions(componenttype) {
     //open the popup to show nursing instrustions
-    this.subjects.nursingInstruction.next(this.prescription.__nursinginstructions);
+    this.subjects.nursingInstruction.next( { "prescription_id" : this.prescription_id, "data": this.prescription.__nursinginstructions, "componenttype": componenttype } );
 
   }
   GetOPAdministrationIcon() {
-      
-    if(moment(this.medicationadminstration.planneddatetime).isSame(this.medicationadminstration.administrationstartime)) {
-      if(this.medicationadminstration.planneddosesize == this.medicationadminstration.administreddosesize) {
-        this.opAdministeredCSSClass= "OP_Completed_Administration";
-      } else {
-        // green with triangle
-        this.opAdministeredCSSClass= "OP_Dose_Administered_Is_Different_From_Prescribed";
-      }
-    } else  if(moment(this.medicationadminstration.planneddatetime).isAfter(this.medicationadminstration.administrationstartime)) {
-      if(this.medicationadminstration.planneddosesize == this.medicationadminstration.administreddosesize) {
-        this.opAdministeredCSSClass= "OP_Administration_Completed_Early";
-      } else {
-        // green with triangle
-        this.opAdministeredCSSClass= "OP_Dose_Administered_Early_Is_Different_From_Prescribed";
-      }
-    } 
-    else  if(moment(this.medicationadminstration.planneddatetime).isBefore(this.medicationadminstration.administrationstartime)) {
-      if(this.medicationadminstration.planneddosesize == this.medicationadminstration.administreddosesize) {
-        this.opAdministeredCSSClass= "OP_Administration_Completed_Late";
-      } else {
-        // green with triangle
-        this.opAdministeredCSSClass= "OP_Dose_Administered_Late_Is_Different_From_Prescribed";
-      }
-    } 
+    this.opAdministeredCSSClass = "OP_Completed_Administration";
+    if(this.medicationadminstration.isdifferentproductadministered) {
+      this.opAdministeredCSSClass = "OP_Dose_Administered_Is_Different_From_Prescribed";
+    }
+    // if (moment(this.medicationadminstration.planneddatetime).isSame(this.medicationadminstration.administrationstartime)) {
+
+    //   if (this.medicationadminstration.planneddosesize == this.medicationadminstration.administreddosesize) {
+    //     this.opAdministeredCSSClass = "OP_Completed_Administration";
+    //   } else {
+    //     // green with triangle
+    //     this.opAdministeredCSSClass = "OP_Dose_Administered_Is_Different_From_Prescribed";
+    //   }
+    // } else if (moment(this.medicationadminstration.planneddatetime).isAfter(this.medicationadminstration.administrationstartime)) {
+    //   if (this.medicationadminstration.planneddosesize == this.medicationadminstration.administreddosesize) {
+    //     this.opAdministeredCSSClass = "OP_Administration_Completed_Early";
+    //   } else {
+    //     // green with triangle
+    //     this.opAdministeredCSSClass = "OP_Dose_Administered_Early_Is_Different_From_Prescribed";
+    //   }
+    // }
+    // else if (moment(this.medicationadminstration.planneddatetime).isBefore(this.medicationadminstration.administrationstartime)) {
+    //   if (this.medicationadminstration.planneddosesize == this.medicationadminstration.administreddosesize) {
+    //     this.opAdministeredCSSClass = "OP_Administration_Completed_Late";
+    //   } else {
+    //     // green with triangle
+    //     this.opAdministeredCSSClass = "OP_Dose_Administered_Late_Is_Different_From_Prescribed";
+    //   }
+    // }
+  }
+
+  CheckDataVersion() {
+    this.dr.RefreshIfDataVersionChanged((result) => {
+    });
   }
 
   // getNursingInstructions() {

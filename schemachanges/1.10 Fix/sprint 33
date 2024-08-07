@@ -1,0 +1,8 @@
+INSERT INTO entitystore.meta_prescriptionsource
+(prescriptionsource_id, "_row_id", "_contextkey", "_createdtimestamp", "_createddate", "_createdsource", "_createdmessageid", "_createdby", "_recordstatus", "_timezonename", "_timezoneoffset", "_tenant", "source", description, displayname)
+VALUES('437850c2-6d80-41f8-a136-2f590e72781e', '4b6d1b1d-454d-407f-8a40-72ed3894af21', '', timezone('UTC'::text, now()), now(), '', '', '', 1, '', 0,  '', 'GP connect', 'GP connect', 'GP connect');
+
+INSERT INTO entitystorematerialised.meta_prescriptionsource
+(prescriptionsource_id, "_row_id", "_contextkey", "_createdtimestamp", "_createddate", "_createdsource", "_createdmessageid", "_createdby", "_recordstatus", "_timezonename", "_timezoneoffset", "_tenant", "source", description, displayname)
+VALUES('437850c2-6d80-41f8-a136-2f590e72781e', '4b6d1b1d-454d-407f-8a40-72ed3894af21', '', timezone('UTC'::text, now()), now(), '', '', '', 1, '', 0,  '', 'GP connect', 'GP connect', 'GP connect');
+

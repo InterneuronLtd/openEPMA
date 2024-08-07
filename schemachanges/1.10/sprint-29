@@ -1,0 +1,23 @@
+Update Meta
+----------------------
+meta_reviewstatus (EPMA-2806)
+    Current value = Med changed and requires pharmacy review
+    New Value = Med changed and requires Pharmacist review
+
+
+Entities
+----------------------
+core_posology
+core_dose
+epma_prescriptionreminders
+epma_remindersack
+core_prescription
+
+Baseviews
+----------------------
+epma_prescriptiondetail
+
+
+new app and module
+-----------------------
+Outpatient EPMA

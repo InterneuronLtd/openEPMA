@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ import { forkJoin, interval, of, Subscription } from 'rxjs';
 import { DataSet, Timeline } from 'vis-timeline/standalone';
 import { TimelineServiceService } from '../../services/timeline-service.service'
 import { AppService } from "src/app/services/app.service"
-import { DrugChart, Posology, Prescription, PrescriptionMedicaitonSupply } from 'src/app/models/EPMA';
+import { DrugChart, PersonAwayPeriod, Posology, Prescription, PrescriptionMedicaitonSupply } from 'src/app/models/EPMA';
 import moment from 'moment';
 import { TimeerHelper } from '../drug-chart/timer-helper'
 
@@ -32,6 +32,7 @@ import { ApirequestService } from 'src/app/services/apirequest.service';
 import { filter, filterparam, filterParams, filters, orderbystatement, selectstatement } from 'src/app/models/filter.model';
 import { HostListener } from "@angular/core";
 import { RoleAction } from 'src/app/services/enum';
+import { DataRequest } from 'src/app/services/datarequest';
 
 @Component({
   selector: 'app-drug-chart',
@@ -62,6 +63,8 @@ export class DrugChartComponent implements OnInit, OnDestroy {
   }
   @Input() groupFilterType;
 
+  isZoomCssApplied=false;
+
   isitemclickedboolean = false;
   showAdministrationForm: boolean = false;
   showEditpopup: boolean = false;
@@ -72,13 +75,13 @@ export class DrugChartComponent implements OnInit, OnDestroy {
   contextdistype = "none"
   editpopuptypetype = ""
   PrescriptionAdmistration: Prescription;
-
+ 
   displayeventtime: any;
   doctorConformationModel: boolean = false;
   selectedDose: any;
   timeerHelper: TimeerHelper;
   errorgeneratingevents = false;
-
+ range:any;
   menuArray: any[];
 
   subscription: Subscription = new Subscription();
@@ -89,8 +92,8 @@ export class DrugChartComponent implements OnInit, OnDestroy {
   @ViewChild('timecomponentid', { static: false }) timecomponentid: ElementRef;
 
 
-  constructor(public subjects: SubjectsService, private timelineService: TimelineServiceService, public appService: AppService, private apiRequest: ApirequestService) {
-
+  constructor(public dr: DataRequest, public subjects: SubjectsService, private timelineService: TimelineServiceService, public appService: AppService, private apiRequest: ApirequestService) {
+    this.sampledata();
 
 
   }
@@ -110,9 +113,29 @@ export class DrugChartComponent implements OnInit, OnDestroy {
 
   }
 
+  sampledata() {
+    // let AwayPeriod1 = new PersonAwayPeriod();
+    // AwayPeriod1.PersonAwayPeriod_id="abc1";  
+    // AwayPeriod1.awayFrom="2022-06-02 20:45"
+    // AwayPeriod1.awayTo="2022-06-03 20:45"
+    // let AwayPeriod2 = new PersonAwayPeriod();
+    // AwayPeriod2.PersonAwayPeriod_id="abc12";  
+    // AwayPeriod2.awayFrom="2022-06-04 20:45"
+    // AwayPeriod2.awayTo="2022-06-05 20:45"
+    // let AwayPeriod3 = new PersonAwayPeriod();
+    // AwayPeriod3.PersonAwayPeriod_id="abc13";  
+    // AwayPeriod3.awayFrom="2022-06-06 20:45"
+    // AwayPeriod3.awayTo="2022-06-07 20:45"
+    // this.appService.PersonAwayPeriod.push(AwayPeriod1)
+    // this.appService.PersonAwayPeriod.push(AwayPeriod2)
+    // this.appService.PersonAwayPeriod.push(AwayPeriod3)
+  }
+
   ngOnInit(): void {
+
     this.subscription.add(this.subjects.refreshDrugChart.subscribe(
       (response: any) => {
+        this.appService.Prescription.forEach(p=>this.appService.UpdatePrescriptionCompletedStatus(p));
         this.refreshTimeline();
       },
 
@@ -127,6 +150,7 @@ export class DrugChartComponent implements OnInit, OnDestroy {
     forkJoin([patientDetails$, encounterDetails$, prescriptionHistory$]).subscribe(responseList => {
       this.appService.patientDetails = JSON.parse(responseList[0])[0];
       this.appService.encounterDetails = JSON.parse(responseList[1]);
+       this.appService.disabledatechange=false;
       if (this.appService.Prescription.length) {
         for (let prescription of responseList[2]) {
           prescription.__posology = JSON.parse(prescription.__posology);
@@ -235,7 +259,7 @@ export class DrugChartComponent implements OnInit, OnDestroy {
       }));
 
 
-      this.subscription.add(interval(5000).subscribe(x => {
+      this.subscription.add(interval(7000).subscribe(x => {
 
         for (var TimelineArray of this.appService.TimelineArray) {
           for (let PRNid of this.timeerHelper.PRNids) {
@@ -243,7 +267,7 @@ export class DrugChartComponent implements OnInit, OnDestroy {
             if (getPRNitem) {
               TimelineArray.items.update({
                 id: getPRNitem.id, content: getPRNitem.content,
-                className: "transparant", start: new Date(), group: getPRNitem.group
+                className: getPRNitem.className, start: new Date(), group: getPRNitem.group
               })
             }
           }
@@ -298,13 +322,13 @@ export class DrugChartComponent implements OnInit, OnDestroy {
       this.timelineService.configureOptions("none")
       if (this.timelineService.groups.length == 0) {
         if(this.groupFilterType=="Basic"){
-          container.parentElement.parentElement.innerHTML="<div class='p-2 pl-4'>No medicines prescribed</div>"
+          container.parentElement.parentElement.innerHTML="<div class='p-2 pl-4'>No medicines prescribed </div>"
           
         }
         else{
           container.parentElement.parentElement.parentElement.remove();
         }
-
+       
       }
       else {
         DrugChartModel.timeline = new Timeline(container, null, this.timelineService.options);
@@ -321,21 +345,75 @@ export class DrugChartComponent implements OnInit, OnDestroy {
         DrugChartModel.timeline.on('select', function (properties) {
           this.timelineItemClick(properties);
         }.bind(this));
-
-        DrugChartModel.timeline.on('rangechange', function (changes) {
-          if (changes.byUser) {
-            // if (moment(changes.end) > maxUsercanscroll) {
-            //   changes.end = maxUsercanscroll
-
-            // }
-            // if (moment(changes.start) < minUsercanscroll) {
-            //   changes.start = minUsercanscroll
-
-            // }
-            this.timediv.setWindow(changes.start, changes.end, { animation: false });
-            for (let timelineObject of this.appService.TimelineArray) {
-              timelineObject.timeline.setWindow(changes.start, changes.end, { animation: false });
+       
+        let currentDate = this.appService.changechoosenFilterDate.toDate();
+        let maxUsercanscroll = moment(currentDate).add(7, 'days');
+        let minUsercanscroll = moment(currentDate).add(-7, 'days');
+     
+        let  a0 = 10;
+        let a100 = moment.duration(moment(maxUsercanscroll).diff(moment(minUsercanscroll))).asMilliseconds();
+       let distance = (a100 - a0)/ 100 ;
+       DrugChartModel.timeline.on('rangechange', function (changes) {
+        if (changes.byUser) {
+                
+          this.timediv.setWindow(changes.start, changes.end, { animation: false });
+          for (let timelineObject of this.appService.TimelineArray) {
+            timelineObject.timeline.setWindow(changes.start, changes.end, { animation: false });
+          }
+        }
+      }.bind(this));
+      let currentwindow = this.timediv.getWindow();
+        const starttime = moment(currentwindow.start);
+        const endtime = moment(currentwindow.end);
+        const duration = moment.duration(endtime.diff(starttime));
+            const mins = duration.asMilliseconds();
+             // Arithmatic progression variables
+            
+            if (mins !== 0) {
+              const x = (mins - a0) / distance; // Arithmatic progression formula
+                this.range = x;
+            } else {
+               this.range = 100;
             }
+            this.updatestackCss(true);
+        DrugChartModel.timeline.on('rangechanged', function (changes) {
+          if (changes.byUser) {
+           
+           let start = moment(changes.start);
+           let end = moment(changes.end);
+           this.appService.chartScrolled=true;
+           this.appService.Choosenfilterdate =new Date(changes.start)
+            const duration = moment.duration(end.diff(start));
+            const mins = duration.asMilliseconds();
+             // Arithmatic progression variables
+            
+            if (mins !== 0) {
+              const x = (mins - a0) / distance; // Arithmatic progression formula
+                this.range = x;
+            } else {
+               this.range = 100;
+            }
+           
+            if(this.range > 0.46){
+             // if(!this.isZoomCssApplied){
+                if(this.range > 6){
+                  this.isZoomCssApplied=true;
+                }
+                else{
+                  this.isZoomCssApplied=false;
+                }
+                this.updatestackCss(true);
+            
+              //}
+            }
+            else{
+              //if(this.isZoomCssApplied){
+                this.isZoomCssApplied=false;
+              this.updatestackCss(false);
+             // }
+            }
+         
+           
           }
         }.bind(this));
         this.appService.TimelineArray.push(DrugChartModel);
@@ -344,85 +422,117 @@ export class DrugChartComponent implements OnInit, OnDestroy {
   }
 
   timelineItemClick(properties: any) {
-    if (properties.items.length == 0) {
-      return
-    }
-    let events: any;
-    let containid = properties.items[0];
-    if (properties.items.length > 0 && properties.items[0].includes("flowrate")) {
+    this.dr.RefreshIfDataVersionChanged((result) => {
+      if (result == false) {
 
-      var components = properties.items[0].split('_');
-      components.shift();
-      containid = components.join('_');
+       // check zoom click
+      
 
-
-    }
-
-
-    // checking with item doctor order is there for dose and its conform
-
-    events = this.appService.events.find(x => x.dose_id.includes(containid) && !x.dose_id.includes("flowrate"))
-    if (events.prn) {
-      events = this.appService.events.find(x => x.dose_id == containid)
-    }
-    if (events === undefined || events.dose_id == null) {
-      return;
-    }
-    if (events) {
-      let posology = this.appService.Prescription.find(x => x.prescription_id == events.prescription_id).__posology.find(p => p.posology_id == events.posology_id)
-      let prescription = this.appService.Prescription.find(x => x.prescription_id == events.prescription_id);
-      let prescriptionStatus = this.appService.MetaPrescriptionstatus.find(x => x.prescriptionstatus_id == prescription.prescriptionstatus_id).status;
-      // if (prescriptionStatus == "suspended" || prescriptionStatus == "stopped" || prescriptionStatus == "cancelled") {
-      //   return;
-      //  }
-      if (events.dose_id.includes("dur")) {
+        if (properties.items.length == 0) {
+          return
+        }
+        let events: any;
+        let containid = properties.items[0];
+        let eventsiszoom;
+        eventsiszoom = this.appService.stackButtons.find(x => x.dose_id==containid)
+       if(eventsiszoom !== undefined){
+       let windowstart =moment(eventsiszoom.eventStart).add(-30, 'minutes');
+       let windowsEnd =moment(eventsiszoom.eventStart).add(30, 'minutes');
+        this.timediv.setWindow(windowstart, windowsEnd);
+        for(let d of  this.appService.TimelineArray){
+       
+          d.timeline.setWindow(windowstart, windowsEnd);
+        }
+        this.updatestackCss(false);
         return;
-      }
-      if (events.dose_id.includes("infusionevent")) {
-        this.infusionmenu(posology);
+       }
+        if (properties.items.length > 0 && properties.items[0].includes("flowrate")) {
 
-      }
-      else {
-        this.clickEventType(prescription, posology, events.dose_id, events.eventStart);
-        if (this.menuArray.length === 0) {
+          var components = properties.items[0].split('_');
+          components.shift();
+          containid = components.join('_');
+
+
+        }
+
+      
+        
+       
+        // checking with item doctor order is there for dose and its conform
+       
+        if (containid.includes("dur_Reminder")) {
+          events = this.appService.CurrentReminderevents.find(x => x.dose_id.includes(containid))
+          if (events === undefined || events.dose_id == null || events.opacityclass.trim() != "") {
+            return;
+          }
+          this.subjects.viewReminder.next({prescription: null, drugchart: events });
           return;
         }
-      }
+        events = this.appService.events.find(x => x.dose_id.includes(containid) && !x.dose_id.includes("flowrate"))
+        if (events.prn) {
+          events = this.appService.events.find(x => x.dose_id == containid)
+        }
+        if (events === undefined || events.dose_id == null || events.opacityclass.trim() != "") {
+          return;
+        }
+        if (events) {
+          let posology = this.appService.Prescription.find(x => x.prescription_id == events.prescription_id).__posology.find(p => p.posology_id == events.posology_id)
+          let prescription = this.appService.Prescription.find(x => x.prescription_id == events.prescription_id);
+          let prescriptionStatus = this.appService.MetaPrescriptionstatus.find(x => x.prescriptionstatus_id == prescription.prescriptionstatus_id).status;
+          // if (prescriptionStatus == "suspended" || prescriptionStatus == "stopped" || prescriptionStatus == "cancelled") {
+          //   return;
+          //  }
+          
+          if (events.dose_id.includes("dur")) {
+            return;
+          }          
+          if (events.dose_id.includes("infusionevent")) {
+            this.infusionmenu(posology);
 
-      this.selectedDose = events;
+          }
+          else {
+            this.clickEventType(prescription, posology, events.dose_id, events.eventStart);
+            if (this.menuArray.length === 0) {
+              return;
+            }
+          }
 
-      if (posology && posology.doctorsorder && events.doctorsorder && !events.iscancel) {
-        if (this.appService.bannerWarningStatus && this.appService.warningServiceIPContext.existingWarningsStatus) {
-          this.doctorConformationModel = true;
-          this.PrescriptionAdmistration = new Prescription();
-          this.PrescriptionAdmistration = this.appService.Prescription.find(x => x.prescription_id == events.prescription_id);
-          this.showContextMenu = false;
+          this.selectedDose = events;
+
+          if (posology && posology.doctorsorder && events.doctorsorder && !events.iscancel) {
+            if (this.appService.bannerWarningStatus && this.appService.warningServiceIPContext.existingWarningsStatus) {
+              this.doctorConformationModel = true;
+              this.PrescriptionAdmistration = new Prescription();
+              this.PrescriptionAdmistration = this.appService.Prescription.find(x => x.prescription_id == events.prescription_id);
+              this.showContextMenu = false;
+            }
+          }
+          else {
+
+            let hight = this.screenHeight - properties.event.center.y;
+            let width = this.screenWidth - properties.event.center.x;
+            if (width < 170) {
+              width = this.screenWidth - 170;
+            }
+            else {
+              width = properties.event.center.x;
+            }
+            if (hight < 150) {
+              hight = this.screenHeight - 150;
+            }
+            else {
+              hight = properties.event.center.y;
+            }
+            this.contextmenuX = width;
+            this.contextmenuY = hight;
+            this.PrescriptionAdmistration = new Prescription();
+            this.PrescriptionAdmistration = this.appService.Prescription.find(x => x.prescription_id == events.prescription_id);
+            this.showContextMenu = true;
+            this.isitemclickedboolean = true;
+          }
         }
       }
-      else {
-
-        let hight = this.screenHeight - properties.event.center.y;
-        let width = this.screenWidth - properties.event.center.x;
-        if (width < 170) {
-          width = this.screenWidth - 170;
-        }
-        else {
-          width = properties.event.center.x;
-        }
-        if (hight < 150) {
-          hight = this.screenHeight - 150;
-        }
-        else {
-          hight = properties.event.center.y;
-        }
-        this.contextmenuX = width;
-        this.contextmenuY = hight;
-        this.PrescriptionAdmistration = new Prescription();
-        this.PrescriptionAdmistration = this.appService.Prescription.find(x => x.prescription_id == events.prescription_id);
-        this.showContextMenu = true;
-        this.isitemclickedboolean = true;
-      }
-    }
+    })
   }
 
   hideAdministrationForm(isrefresh = false) {
@@ -431,6 +541,7 @@ export class DrugChartComponent implements OnInit, OnDestroy {
     this.showEditpopup = false;
     this.doctorConformationModel = false;
     if (isrefresh) {
+      this.appService.Prescription.forEach(p=>this.appService.UpdatePrescriptionCompletedStatus(p));
       this.refreshTimeline();
     }
   }
@@ -447,18 +558,41 @@ export class DrugChartComponent implements OnInit, OnDestroy {
       let items: any
       items = new DataSet();
       timelinearray.items.clear()
+      for (var arrp of this.appService.CurrentReminderevents) {
+        items.add({
+          id: arrp.dose_id, content: arrp.content,
+          className: "transparant" + arrp.opacityclass, start: arrp.eventStart, end: arrp.eventEnd, group: arrp.prescription_id, title: arrp.title
+        })
+     }
+      for (var arrp of this.appService.arrPrescriptionCurrentFlowRate) {
+      
+          items.add({ id: "status"+arrp.prescriptionid, content: arrp.content, start: moment(arrp.start).format("YYYY-MM-DD HH:mm"), end: moment(arrp.end).format("YYYY-MM-DD HH:mm"), type: 'background', className: 'transbackground', tooltip: '', group: arrp.prescriptionid, })
+       
+      }
+      for (var arr of this.appService.PersonAwayPeriod) {
+        if (arr.isenabled) {
+          items.add({ id: arr.epma_personawayperiod_id, content: this.appService.appConfig.AppSettings.personAwayHeading, start: moment(arr.awayfrom).format("YYYY-MM-DD HH:mm"), end: moment(arr.awayto).format("YYYY-MM-DD HH:mm"), type: 'background', className: 'negative', tooltip: '' })
+        }
+      }
       for (var dose of this.appService.events) {
         let itemid = timelinearray.group.get(dose.prescription_id);
         if (itemid) {
-          if (dose.content.indexOf("myDIVPRN") >= 0) {
+          if (dose.content.indexOf("divPRN") >= 0) {
             items.add({
               id: dose.dose_id, content: dose.content,
-              className: "PRNRange", start: dose.eventStart, end: dose.eventEnd, group: dose.prescription_id,title:dose.title
+              className: "PRNRange" + dose.opacityclass, start: dose.eventStart, end: dose.eventEnd, group: dose.prescription_id, title: dose.title
             })
+          }
+          else if (dose.content.indexOf("PauseDurline") >= 0) {
+            items.add({
+              id: dose.dose_id, content: dose.content,
+              className: "PauseDurline" + dose.opacityclass, start: dose.eventStart, end: dose.eventEnd, group: dose.prescription_id, title: dose.title
+            })
+            
           } else {
             items.add({
               id: dose.dose_id, content: dose.content,
-              className: "transparant", start: dose.eventStart, end: dose.eventEnd, group: dose.prescription_id,title:dose.title
+              className: "transparant" + dose.opacityclass, start: dose.eventStart, end: dose.eventEnd, group: dose.prescription_id, title: dose.title
             })
           }
         }
@@ -466,7 +600,20 @@ export class DrugChartComponent implements OnInit, OnDestroy {
       timelinearray.timeline.setItems(items);
       timelinearray.items = items;
     }
-
+    // add zoom button and stacking
+    if(this.range > 0.46){
+      if(this.range > 6){
+        this.isZoomCssApplied=true;
+      }
+      this.updatestackCss(true);
+    
+    }
+    else{
+     
+        this.isZoomCssApplied=false;
+      this.updatestackCss(false);
+    
+    }
     this.appService.logToConsole("end refresh" + new Date())
   }
   infusionmenu(posology: Posology) {
@@ -490,9 +637,9 @@ export class DrugChartComponent implements OnInit, OnDestroy {
     }
 
     else if (this.appService.AuthoriseAction(RoleAction.epma_administer_administrationevent) && this.appService.isCurrentEncouner) {
-      this.menuArray.push("Adjust flow rate");
+      this.menuArray.push("Change Flow Rate/Syringe/Lines");
       this.menuArray.push("Pause");
-      this.menuArray.push("View History");
+      // this.menuArray.push("View History");
       if (infusiontype != "oxygen") {
         this.menuArray.push("Add Bolus");
       }
@@ -513,31 +660,40 @@ export class DrugChartComponent implements OnInit, OnDestroy {
     }
 
     let prescriptionStatus = this.appService.MetaPrescriptionstatus.find(x => x.prescriptionstatus_id == prescription.prescriptionstatus_id).status;
-    let doseEventsCount = this.appService.DoseEvents.filter(x => x.logicalid == logicalid).length;
+    let doseEventsCount = this.appService.DoseEvents.filter(x => x.logicalid == logicalid && x.eventtype !="Undo").length;
+    let ShowUndoMenu=true;
+    if(logicalid.includes("addadjust") || logicalid.includes("pause") || logicalid.includes("bolus") || logicalid.includes("restart")){
+      ShowUndoMenu=false;
+    }
     if (this.appService.Prescription.find(x => x.prescription_id == prescription.prescription_id).isinfusion) {
       // is event administered
-      if (this.appService.InfusionEvents.find(x => x.logicalid == logicalid && x.eventtype != "endinfusion_planned")) {
+     
+      if (this.appService.InfusionEvents.find(x => x.logicalid == logicalid && x.eventtype != "endinfusion_planned" && x.eventtype !="Undo")) {
         this.menuArray.push("View Administration");
         if (hideUndoAndEdit && this.appService.AuthoriseAction(RoleAction.epma_administer_administrationevent) && this.appService.isCurrentEncouner) {
+          //show Edit Administration only if enter in error is not there and admister user and current user is same
+          if(logicalid.includes("end") || (this.appService.Medicationadministration.find(x=>x.logicalid==logicalid) && !this.appService.Medicationadministration.find(x=>x.logicalid==logicalid).isenterinerror)){
           this.menuArray.push("Edit Administration");
-          if (this.appService.AuthoriseAction(RoleAction.epma_administer_administrationevent) && prescriptionStatus != "suspended" && prescriptionStatus != "stopped" && prescriptionStatus != "cancelled") {
+          }
+          
+          if (this.appService.Medicationadministration.find(x=>x.logicalid==logicalid && x.administredby == this.appService.loggedInUserName) && this.appService.AuthoriseAction(RoleAction.epma_administer_administrationevent) && ShowUndoMenu && prescriptionStatus != "suspended" && prescriptionStatus != "stopped" && prescriptionStatus != "cancelled") {
             this.menuArray.push("Undo Administration");
           }
         }
         this.menuArray.push("View History");
         this.menuArray.push("Close");
       }
-      else if (doseEventsCount > 0 && this.appService.DoseEvents.filter(x => x.logicalid == logicalid)[0].eventtype == "Cancel") {
-        this.loadMenuforclick("eventCancel", logicalid);
+      else if (doseEventsCount > 0 && this.appService.DoseEvents.filter(x => x.logicalid == logicalid && x.eventtype !="Undo")[0].eventtype == "Cancel") {
+        this.loadMenuforclick("eventCancel", logicalid,posology);
       }
       else {
         // check if infution is started
         let isstarted = this.checkInfutionStarted(posology, logicalid);
         if (isstarted) {
-          this.loadMenuforclick("infutionNotAdministered", logicalid);
+          this.loadMenuforclick("infutionNotAdministered", logicalid,posology);
         }
         else {
-          this.loadMenuforclick("infutionNotstarted", logicalid);
+          this.loadMenuforclick("infutionNotstarted", logicalid,posology);
         }
 
       }
@@ -550,16 +706,19 @@ export class DrugChartComponent implements OnInit, OnDestroy {
       if (this.appService.Medicationadministration.find(x => x.logicalid == logicalid)) {
         this.menuArray.push("View Administration");
         if (this.appService.AuthoriseAction(RoleAction.epma_administer_administrationevent) && this.appService.isCurrentEncouner) {
+          //show Edit Administration only if enter in error is not there 
+          if(!this.appService.Medicationadministration.find(x=>x.logicalid==logicalid).isenterinerror){
           this.menuArray.push("Edit Administration");
-          if (this.appService.AuthoriseAction(RoleAction.epma_administer_administrationevent) && prescriptionStatus != "suspended" && prescriptionStatus != "stopped" && prescriptionStatus != "cancelled") {
+          }
+          if (this.appService.Medicationadministration.find(x=>x.logicalid==logicalid && x.administredby == this.appService.loggedInUserName) && this.appService.AuthoriseAction(RoleAction.epma_administer_administrationevent) && prescriptionStatus != "suspended" && prescriptionStatus != "stopped" && prescriptionStatus != "cancelled") {
             this.menuArray.push("Undo Administration");
           }
         }
         this.menuArray.push("View History");
         this.menuArray.push("Close");
       }
-      else if (doseEventsCount > 0 && this.appService.DoseEvents.filter(x => x.logicalid == logicalid)[0].eventtype == "Cancel") {
-        this.loadMenuforclick("eventCancel", logicalid);
+      else if (doseEventsCount > 0 && this.appService.DoseEvents.filter(x => x.logicalid == logicalid && x.eventtype !="Undo")[0].eventtype == "Cancel") {
+        this.loadMenuforclick("eventCancel", logicalid,posology);
       }
       else if (this.appService.Prescription.find(x => x.prescription_id == posology.prescription_id).titration) {
         let isTitrationDone = this.appService.DoseEvents.find(
@@ -569,11 +728,11 @@ export class DrugChartComponent implements OnInit, OnDestroy {
           isTitrationDone = this.appService.DoseEvents.find(x => x.eventtype == "titration" && x.logicalid == logicalid && moment(x.titrateduntildatetime).format("YYYYMMDDHHmm") == moment(ploteDate).format("YYYYMMDDHHmm")) ? true : false;
         }
         if (!isTitrationDone) {
-          this.loadMenuforclick("Titrate", logicalid);
+          this.loadMenuforclick("Titrate", logicalid,posology);
           return;
         }
         else {
-          this.loadMenuforclick("tablateNotAdministered", logicalid);
+          this.loadMenuforclick("tablateNotAdministered", logicalid,posology);
         }
       }
 
@@ -583,11 +742,11 @@ export class DrugChartComponent implements OnInit, OnDestroy {
 
 
         if (posology.prn) {
-          this.loadMenuforclick("prnClick", logicalid);
+          this.loadMenuforclick("prnClick", logicalid,posology);
         }
 
         else {
-          this.loadMenuforclick("tablateNotAdministered", logicalid);
+          this.loadMenuforclick("tablateNotAdministered", logicalid,posology);
         }
       }
     }
@@ -625,7 +784,7 @@ export class DrugChartComponent implements OnInit, OnDestroy {
 
 
 
-  loadMenuforclick(menutype: string, logicalid: string) {
+  loadMenuforclick(menutype: string, logicalid: string, posology: Posology) {
     this.menuArray = [];
     if (menutype == "infutionNotAdministered") {
       if (this.appService.AuthoriseAction(RoleAction.epma_administer_administrationevent) && this.appService.warningService && this.appService.warningServiceIPContext.existingWarningsStatus && this.appService.isCurrentEncouner) {
@@ -680,7 +839,7 @@ export class DrugChartComponent implements OnInit, OnDestroy {
       if (this.appService.AuthoriseAction(RoleAction.epma_administer_administrationevent) && this.appService.AuthoriseAction(RoleAction.epma_administer_administrationevent) && this.appService.warningService && this.appService.warningServiceIPContext.existingWarningsStatus && this.appService.isCurrentEncouner) {
         this.menuArray.push("Administration");
       }
-      this.menuArray.push("View History");
+      // this.menuArray.push("View History");
       this.menuArray.push("Close");
     }
     else if (menutype == "Titrate") {
@@ -702,7 +861,7 @@ export class DrugChartComponent implements OnInit, OnDestroy {
     else {
       if (this.appService.AuthoriseAction(RoleAction.epma_administer_administrationevent) && this.appService.warningService && this.appService.warningServiceIPContext.existingWarningsStatus && this.appService.isCurrentEncouner) {
         this.menuArray.push("Administration");
-      }
+      }//posology.frequency != "stat" && 
       if (this.appService.AuthoriseAction(RoleAction.epma_transfer_administrationevent) && this.appService.isCurrentEncouner && this.appService.bannerWarningStatus && this.appService.warningServiceIPContext.existingWarningsStatus) {
         this.menuArray.push("Transfer");
       }
@@ -719,7 +878,7 @@ export class DrugChartComponent implements OnInit, OnDestroy {
 
   menuclick(option: any) {
 
-    if (option == "Adjust flow rate") {
+    if (option == "Change Flow Rate/Syringe/Lines") {
       this.subjects.adjustInfusion.next({ prescription: this.PrescriptionAdmistration });
     }
     else if (option == "Pause") {
@@ -752,6 +911,85 @@ export class DrugChartComponent implements OnInit, OnDestroy {
       this.showContextMenu = false;
     }
     this.showContextMenu = false;
+  }
+
+
+
+  updatestackCss(Addstackcss:boolean) {
+  
+   console.log('here')
+   let currentwindow = this.timediv.getWindow();
+   const starttime = moment(currentwindow.start);
+   const endtime = moment(currentwindow.end);
+  
+    for (var timelinearray of this.appService.TimelineArray) {
+      let items: any
+      
+      items = timelinearray.items;
+
+      for (var dose of this.appService.stackButtons) {
+        if( moment(dose.eventStart).isBetween(starttime,endtime,undefined,"[]"))
+        {
+          let itemid = timelinearray.group.get(dose.prescription_id);
+          if (itemid) {
+          if(Addstackcss){
+           if(this.range > 30){
+              if(dose.diffrence > 90){
+                items.remove( dose.dose_id);
+                continue;
+              }
+            }
+            else if(this.range > 15){
+              if(dose.diffrence > 60){
+                items.remove( dose.dose_id);
+                continue;
+              }
+            }
+            else if(this.range > 5){
+              if(dose.diffrence > 30){
+                items.remove( dose.dose_id);
+                continue;
+              }
+            }
+            else if(this.range > 2.2){
+              if(dose.diffrence > 10){
+                items.remove( dose.dose_id);
+                continue;
+              }
+            }
+            else if(this.range > 1){
+              if(dose.diffrence > 5){
+                items.remove( dose.dose_id);
+                continue;
+              }
+            }
+            else if(this.range >= 0.46){
+              if(dose.diffrence > 2){
+                items.remove( dose.dose_id);
+                continue;
+              }
+            }
+           if(!items.get(dose.dose_id))
+              items.add({
+                id: dose.dose_id, content: dose.content,
+                className: "transparant AddZindux" + dose.opacityclass, start: dose.eventStart, end: dose.eventEnd, group: dose.prescription_id, title: dose.title
+              })
+            
+            }
+            else{
+              items.remove( dose.dose_id);
+            }
+          
+          }
+        }
+       
+      }
+      
+    // timelinearray.timeline.setItems(items);
+      timelinearray.items = items;
+    }
+
+    this.appService.logToConsole("end refresh" + new Date())
   }
 
 

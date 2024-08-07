@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -37,12 +37,14 @@ import { SubjectsService } from 'src/app/services/subjects.service';
   templateUrl: './addto-orderset.component.html',
   styleUrls: ['./addto-orderset.component.css'],
 })
+
+
 export class AddtoOrdersetComponent implements OnInit, OnDestroy {
   @Input('patientid') patientid: string;// = '1058b305c9-3753-4c5e-ac4a-eba1d19dca4801';
   @Input('ownerid') ownerid: string;// = '1001';
   @Input('visible') visible: boolean = true;
   @Input('prescriptions') prescriptions: Array<Prescription>;
-  @Input('orderset_id') orderset_id?:string
+  @Input('orderset_id') orderset_id?: string
 
   @Output() Complete = new EventEmitter<object>();
   @Output() Failed = new EventEmitter<object>();
@@ -55,14 +57,17 @@ export class AddtoOrdersetComponent implements OnInit, OnDestroy {
   inclusiveLabelText: string;
   exclusiveLabelText: string;
 
+  weightInclusiveLabelText: string;
+  weightexclusiveLabelText: string;
+
   subscriptions: Subscription = new Subscription();
 
   orderSetTypes = [];
   existingOrderSets = [];
 
   isSaving: boolean = false;
-  groups=[]
-  
+  groups = []
+
   constructor(
     private apiRequest: ApirequestService,
     public appService: AppService,
@@ -71,54 +76,119 @@ export class AddtoOrdersetComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
-  this.accessgroupReset();
+    this.accessgroupReset();
     this.initializeForm();
-    if(this.orderset_id){
+    if (this.orderset_id) {
       this.getupdateOrderSet();
     }
   }
 
-  accessgroupReset(){
-    this.groups=[]
-    for(let grop of this.appService.appConfig.AppSettings.EPMAGroups){
+  accessgroupReset() {
+    this.groups = []
+    for (let grop of this.appService.appConfig.AppSettings.EPMAGroups) {
       let g = new EPMAGroups();
       g.selected = false;
       g.groupname = grop
       this.groups.push(g);
-}
+    }
   }
 
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
   }
 
-  getupdateOrderSet(){
-   let id= this.orderset_id
-   this.subscriptions.add(
-    this.apiRequest
-      .getRequest(
-        this.appService.baseURI +
-        '/GetObject?synapsenamespace=local&synapseentityname=epma_orderset&id=' +id
-      )
+  getupdateOrderSet() {
+    let id = this.orderset_id
+    this.subscriptions.add(
+      this.apiRequest
+        .getRequest(
+          this.appService.baseURI +
+          '/GetObject?synapsenamespace=local&synapseentityname=epma_orderset&id=' + id
+        )
         .subscribe((response) => {
-         this.updateorderset = JSON.parse(response);
-         let selectedgroups=JSON.parse(this.updateorderset.groupsauthorizedtoview)
-         for(let g of (selectedgroups??[])){
-           this.groups.find(x=>x.groupname==g.groupname).selected=true;
-         }
-         this.therapyOrderSet.definedCriteria=this.updateorderset.defined_criteria
-         this.therapyOrderSet.inclusiveValue=this.updateorderset.inclusive_value
-         this.therapyOrderSet.exclusiveValue=this.updateorderset.exclusive_value
+          this.updateorderset = JSON.parse(response);
+          let selectedgroups = JSON.parse(this.updateorderset.groupsauthorizedtoview)
+          for (let g of (selectedgroups ?? [])) {
+            this.groups.find(x => x.groupname == g.groupname).selected = true;
+          }
+          if (this.updateorderset.defined_criteria) {
+            if (this.updateorderset.defined_criteria == "Age in years" || this.updateorderset.defined_criteria == "Age in months") {
+              this.therapyOrderSet.agedefinedCriteria = this.updateorderset.defined_criteria
+              this.therapyOrderSet.ageinclusiveValue = this.updateorderset.inclusive_value
+              this.therapyOrderSet.ageexclusiveValue = this.updateorderset.exclusive_value
+              switch (this.updateorderset.defined_criteria) {
+                case 'Age in years':
+                  this.inclusiveLabelText = 'years (incl.) -';
+                  this.exclusiveLabelText = 'years (incl.)';
+                  break;
+                case 'Age in months':
+                  this.inclusiveLabelText = 'months (incl.) -';
+                  this.exclusiveLabelText = 'months (incl.)';
+                  break;
 
+              }
+            }
+            else {
+              this.therapyOrderSet.weightdefinedCriteria = this.updateorderset.defined_criteria
+              this.therapyOrderSet.weightinclusiveValue = this.updateorderset.inclusive_value
+              this.therapyOrderSet.weightexclusiveValue = this.updateorderset.exclusive_value
+            }
+          }
+          else if (this.updateorderset.criteriajson != "" && this.updateorderset.criteriajson != null) {
+
+            let critraarr = JSON.parse(this.updateorderset.criteriajson)
+            for (let crit of critraarr) {
+              if (crit.criteria != "" && (crit.criteria == 'Age in years' || crit.criteria == 'Age in months')) {
+
+                this.therapyOrderSet.agedefinedCriteria = crit.criteria
+                this.therapyOrderSet.ageinclusiveValue = crit.min
+                this.therapyOrderSet.ageexclusiveValue = crit.max
+                switch (this.therapyOrderSet.agedefinedCriteria) {
+                  case 'Age in years':
+                    this.inclusiveLabelText = 'years (incl.) -';
+                    this.exclusiveLabelText = 'years (incl.)';
+                    break;
+                  case 'Age in months':
+                    this.inclusiveLabelText = 'months (incl.) -';
+                    this.exclusiveLabelText = 'months (incl.)';
+                    break;
+
+                }
+              }
+              else if (crit.criteria != "" && (crit.criteria == 'Weight' || crit.criteria == 'Body Surface')) {
+
+                this.therapyOrderSet.weightdefinedCriteria = crit.criteria
+                this.therapyOrderSet.weightinclusiveValue = crit.min
+                this.therapyOrderSet.weightexclusiveValue = crit.max
+
+                switch (this.therapyOrderSet.weightdefinedCriteria) {
+
+                  case 'Weight':
+                    this.weightInclusiveLabelText = 'kg (incl.) -';
+                    this.weightexclusiveLabelText = 'kg (incl.)';
+                    break;
+                  case 'Body Surface':
+                    this.weightInclusiveLabelText = 'm' + '\u00B2' + '(incl.) -';
+                    this.weightexclusiveLabelText = 'm' + '\u00B2' + '(incl.)';
+                    break;
+                }
+              }
+
+            }
+
+          }
         })
     );
   }
 
   onChangeOfOrderSetType(event): void {
     this.therapyOrderSet.prescriptionordersettype_id = event.target.value;
-    this.therapyOrderSet.definedCriteria = '';
-    this.therapyOrderSet.inclusiveValue = undefined;
-    this.therapyOrderSet.exclusiveValue = undefined;
+    this.therapyOrderSet.agedefinedCriteria = '';
+    this.therapyOrderSet.ageinclusiveValue = undefined;
+    this.therapyOrderSet.ageexclusiveValue = undefined;
+    this.therapyOrderSet.weightdefinedCriteria = '';
+    this.therapyOrderSet.weightinclusiveValue = undefined;
+    this.therapyOrderSet.weightexclusiveValue = undefined;
     this.validationMessage = '';
 
     if (this.therapyOrderSet.addToExistingOrderSet) {
@@ -133,9 +203,9 @@ export class AddtoOrdersetComponent implements OnInit, OnDestroy {
         this.therapyOrderSet.addToNewOrderSet = true;
         this.therapyOrderSet.addToExistingOrderSet = false;
         this.existingOrderSets = [];
-        this.therapyOrderSet.definedCriteria = '';
-        this.therapyOrderSet.inclusiveValue = undefined;
-        this.therapyOrderSet.exclusiveValue = undefined;
+        this.therapyOrderSet.agedefinedCriteria = '';
+        this.therapyOrderSet.ageinclusiveValue = undefined;
+        this.therapyOrderSet.ageexclusiveValue = undefined;
         this.inclusiveLabelText = '';
         this.exclusiveLabelText = '';
         this.validationMessage = '';
@@ -149,34 +219,35 @@ export class AddtoOrdersetComponent implements OnInit, OnDestroy {
         break;
     }
   }
-  ongroupChange(group:string): void {
-  //  if( event.target.value=="Select"){
-  //    return;
-  //  }
-   let grp= this.groups.find(x=>x.groupname ==group)
-    grp.selected=true;
+  ongroupChange(group: string): void {
+    //  if( event.target.value=="Select"){
+    //    return;
+    //  }
+    let grp = this.groups.find(x => x.groupname == group)
+    grp.selected = true;
   }
-  groupChanged(group:string){
-    let grp= this.groups.find(x=>x.groupname == group)
-    grp.selected=false;
+  groupChanged(group: string) {
+    let grp = this.groups.find(x => x.groupname == group)
+    grp.selected = false;
   }
+
   onDefinedCriteriaChange(event): void {
     switch (event.target.value) {
       case 'Age in years':
         this.inclusiveLabelText = 'years (incl.) -';
-        this.exclusiveLabelText = 'years (excl.)';
+        this.exclusiveLabelText = 'years (incl.)';
         break;
       case 'Age in months':
         this.inclusiveLabelText = 'months (incl.) -';
-        this.exclusiveLabelText = 'months (excl.)';
+        this.exclusiveLabelText = 'months (incl.)';
         break;
       case 'Weight':
-        this.inclusiveLabelText = 'kg (incl.) -';
-        this.exclusiveLabelText = 'kg (excl.)';
+        this.weightInclusiveLabelText = 'kg (incl.) -';
+        this.weightexclusiveLabelText = 'kg (incl.)';
         break;
       case 'Body Surface':
-        this.inclusiveLabelText = 'm' + '\u00B2' + '(incl.) -';
-        this.exclusiveLabelText = 'm' + '\u00B2' + '(excl.)';
+        this.weightInclusiveLabelText = 'm' + '\u00B2' + '(incl.) -';
+        this.weightexclusiveLabelText = 'm' + '\u00B2' + '(incl.)';
         break;
       default:
         this.inclusiveLabelText = '';
@@ -184,7 +255,36 @@ export class AddtoOrdersetComponent implements OnInit, OnDestroy {
         break;
     }
   }
-  onupdate(){
+
+  onupdate() {
+    if (this.updateorderset.ordersetname.trim().length == 0) {
+      this.validationMessage = 'Order set name require.';
+      this.isSaving = false;
+      return;
+    }
+    if (this.therapyOrderSet.ageinclusiveValue < 0 || this.therapyOrderSet.ageexclusiveValue < 0 || this.therapyOrderSet.weightinclusiveValue < 0 || this.therapyOrderSet.weightexclusiveValue < 0) {
+      this.validationMessage = 'No negative values allowed.';
+      this.isSaving = false;
+      return;
+    }
+    if ((this.therapyOrderSet.ageinclusiveValue != null && this.therapyOrderSet.ageexclusiveValue == null) || (this.therapyOrderSet.ageexclusiveValue != null && this.therapyOrderSet.ageinclusiveValue == null)) {
+      this.validationMessage = 'Both minimum and maximum values require.';
+      this.isSaving = false;
+      return;
+    }
+    if ((this.therapyOrderSet.weightinclusiveValue != null && this.therapyOrderSet.weightexclusiveValue == null) || (this.therapyOrderSet.weightexclusiveValue != null && this.therapyOrderSet.weightinclusiveValue == null)) {
+      this.validationMessage = 'Both minimum and maximum values require.';
+      this.isSaving = false;
+      return;
+    }
+    if (this.therapyOrderSet.ageinclusiveValue > this.therapyOrderSet.ageexclusiveValue) {
+      this.validationMessage = 'The minimum value should not be greater than maximum  value';
+      return;
+    }
+    if (this.therapyOrderSet.weightinclusiveValue > this.therapyOrderSet.weightexclusiveValue) {
+      this.validationMessage = 'The minimum value should not be greater than maximum value';
+      return;
+    }
     this.subscriptions.add(
       this.apiRequest
         .getRequest(
@@ -195,11 +295,12 @@ export class AddtoOrdersetComponent implements OnInit, OnDestroy {
         .subscribe((response) => {
           let responseArray = JSON.parse(response);
 
-         let recordExists = responseArray.filter(
+          let recordExists = responseArray.filter(
             (val) =>
               val.ordersetname.toLowerCase() ==
-              this.updateorderset.ordersetname.toLowerCase() && val.epma_orderset_id !=this.updateorderset.epma_orderset_id
+              this.updateorderset.ordersetname.toLowerCase() && val.epma_orderset_id != this.updateorderset.epma_orderset_id
           ).length;
+
 
           if (recordExists > 0) {
             this.validationMessage = 'Order set name already exists.';
@@ -207,43 +308,80 @@ export class AddtoOrdersetComponent implements OnInit, OnDestroy {
             return;
           }
 
-          if(this.therapyOrderSet.definedCriteria.trim()!=""){
-            if (this.therapyOrderSet.inclusiveValue > this.therapyOrderSet.exclusiveValue) {
+          if (this.therapyOrderSet.agedefinedCriteria.trim() != "") {
+            if (this.therapyOrderSet.ageinclusiveValue > this.therapyOrderSet.ageexclusiveValue) {
               this.validationMessage = 'The inclusive value should not be greater than exclusive value';
               return;
             }
-           }
-            var entities: Array<UpsertEntity> = [];
-           
-            this.updateorderset.defined_criteria = this.therapyOrderSet.definedCriteria;
-            this.updateorderset.inclusive_value = this.therapyOrderSet.inclusiveValue;
-            this.updateorderset.exclusive_value = this.therapyOrderSet.exclusiveValue;
-            this.updateorderset.groupsauthorizedtoview=JSON.stringify(this.groups.filter(x=>x.selected))
-            entities.push(new UpsertEntity("local", "epma_orderset", this.updateorderset));
-            this.CommitInTransaction(entities);
-         
-      
+          }
+          var entities: Array<UpsertEntity> = [];
+          let criteriaarr = [];
+          let criteriaobj = new criteria()
+          if (this.therapyOrderSet.ageinclusiveValue != null && this.therapyOrderSet.ageexclusiveValue != null) {
+            criteriaobj.criteria = this.therapyOrderSet.agedefinedCriteria;
+            criteriaobj.min = this.therapyOrderSet.ageinclusiveValue;
+            criteriaobj.max = this.therapyOrderSet.ageexclusiveValue;
+            criteriaarr.push(criteriaobj);
+          }
+          /////////////////////////////////////////
+          if (this.therapyOrderSet.weightinclusiveValue != null && this.therapyOrderSet.weightexclusiveValue != null) {
+            criteriaobj = new criteria()
+            criteriaobj.criteria = this.therapyOrderSet.weightdefinedCriteria;
+            criteriaobj.min = this.therapyOrderSet.weightinclusiveValue;
+            criteriaobj.max = this.therapyOrderSet.weightexclusiveValue;
+            criteriaarr.push(criteriaobj);
+          }
 
+          this.updateorderset.defined_criteria = "";
+          this.updateorderset.inclusive_value = 0;
+          this.updateorderset.exclusive_value = 0;
+          this.updateorderset.criteriajson = JSON.stringify(criteriaarr);
+          this.updateorderset.groupsauthorizedtoview = JSON.stringify(this.groups.filter(x => x.selected))
+          entities.push(new UpsertEntity("local", "epma_orderset", this.updateorderset));
+          this.CommitInTransaction(entities);
 
         })
     );
-   
+
   }
   onConfirm(): void {
     let prescriptionorderset = new Orderset();
     var entities: Array<UpsertEntity> = [];
 
     if (this.therapyOrderSet.addToNewOrderSet) {
-      if (this.therapyOrderSet.inclusiveValue > this.therapyOrderSet.exclusiveValue) {
-        this.validationMessage = 'The inclusive value should not be greater than exclusive value';
-        return;
-      }
 
-      if (!this.therapyOrderSet.newOrderSetName) {
+      if (!this.therapyOrderSet.newOrderSetName || this.therapyOrderSet.newOrderSetName.trim().length == 0) {
         this.validationMessage = 'Please enter the new order set name';
         return;
       }
-
+      if (this.therapyOrderSet.newOrderSetName.trim().length == 0) {
+        this.validationMessage = 'Order set name require.';
+        this.isSaving = false;
+        return;
+      }
+      if (this.therapyOrderSet.ageinclusiveValue < 0 || this.therapyOrderSet.ageexclusiveValue < 0 || this.therapyOrderSet.weightinclusiveValue < 0 || this.therapyOrderSet.weightexclusiveValue < 0) {
+        this.validationMessage = 'No negative values allowed.';
+        this.isSaving = false;
+        return;
+      }
+      if ((this.therapyOrderSet.ageinclusiveValue != null && this.therapyOrderSet.ageexclusiveValue == null) || (this.therapyOrderSet.ageexclusiveValue != null && this.therapyOrderSet.ageinclusiveValue == null)) {
+        this.validationMessage = 'Both minimum and maximum values require.';
+        this.isSaving = false;
+        return;
+      }
+      if ((this.therapyOrderSet.weightinclusiveValue != null && this.therapyOrderSet.weightexclusiveValue == null) || (this.therapyOrderSet.weightexclusiveValue != null && this.therapyOrderSet.weightinclusiveValue == null)) {
+        this.validationMessage = 'Both minimum and maximum values require.';
+        this.isSaving = false;
+        return;
+      }
+      if (this.therapyOrderSet.ageinclusiveValue > this.therapyOrderSet.ageexclusiveValue) {
+        this.validationMessage = 'The minimum value should not be greater than maximum  value';
+        return;
+      }
+      if (this.therapyOrderSet.weightinclusiveValue > this.therapyOrderSet.weightexclusiveValue) {
+        this.validationMessage = 'The minimum value should not be greater than maximum value';
+        return;
+      }
       let attributeName = 'prescriptionordersettype_id';
       let attributeValue = this.therapyOrderSet.prescriptionordersettype_id
         .split(':')[1]
@@ -293,6 +431,24 @@ export class AddtoOrdersetComponent implements OnInit, OnDestroy {
               inclusive_value: this.therapyOrderSet.inclusiveValue,
               exclusive_value: this.therapyOrderSet.exclusiveValue,
             };*/
+
+            let criteriaarr = [];
+            let criteriaobj = new criteria()
+            if (this.therapyOrderSet.ageinclusiveValue != null && this.therapyOrderSet.ageexclusiveValue != null) {
+              criteriaobj.criteria = this.therapyOrderSet.agedefinedCriteria;
+              criteriaobj.min = this.therapyOrderSet.ageinclusiveValue;
+              criteriaobj.max = this.therapyOrderSet.ageexclusiveValue;
+              criteriaarr.push(criteriaobj);
+            }
+            /////////////////////////////////////////
+            if (this.therapyOrderSet.weightinclusiveValue != null && this.therapyOrderSet.weightexclusiveValue != null) {
+              criteriaobj = new criteria()
+              criteriaobj.criteria = this.therapyOrderSet.weightdefinedCriteria;
+              criteriaobj.min = this.therapyOrderSet.weightinclusiveValue;
+              criteriaobj.max = this.therapyOrderSet.weightexclusiveValue;
+              criteriaarr.push(criteriaobj);
+            }
+            ////////////////////////////////////////////
             prescriptionorderset.epma_orderset_id = newOrderSetId;
             prescriptionorderset.prescriptionordersettype_id = this.therapyOrderSet.prescriptionordersettype_id
               .split(':')[1]
@@ -300,10 +456,11 @@ export class AddtoOrdersetComponent implements OnInit, OnDestroy {
             prescriptionorderset.ordersetname = this.therapyOrderSet.newOrderSetName;
             prescriptionorderset.person_id = this.patientid;
             prescriptionorderset.owner = this.ownerid;
-            prescriptionorderset.defined_criteria = this.therapyOrderSet.definedCriteria;
-            prescriptionorderset.inclusive_value = this.therapyOrderSet.inclusiveValue;
-            prescriptionorderset.exclusive_value = this.therapyOrderSet.exclusiveValue;
-            prescriptionorderset.groupsauthorizedtoview=JSON.stringify(this.groups.filter(x=>x.selected))
+            prescriptionorderset.defined_criteria = "";
+            prescriptionorderset.inclusive_value = 0;
+            prescriptionorderset.exclusive_value = 0;
+            prescriptionorderset.criteriajson = JSON.stringify(criteriaarr);
+            prescriptionorderset.groupsauthorizedtoview = JSON.stringify(this.groups.filter(x => x.selected))
             entities.push(new UpsertEntity("local", "epma_orderset", prescriptionorderset));
 
             //this.onOrderSetConfirm.emit(prescriptionorderset);
@@ -332,7 +489,7 @@ export class AddtoOrdersetComponent implements OnInit, OnDestroy {
           })
       );
     } else {
-      if (this.therapyOrderSet.inclusiveValue > this.therapyOrderSet.exclusiveValue) {
+      if (this.therapyOrderSet.ageinclusiveValue > this.therapyOrderSet.ageexclusiveValue) {
         this.validationMessage = 'The inclusive value should not be greater than exclusive value';
         return;
       }
@@ -378,6 +535,18 @@ export class AddtoOrdersetComponent implements OnInit, OnDestroy {
               inclusive_value: this.therapyOrderSet.inclusiveValue,
               exclusive_value: this.therapyOrderSet.exclusiveValue,
             };*/
+            let criteriaarr = [];
+            let criteriaobj = new criteria()
+            criteriaobj.criteria = this.therapyOrderSet.agedefinedCriteria;
+            criteriaobj.min = this.therapyOrderSet.ageinclusiveValue;
+            criteriaobj.max = this.therapyOrderSet.ageexclusiveValue;
+            criteriaarr.push(criteriaobj);
+            /////////////////////////////////////////
+            criteriaobj = new criteria()
+            criteriaobj.criteria = this.therapyOrderSet.weightdefinedCriteria;
+            criteriaobj.min = this.therapyOrderSet.weightinclusiveValue;
+            criteriaobj.max = this.therapyOrderSet.weightexclusiveValue;
+            criteriaarr.push(criteriaobj);
 
             prescriptionorderset.epma_orderset_id = attributeValue;
             prescriptionorderset.prescriptionordersettype_id = this.therapyOrderSet.prescriptionordersettype_id
@@ -386,10 +555,11 @@ export class AddtoOrdersetComponent implements OnInit, OnDestroy {
             prescriptionorderset.ordersetname = orderSets[0].ordersetname;
             prescriptionorderset.person_id = this.patientid;
             prescriptionorderset.owner = this.ownerid;
-            prescriptionorderset.defined_criteria = this.therapyOrderSet.definedCriteria;
-            prescriptionorderset.inclusive_value = this.therapyOrderSet.inclusiveValue;
-            prescriptionorderset.exclusive_value = this.therapyOrderSet.exclusiveValue;
-            prescriptionorderset.groupsauthorizedtoview=JSON.stringify(this.groups.filter(x=>x.selected))
+            prescriptionorderset.defined_criteria = ""
+            prescriptionorderset.inclusive_value = 0;
+            prescriptionorderset.exclusive_value = 0;
+            prescriptionorderset.criteriajson = JSON.stringify(criteriaarr)
+            prescriptionorderset.groupsauthorizedtoview = JSON.stringify(this.groups.filter(x => x.selected))
             entities.push(new UpsertEntity("local", "epma_orderset", prescriptionorderset));
 
             this.saveOrdersetPrescription(attributeValue, entities);
@@ -439,7 +609,7 @@ export class AddtoOrdersetComponent implements OnInit, OnDestroy {
         this.Failed.emit(error);
 
         if (this.appService.IsDataVersionStaleError(error)) {
-          this.subjects.ShowRefreshPageMessage.next(error);
+          this.appService.RefreshPageWithStaleError(error);
         }
       }
     );
@@ -557,40 +727,62 @@ export class AddtoOrdersetComponent implements OnInit, OnDestroy {
 
       this.validationMessage = '';
       this.accessgroupReset();
-      let selectedgroups=JSON.parse(orderSet[0].groupsauthorizedtoview)
-      for(let g of (selectedgroups??[])){
-        this.groups.find(x=>x.groupname==g.groupname).selected=true;
+      let selectedgroups = JSON.parse(orderSet[0].groupsauthorizedtoview)
+      for (let g of (selectedgroups ?? [])) {
+        this.groups.find(x => x.groupname == g.groupname).selected = true;
       }
-      this.therapyOrderSet.definedCriteria = orderSet[0].defined_criteria;
-      this.therapyOrderSet.inclusiveValue = orderSet[0].inclusive_value;
-      this.therapyOrderSet.exclusiveValue = orderSet[0].exclusive_value;
+      if (orderSet[0].defined_criteria != "") {
+        this.therapyOrderSet.agedefinedCriteria = orderSet[0].defined_criteria;
+        this.therapyOrderSet.ageinclusiveValue = orderSet[0].inclusive_value;
+        this.therapyOrderSet.ageexclusiveValue = orderSet[0].exclusive_value;
+      }
+      else if ( orderSet[0].criteriajson != "" &&  orderSet[0].criteriajson != null) {
 
-      switch (this.therapyOrderSet.definedCriteria) {
-        case 'Age in years':
-          this.inclusiveLabelText = 'years (incl.) -';
-          this.exclusiveLabelText = 'years (excl.)';
-          break;
-        case 'Age in months':
-          this.inclusiveLabelText = 'months (incl.) -';
-          this.exclusiveLabelText = 'months (excl.)';
-          break;
-        case 'Weight':
-          this.inclusiveLabelText = 'kg (incl.) -';
-          this.exclusiveLabelText = 'kg (excl.)';
-          break;
-        case 'Body Surface':
-          this.inclusiveLabelText = 'm' + '\u00B2' + '(incl.) -';
-          this.exclusiveLabelText = 'm' + '\u00B2' + '(excl.)';
-          break;
-        default:
-          this.inclusiveLabelText = '';
-          this.exclusiveLabelText = '';
-          break;
+        let critraarr = JSON.parse( orderSet[0].criteriajson)
+        for (let crit of critraarr) {
+          if (crit.criteria != "" && (crit.criteria == 'Age in years' || crit.criteria == 'Age in months')) {
+
+            this.therapyOrderSet.agedefinedCriteria = crit.criteria
+            this.therapyOrderSet.ageinclusiveValue = crit.min
+            this.therapyOrderSet.ageexclusiveValue = crit.max
+            switch (this.therapyOrderSet.agedefinedCriteria) {
+              case 'Age in years':
+                this.inclusiveLabelText = 'years (incl.) -';
+                this.exclusiveLabelText = 'years (incl.)';
+                break;
+              case 'Age in months':
+                this.inclusiveLabelText = 'months (incl.) -';
+                this.exclusiveLabelText = 'months (incl.)';
+                break;
+
+            }
+          }
+          else if (crit.criteria != "" && (crit.criteria == 'Weight' || crit.criteria == 'Body Surface')) {
+
+            this.therapyOrderSet.weightdefinedCriteria = crit.criteria
+            this.therapyOrderSet.weightinclusiveValue = crit.min
+            this.therapyOrderSet.weightexclusiveValue = crit.max
+
+            switch (this.therapyOrderSet.weightdefinedCriteria) {
+
+              case 'Weight':
+                this.weightInclusiveLabelText = 'kg (incl.) -';
+                this.weightexclusiveLabelText = 'kg (incl.)';
+                break;
+              case 'Body Surface':
+                this.weightInclusiveLabelText = 'm' + '\u00B2' + '(incl.) -';
+                this.weightexclusiveLabelText = 'm' + '\u00B2' + '(incl.)';
+                break;
+            }
+          }
+
+        }
+
       }
     } else {
-      this.therapyOrderSet.definedCriteria = "";
-      this.therapyOrderSet.inclusiveValue = undefined;
-      this.therapyOrderSet.exclusiveValue = undefined;
+      this.therapyOrderSet.agedefinedCriteria = "";
+      this.therapyOrderSet.ageinclusiveValue = undefined;
+      this.therapyOrderSet.ageexclusiveValue = undefined;
       this.inclusiveLabelText = '';
       this.exclusiveLabelText = '';
     }
@@ -600,7 +792,7 @@ export class AddtoOrdersetComponent implements OnInit, OnDestroy {
     this.therapyOrderSet = new OrderSet();
     this.therapyOrderSet.addToExistingOrderSet = true;
     this.therapyOrderSet.existingOrderSetName = '';
-    this.therapyOrderSet.definedCriteria = '';
+    this.therapyOrderSet.agedefinedCriteria = '';
     this.getOrderSetTypes();
   }
 
@@ -706,7 +898,7 @@ export class AddtoOrdersetComponent implements OnInit, OnDestroy {
                 .postRequest(
                   this.appService.baseURI +
                   '/PostObject?synapsenamespace=core&synapseentityname=prescriptionorderset',
-                  resp,false
+                  resp, false
                 )
                 .subscribe((response) => {
                 }
@@ -727,5 +919,12 @@ class UpsertEntity {
 
 export class EPMAGroups {
   selected: boolean
-  groupname:string
+  groupname: string
+}
+
+export class criteria {
+  criteria: string;
+  min: number;
+  max: number;
+
 }

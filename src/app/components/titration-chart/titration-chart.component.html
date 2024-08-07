@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -28,21 +28,31 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                 <div *ngIf="!showSpinner" class="close close-adminstration" (click)="closePopup()"></div>
             </h3>
 
-            <div [hidden]="!this.appService.AuthoriseAction('epma_confirm_doctorsorder')"  class="modal-body" style="padding: 0rem;" id="popup">
+            <div  [hidden]="!this.appService.AuthoriseAction('epma_confirm_doctorsorder')"  class="modal-body" style="padding: 0rem;overflow: auto;max-height: 75vh;" id="popup">
                 <div class="row" style="margin: 0; border: 1px solid #ccc;border-left: 3px solid white;">
                     <div class="col-4"><strong>{{prescription.titrationtype}}</strong></div>
-                    <div class="col-8" style="padding: 0;">
+                    <div class="col-8" style="padding: 0;" id="labresult">
                         <div #visualization id="visualization"></div>
                     </div>
                 </div>
-                <div class="row" style="margin: 0; border: 1px solid #ccc;border-left: 3px solid orange;">
+                <div *ngFor="let p of titrationPrescription;let i=index;" class="row" style="margin: 0; border: 1px solid #ccc;border-left: 3px solid orange;">
+                    <div class="col-4" style="padding: 0;">
+                        <app-prescription-template [prescription]="p"
+                            componenttype="titration">
+                        </app-prescription-template>
+                    </div>
+                    <div class="col-8" style="padding: 0;">
+                        <div id="visualization{{i}}"></div>
+                    </div>
+                </div>
+                <div  class="row" style="margin: 0; border: 1px solid #ccc;border-left: 3px solid orange;">
                     <div class="col-4" style="padding: 0;">
                         <app-prescription-template [prescription]="prescription"
                             componenttype="titration">
                         </app-prescription-template>
                     </div>
                     <div class="col-8" style="padding: 0;">
-                        <div #visualization1 id="visualization1"></div>
+                        <div id="visualizationCurrent"></div>
                     </div>
                 </div>
                 <div *ngIf="!isOnlyShowChart" class="row" style="margin: 0; border-left: 3px solid orange;">

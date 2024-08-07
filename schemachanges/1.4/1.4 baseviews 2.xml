@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-16"?><Export xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" format="Json"><Entities /><Baseviews><Baseview id="9bf058f2-4e77-4c1a-bbf6-41f4d3641216" name="prescriptionmeta"><Namespace>{
+  "listsettings.baseviewnamespace": [
+    {
+      "_row_id": "aae8897c-614c-4370-ad2f-c0691bc55618",
+      "_sequenceid": 30,
+      "_contextkey": null,
+      "_contextid": null,
+      "_createdtimestamp": "2020-09-21T08:28:10.02473",
+      "_createddate": "2020-09-21T08:28:10.02473",
+      "_createdsource": "Synapse Studio",
+      "_createdchannelid": null,
+      "_createdmessageid": null,
+      "_createdby": "Singh Manoj",
+      "_recordstatus": 1,
+      "_expirydate": null,
+      "baseviewnamespaceid": "1ea2f183-7018-4118-aed3-d90ad6ff1548",
+      "baseviewnamespace": "epma",
+      "baseviewnamespacedescription": "to store baseview for epma"
+    }
+  ]
+}</Namespace><BaseviewManager>{
+  "listsettings.baseviewmanager": [
+    {
+      "_row_id": "486669f7-aef6-4202-a6ce-b7365f35c884",
+      "_sequenceid": 1484,
+      "_contextkey": null,
+      "_contextid": null,
+      "_createdtimestamp": "2022-06-06T11:18:39.859671",
+      "_createddate": "2022-06-06T11:18:39.859671",
+      "_createdsource": "Synapse Studio",
+      "_createdchannelid": null,
+      "_createdmessageid": null,
+      "_createdby": "Singh Manoj",
+      "_recordstatus": 1,
+      "_expirydate": null,
+      "_timezonename": null,
+      "_timezoneoffset": 0,
+      "baseview_id": "9bf058f2-4e77-4c1a-bbf6-41f4d3641216",
+      "baseviewnamespaceid": "1ea2f183-7018-4118-aed3-d90ad6ff1548",
+      "baseviewnamespace": "epma",
+      "baseviewname": "prescriptionmeta",
+      "baseviewdescription": "to get all meta for empa",
+      "baseviewsqlstatement": " select  'oxygendevices' as field, coalesce(array_to_json(array_agg(row_to_json(oxygendevices))), '[]') as data \r\n from (\r\n \tselect * from entitystorematerialised.meta_oxygendevices\r\n ) oxygendevices\r\n \r\n union ALL\r\n \r\n select  'oxygenprescriptionadditionalinfo' as field, coalesce(array_to_json(array_agg(row_to_json(oxygenprescriptionadditionalinfo))), '[]') as data \r\n from (\r\n \tselect * from entitystorematerialised.meta_oxygenprescriptionadditionalinfo\r\n ) oxygenprescriptionadditionalinfo\r\n \r\n union ALL\r\n \r\n select  'observationscaletype' as field, coalesce(array_to_json(array_agg(row_to_json(observationscaletype))), '[]') as data \r\n from (\r\n \tselect * from entitystorematerialised.meta_observationscaletype\r\n ) observationscaletype\r\n \r\n union all\r\n \r\n  select  'reviewstatus' as field, coalesce(array_to_json(array_agg(row_to_json(reviewstatus))), '[]') as data \r\n from (\r\n \tselect * from entitystorematerialised.meta_reviewstatus\r\n ) reviewstatus\r\n \r\n union all\r\n \r\n  select  'prescriptionstatus' as field, coalesce(array_to_json(array_agg(row_to_json(prescriptionstatus))), '[]') as data \r\n from (\r\n \tselect * from entitystorematerialised.meta_prescriptionstatus\r\n ) prescriptionstatus\r\n \r\n union all\r\n \r\n  select  'prescriptionduration' as field, coalesce(array_to_json(array_agg(row_to_json(prescriptionduration))), '[]') as data \r\n from (\r\n \tselect * from entitystorematerialised.meta_prescriptionduration\r\n ) prescriptionduration\r\n \r\n union all\r\n \r\n  select  'prescriptionadditionalconditions' as field, coalesce(array_to_json(array_agg(row_to_json(prescriptionadditionalconditions))), '[]') as data \r\n from (\r\n \tselect * from entitystorematerialised.meta_prescriptionadditionalconditions\r\n ) prescriptionadditionalconditions\r\n \r\n union all\r\n \r\n  select  'prescriptionsource' as field, coalesce(array_to_json(array_agg(row_to_json(prescriptionsource))), '[]') as data \r\n from (\r\n \tselect * from entitystorematerialised.meta_prescriptionsource\r\n ) prescriptionsource\r\n union all \r\n   select  'prescriptioncontext' as field, coalesce(array_to_json(array_agg(row_to_json(prescriptioncontext))), '[]') as data \r\n from (\r\n \tselect * from entitystorematerialised.meta_prescriptioncontext\r\n ) prescriptioncontext\r\n\r\n union all \r\n   select  'complianceaid' as field, coalesce(array_to_json(array_agg(row_to_json(complianceaid))), '[]') as data \r\n from (\r\n \tselect * from entitystorematerialised.meta_complianceaid\r\n ) complianceaid",
+      "ismaterialised": false
+    }
+  ]
+}</BaseviewManager><action>New</action></Baseview></Baseviews><SLists /></Export>

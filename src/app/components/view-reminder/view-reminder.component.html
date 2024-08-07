@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,84 +18,258 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <!--END LICENSE BLOCK--> 
-<div *ngIf="!showAcknowledgeReminder" class="modal fade bd-example-modal-lg"
-    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
-    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
-    aria-hidden="true">
+<div *ngIf="isMainReminder && !showAcknowledgeReminder && !isManageReminder && !showNewReminder"
+    class="modal fade bd-example-modal-lg" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal
+    tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+    aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg  modal-dialog-centered" role="document">
         <div class="modal-content">
             <h3 class="popover-title popover-header">
                 Reminders
                 <div class="close close-medication" (click)="closeReminderPopup()"></div>
             </h3>
-
-            <div class="modal-body" style="max-height: 630px; overflow-y: scroll;">
-                <div class="row mt-1">
+            <div class="modal-body">
+                <div class="row">
                     <div class="col-12">
+                        <a class="float-right" href="javascript:void(0);" (click)="openManagerReminder()">Manage
+                            Reminders</a>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <tabset #tabsetAckReminder>
+                            <tab tab1 heading="Active" id="active" #active>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <table class="table table-responsive border-0" width="100%"
+                                            style="overflow: hidden;">
+                                            <tr *ngFor="let d of activeReminderList">
+                                                <td style="width: 40%;">
+                                                    <strong>{{d.__calculatedactivationdatetime | date : 'dd-MMM-yyyy
+                                                        HH:mm'}}
+                                                        {{d.__noactivationdatetime}}
+                                                    </strong>
+                                                    <br />
+                                                    <span class="text-break"> {{d.message}}</span>
+                                                </td>
+                                                <td style="width: 10%;">
+                                                    <span *ngIf="!d.issystem">{{d.lastmodifiedby}}</span>
+                                                    <span *ngIf="d.issystem"> System Generated</span>
+                                                </td>
+                                                <td style="width:5%;">
+                                                    <div *ngIf="d.ackstatus=='ivtooralset'"
+                                                        class="template-switch-to-oral-set reminder-icon"></div>
+                                                    <div *ngIf="d.ackstatus=='ivtooralactive'"
+                                                        class="template-switch-to-oral-acive reminder-icon"></div>
+                                                    <div *ngIf="d.ackstatus=='ivtooraloverdue'"
+                                                        class="template-switch-to-oral-overdue reminder-icon"></div>
 
-                        <div class="row" *ngFor="let r of reminderList">
-                            <div class="col-12" >
-                                <div class="pb-1"><strong>{{r.status}}</strong></div>
-                                <table *ngIf="r.reminder.length>0" class="table table-responsive border-0" width="100%" style="overflow: hidden;">
-                                    <tr *ngFor="let d of r.reminder">
-                                        <td style="width: 40%;"><strong>{{d.__calculatedactivationdatetime | date : 'dd-MMM-yyyy HH:mm'}}
-                                            {{d.__noactivationdatetime}}
-                                        </strong> 
-                                            <br />
-                                           <span class="text-break"> {{d.message}}</span>
-                                        </td>
-                                        <td style="width: 10%;">
-                                            <span *ngIf="!d.issystem">{{d.lastmodifiedby}}</span>
-                                            <span *ngIf="d.issystem"> System Generated</span>
-                                        </td>
-                                        <td style="width:5%;">
-                                            <div *ngIf="d.ackstatus=='ivtooralset'"
-                                                class="template-switch-to-oral-set reminder-icon"></div>
-                                            <div *ngIf="d.ackstatus=='ivtooralactive'"
-                                                class="template-switch-to-oral-acive reminder-icon"></div> 
-                                            <div *ngIf="d.ackstatus=='ivtooraloverdue'"
-                                                class="template-switch-to-oral-overdue reminder-icon"></div>
+                                                    <div *ngIf="d.ackstatus=='active'"
+                                                        class="template-reminder-icon-active reminder-icon"></div>
+                                                    <div *ngIf="d.ackstatus=='overdue'"
+                                                        class="template-reminder-icon-overdue reminder-icon"></div>
+                                                    <div *ngIf="d.ackstatus=='set'"
+                                                        class="template-reminder-icon-set reminder-icon"></div>
+                                                </td>
 
-                                            <div *ngIf="d.ackstatus=='active'"
-                                                class="template-reminder-icon-active reminder-icon"></div>
-                                            <div *ngIf="d.ackstatus=='overdue'"
-                                                class="template-reminder-icon-overdue reminder-icon"></div>
-                                            <div *ngIf="d.ackstatus=='set'"
-                                                class="template-reminder-icon-set reminder-icon"></div>
-                                        </td>
+                                                <td style="width: 45%;">
+                                                    <span *ngIf="d.isacknowledged">
+                                                        <div class="row">
+                                                            <div class="col-7">
+                                                                <strong> {{d.acknowledgedon | date : 'dd-MMM-yyyy
+                                                                    HH:mm'}}</strong>
 
-                                        <td style="width: 45%;">
-                                            <span *ngIf="d.isacknowledged">
-                                                <div class="row">
-                                                    <div class="col-7">
-                                                        <strong> {{d.acknowledgedon | date : 'dd-MMM-yyyy HH:mm'}}</strong>
-                                                       
-                                                        <br />
-                                                        <span class="text-break">{{d.ackmsg}}</span>
+                                                                <br />
+                                                                <span class="text-break">{{d.ackmsg}}</span>
+                                                            </div>
+                                                            <div class="col-5">
+                                                                {{d.acknowledgedby}}
+                                                            </div>
+                                                        </div>
+
+                                                    </span>
+                                                    <!-- <input
+                                                        *ngIf="r.status=='Pending' && d.activationdatetime && d.lastmodifiedby && appService.loggedInUserName && d.lastmodifiedby.trim().toLowerCase()== appService.loggedInUserName.trim().toLowerCase() && appService.isCurrentEncouner"
+                                                        type="button" class="btn btn-primary btn-sm"
+                                                        (click)="openEditReminderPopup(d)" value="Edit"> -->
+                                                    <input *ngIf="!d.isacknowledged && appService.isCurrentEncouner"
+                                                        type="button" class="btn btn-primary btn-sm"
+                                                        (click)="openAcknowledgeReminderPopup(d,'reminder')"
+                                                        value="Acknowledge">
+                                                </td>
+
+                                            </tr>
+                                            <tr *ngIf="activeReminderList.length==0">
+                                                <td>No active reminders</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+
+                            </tab>
+                            <tab tab1 heading="Pending" id="pedning" #pedning>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <table class="table table-responsive border-0" width="100%"
+                                            style="overflow: hidden;">
+                                            <tr *ngFor="let d of pendingReminderList">
+                                                <td style="width: 40%;">
+                                                    <strong>{{d.__calculatedactivationdatetime | date : 'dd-MMM-yyyy
+                                                        HH:mm'}}
+                                                        {{d.__noactivationdatetime}}
+                                                    </strong>
+                                                    <br />
+                                                    <span class="text-break"> {{d.message}}</span>
+                                                </td>
+                                                <td style="width: 10%;">
+                                                    <span *ngIf="!d.issystem">{{d.lastmodifiedby}}</span>
+                                                    <span *ngIf="d.issystem"> System Generated</span>
+                                                </td>
+                                                <td style="width:5%;">
+                                                    <div *ngIf="d.ackstatus=='ivtooralset'"
+                                                        class="template-switch-to-oral-set reminder-icon"></div>
+                                                    <div *ngIf="d.ackstatus=='ivtooralactive'"
+                                                        class="template-switch-to-oral-acive reminder-icon"></div>
+                                                    <div *ngIf="d.ackstatus=='ivtooraloverdue'"
+                                                        class="template-switch-to-oral-overdue reminder-icon"></div>
+
+                                                    <div *ngIf="d.ackstatus=='active'"
+                                                        class="template-reminder-icon-active reminder-icon"></div>
+                                                    <div *ngIf="d.ackstatus=='overdue'"
+                                                        class="template-reminder-icon-overdue reminder-icon"></div>
+                                                    <div *ngIf="d.ackstatus=='set'"
+                                                        class="template-reminder-icon-set reminder-icon"></div>
+                                                </td>
+
+                                                <td style="width: 45%;">
+                                                    <span *ngIf="d.isacknowledged">
+                                                        <div class="row">
+                                                            <div class="col-7">
+                                                                <strong> {{d.acknowledgedon | date : 'dd-MMM-yyyy
+                                                                    HH:mm'}}</strong>
+
+                                                                <br />
+                                                                <span class="text-break">{{d.ackmsg}}</span>
+                                                            </div>
+                                                            <div class="col-5">
+                                                                {{d.acknowledgedby}}
+                                                            </div>
+                                                        </div>
+
+                                                    </span>
+
+                                                </td>
+
+                                            </tr>
+                                            <tr *ngIf="pendingReminderList.length==0">
+                                                <td>No pending reminders</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </tab>
+                            <tab tab1 heading="Acknowledged" id="acknowledged" #acknowledged>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <table class="table table-responsive border-0" width="100%"
+                                            style="overflow: hidden;">
+                                            <tr *ngFor="let d of acknowledgedReminderList">
+                                                <td style="width: 40%;">
+                                                    <strong>{{d.__calculatedactivationdatetime | date : 'dd-MMM-yyyy
+                                                        HH:mm'}}
+                                                        {{d.__noactivationdatetime}}
+                                                    </strong>
+                                                    <br />
+                                                    <span class="text-break"> {{d.message}}</span>
+                                                </td>
+                                                <td style="width: 10%;">
+                                                    <span *ngIf="!d.issystem">{{d.lastmodifiedby}}</span>
+                                                    <span *ngIf="d.issystem"> System Generated</span>
+                                                </td>
+                                                <td style="width:5%;">
+                                                    <!-- <div *ngIf="d.ackstatus=='ivtooralset'"
+                                                        class="template-switch-to-oral-set reminder-icon"></div>
+                                                    <div *ngIf="d.ackstatus=='ivtooralactive'"
+                                                        class="template-switch-to-oral-acive reminder-icon"></div>
+                                                    <div *ngIf="d.ackstatus=='ivtooraloverdue'"
+                                                        class="template-switch-to-oral-overdue reminder-icon"></div>
+
+                                                    <div *ngIf="d.ackstatus=='active'"
+                                                        class="template-reminder-icon-active reminder-icon"></div>
+                                                    <div *ngIf="d.ackstatus=='overdue'"
+                                                        class="template-reminder-icon-overdue reminder-icon"></div>
+                                                    <div *ngIf="d.ackstatus=='set'"
+                                                        class="template-reminder-icon-set reminder-icon"></div>
+                                                     -->
+                                                     <div class="reminder-acknowledged reminder-icon"></div>
+                                                </td>
+
+                                                <td style="width: 45%;">
+                                                    <span *ngIf="d.isacknowledged">
+                                                        <div class="row">
+                                                            <div class="col-7">
+                                                                <strong> {{d.acknowledgedon | date : 'dd-MMM-yyyy
+                                                                    HH:mm'}}</strong>
+
+                                                                <br />
+                                                                <span class="text-break">{{d.ackmsg}}</span>
+                                                            </div>
+                                                            <div class="col-5">
+                                                                {{d.acknowledgedby}}
+                                                            </div>
+                                                        </div>
+
+                                                    </span>
+
+                                                    <input *ngIf="!d.isacknowledged && appService.isCurrentEncouner"
+                                                        type="button" class="btn btn-primary btn-sm"
+                                                        (click)="openAcknowledgeReminderPopup(d,'reminder')"
+                                                        value="Acknowledge">
+                                                </td>
+
+                                            </tr>
+                                            <tr *ngFor="let a of repeatAckReminder">
+                                                <td style="width: 40%;"> <strong>{{a.plandatetime | date : 'dd-MMM-yyyy
+                                                        HH:mm'}}</strong>
+                                                    <br />
+                                                    <span class="text-break"> {{a.__remindertext}}</span>
+                                                </td>
+                                                <td style="width: 10%;"> {{a.__lastmodifiedby}}</td>
+                                                <td style="width: 5%;">
+                                                    <!-- <div *ngIf="a.ackstatus=='active'"
+                                                        class="template-reminder-icon-active reminder-icon"></div>
+                                                    <div *ngIf="a.ackstatus=='overdue'"
+                                                        class="template-reminder-icon-overdue reminder-icon"></div>
+                                                    <div *ngIf="a.ackstatus=='set'"
+                                                        class="template-reminder-icon-set reminder-icon"></div>
+                                                     -->
+                                                     <div class="reminder-acknowledged reminder-icon"></div>
+                                                </td>
+                                                <td style="width: 45%;">
+                                                    <div class="row">
+                                                        <div class="col-7">
+                                                            <strong> {{a.acknowledgedon | date : 'dd-MMM-yyyy
+                                                                HH:mm'}}</strong>
+
+                                                            <br />
+                                                            <span class="text-break">{{a.acknowledgecomments}}</span>
+                                                        </div>
+                                                        <div class="col-5">
+                                                            {{a.acknowledgedby}}
+                                                        </div>
                                                     </div>
-                                                    <div class="col-5">
-                                                      {{d.acknowledgedby}}
-                                                    </div>
-                                                </div>
+                                                </td>
+                                            </tr>
+                                            <tr
+                                                *ngIf="repeatAckReminder.length==0 && acknowledgedReminderList.length==0">
+                                                <td> No acknowledged reminders</td>
+                                            </tr>
+                                        </table>
 
-                                            </span>
-                                            <input
-                                                *ngIf="r.status=='Pending' && d.activationdatetime && d.lastmodifiedby && appService.loggedInUserName && d.lastmodifiedby.trim().toLowerCase()== appService.loggedInUserName.trim().toLowerCase() && appService.isCurrentEncouner"
-                                                type="button" class="btn btn-primary btn-sm"
-                                                (click)="openEditReminderPopup(d)" value="Edit">
-                                            <input *ngIf="!d.isacknowledged && r.status=='Active' && appService.isCurrentEncouner" type="button"
-                                                class="btn btn-primary btn-sm" (click)="openAcknowledgeReminderPopup(d)"
-                                                value="Acknowledge">
-                                        </td>
-
-                                    </tr>
-                                </table>
-                            </div>
-                            <div class="col-12" *ngIf="r.reminder.length==0">
-                                No {{r.status}} reminders
-                            </div>
-                        </div>
-
+                                    </div>
+                                </div>
+                            </tab>
+                        </tabset>
                     </div>
                 </div>
             </div>
@@ -103,13 +277,120 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                 <div class="container">
                     <div class="row">
                         <div class="col-6 text-left">
-                            <button style="color:white" type="button"  *ngIf="appService.isCurrentEncouner" (click)="openNewReminderPopup()"
-                                class="btn btn-sm btn-info mr-3"> +</button>
+
+                        </div>
+                        <div class="col-6 text-right">
+                            <button data-dismiss="modal" type="button" class="btn btn-sm btn-secondary"
+                                (click)="closeReminderPopup()">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div *ngIf="isManageReminder && !showAcknowledgeReminder && !showNewReminder && !isMainReminder"
+    class="modal fade bd-example-modal-lg" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal
+    tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+    aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg  modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <h3 class="popover-title popover-header">
+                Manage Reminders
+                <div class="close close-medication" (click)="closeManagerReminder()"></div>
+            </h3>
+            <div class="modal-body">
+                <div class="row mt-1">
+                    <div class="col-12">
+                        <tabset #repeatReminderTabSet>
+                            <tab tab1 heading="Standard Reminder" id="standardreminder" #standardreminder>
+                                <table class="table table-responsive" width="100%" style="overflow: hidden;">
+                                    <tr *ngFor="let d of manageReminderList">
+                                        <td style="width: 70%;">
+                                            <strong>{{d.activationdatetime | date :'dd-MMM-yyyy HH:mm'}}</strong>
+                                            <br />
+                                            <span class="text-break"> {{d.message}}</span>
+                                        </td>
+                                        <td style="width: 10%;">
+                                            <span *ngIf="!d.issystem">{{d.lastmodifiedby}}</span>
+                                            <span *ngIf="d.issystem"> System Generated</span>
+                                        </td>
+                                        <td style="width:5%;">
+                                        </td>
+                                        <td style="width: 15%;">
+
+                                            <input
+                                                *ngIf="(!d.remindertype || d.remindertype==0 ) && !d.isacknowledged && d.activationdatetime && d.lastmodifiedby && appService.loggedInUserName && (d.lastmodifiedby.trim().toLowerCase()== appService.loggedInUserName.trim().toLowerCase() || isSuperUser) && appService.isCurrentEncouner"
+                                                type="button" class="btn btn-primary btn-sm"
+                                                (click)="openEditReminderPopup(d)" value="Edit">
+                                            &nbsp;
+                                            <input
+                                                *ngIf="!d.enddatetime && d.remindertype==1 && d.activationdatetime && d.lastmodifiedby && appService.loggedInUserName && d.lastmodifiedby.trim().toLowerCase()== appService.loggedInUserName.trim().toLowerCase() && appService.isCurrentEncouner"
+                                                type="button" class="btn btn-danger btn-sm" (click)="stopReminder(d)"
+                                                value="Stop">
+
+                                            <span class="btn btn-secondary btn-sm disabled"
+                                                *ngIf="d.enddatetime">Stopped</span>
+                                        </td>
+                                    </tr>
+                                    <tr *ngIf="manageReminderList.length==0">
+                                        <td>No standard reminders</td>
+                                    </tr>
+                                </table>
+                            </tab>
+        
+                            <tab tab2 heading="Repeat Reminder" id="repeatreminder" #repeatreminder>
+                                <table class="table table-responsive" width="100%" style="overflow: hidden;">
+                                    <tr *ngFor="let d of manageReminderRepeatList">
+                                        <td style="width: 70%;">
+                                            <strong>{{d.activationdatetime | date :'dd-MMM-yyyy HH:mm'}}</strong>
+                                            <span *ngIf="d.remindertype==1">&nbsp;Repeat
+                                                every&nbsp;{{d.repeatsize}}&nbsp;
+                                                <span *ngIf="d.repeattype=='m'">minutes</span>
+                                                <span *ngIf="d.repeattype=='h'">hours</span>
+                                                <span *ngIf="d.repeattype=='d'">day</span>
+                                            </span>
+                                            <span *ngIf="d.remindertype==2">&nbsp;Associated with dose</span>
+                                            <br />
+                                            <span class="text-break"> {{d.message}}</span>
+                                        </td>
+                                        <td style="width: 10%;">
+                                            <span *ngIf="!d.issystem">{{d.lastmodifiedby}}</span>
+                                            <span *ngIf="d.issystem"> System Generated</span>
+                                        </td>
+                                        <td style="width:5%;">
+                                        </td>
+                                        <td style="width: 15%;">
+                                            <input
+                                                *ngIf="!d.enddatetime  && d.activationdatetime && d.lastmodifiedby && appService.loggedInUserName && d.lastmodifiedby.trim().toLowerCase()== appService.loggedInUserName.trim().toLowerCase() && appService.isCurrentEncouner"
+                                                type="button" class="btn btn-danger btn-sm" (click)="stopReminder(d)"
+                                                value="Stop">
+
+                                            <span class="btn btn-secondary btn-sm disabled"
+                                                *ngIf="d.enddatetime">Stopped</span>
+                                        </td>
+                                    </tr>
+                                    <tr *ngIf="manageReminderRepeatList.length==0">
+                                        <td>No reapeat reminders</td>
+                                    </tr>
+                                </table>
+                            </tab>
+                        </tabset>
+ 
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 0.4rem 0rem;">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-6 text-left">
+                            <button style="color:white" type="button" *ngIf="appService.isCurrentEncouner"
+                                (click)="openNewReminderPopup()" class="btn btn-sm btn-info mr-3"> +</button>
                         </div>
                         <div class="col-6 text-right">
 
-                            <button  data-dismiss="modal" type="button"
-                                class="btn btn-sm btn-secondary" (click)="closeReminderPopup()">Close</button>
+                            <button data-dismiss="modal" type="button" class="btn btn-sm btn-secondary"
+                                (click)="closeManagerReminder();">Close</button>
                         </div>
 
                     </div>
@@ -118,13 +399,12 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
         </div>
     </div>
 </div>
-
-<div *ngIf="showNewReminder" class="modal fade bd-example-modal-lg"
-    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
-    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
-    aria-hidden="true">
+<div *ngIf="showNewReminder && !isManageReminder && !showAcknowledgeReminder && !isMainReminder"
+    class="modal fade bd-example-modal-lg" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal
+    tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+    aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg  modal-dialog-centered" role="document">
-        <div class="modal-content">
+        <div class="modal-content" style="height: auto!important;">
             <h3 class="popover-title popover-header">
                 {{reminderHeader}}
                 <div *ngIf="!showSpinner" class="close close-medication" (click)="closeNewReminderPopup()"></div>
@@ -136,10 +416,10 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                             Reminder text
                         </div>
                         <div class="col-8">
-                            <textarea #textmessage autoGrow name="message" #message="ngModel"
+                            <textarea #textmessage autoGrow name="message" #message="ngModel" style="min-height: 150px;"
                                 [ngClass]="{ 'is-invalid': reminderForm.submitted && message.invalid }" required
                                 [(ngModel)]="reminder.message" maxlength="256" class="form-control" rows="1"></textarea>
-                                {{ textmessage.focus() }}
+
                         </div>
                     </div>
                     <div class="row mt-1">
@@ -153,7 +433,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                     [ngClass]="{ 'is-invalid': reminderForm.submitted && stardate.invalid }"
                                     [(ngModel)]="startdate" placeholder="Select Date" class="form-control"
                                     style="width:120px" bsDatepicker
-                                    [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'bg-light' }" />
+                                    [bsConfig]="{  showWeekNumbers:false, dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'alert-info' }" />
                                 <input type="text" [disabled]="!startdate" name="startime" [(ngModel)]="startime"
                                     name="startime" style="width:80px;" class="form-control" placeholder="HH:mm"
                                     [appTimepicker]="timepicker1">
@@ -162,6 +442,49 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                             </span>
                             <span class="text-danger" *ngIf="inValidTime">Please select a time that is greater than
                                 current time</span>
+                        </div>
+                    </div>
+                    <div class="row mt-1">
+                        <div class="col-4">
+                            Reminder Type
+                        </div>
+                        <div class="col-8 float-left">
+                            <table style="width: 100%;">
+                                <tr>
+                                    <td> <input id="standard" type="radio" [(ngModel)]="reminder.remindertype"
+                                            name="remindertype" [value]="0">
+                                        <label class="form-check-label" for="standard">&nbsp;Standard</label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <input id="Repeat" type="radio" [(ngModel)]="reminder.remindertype"
+                                            name="remindertype" [value]="1">
+                                        <label class="form-check-label" for="Repeat">&nbsp;Repeat</label>
+                                        <span style="display: flex;" *ngIf="reminder.remindertype==1">&nbsp;&nbsp;
+                                            &nbsp;Every&nbsp;
+                                            <input type="text" wholeNumber name="repeatsize" [value]="0"
+                                                class="form-control" style="width: 70px;"
+                                                [(ngModel)]="reminder.repeatsize" #repeatsize="ngModel"
+                                                [ngClass]="{ 'is-invalid': reminderForm.submitted && repeatsize.invalid }"
+                                                required />
+                                            &nbsp;<select name="repeattype" [(ngModel)]="reminder.repeattype"
+                                                class="form-control" style="width: 120px;">
+                                                <option value="m">Minute(s)</option>
+                                                <option value="h">Hour(s)</option>
+                                                <option value="d">Day(s)</option>
+                                            </select>
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td> <input id="associatedwithdose" type="radio" [(ngModel)]="reminder.remindertype"
+                                            name="remindertype" [value]="2">
+                                        <label class="form-check-label" for="associatedwithdose">&nbsp;Associated with
+                                            dose</label>
+                                    </td>
+                                </tr>
+                            </table>
                         </div>
                     </div>
                     <div class="row mt-1">
@@ -176,7 +499,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                 <div class="modal-footer" style="padding: 0.4rem 0rem;">
                     <div class="container">
                         <div class="row">
-                             
+
                             <div class="col-12 text-right">
                                 <span *ngIf="validationMesssage" class="text-danger mr-2">{{validationMesssage}}</span>
                                 <button style="color:white" type="submit" class="btn btn-sm btn-info mr-3"> <span
@@ -194,10 +517,10 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
     </div>
 </div>
 
-<div *ngIf="showAcknowledgeReminder" class="modal fade bd-example-modal-lg"
-    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
-    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
-    aria-hidden="true">
+<div *ngIf="showAcknowledgeReminder && !isManageReminder && !showNewReminder && !isMainReminder"
+    class="modal fade bd-example-modal-lg" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal
+    tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+    aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg  modal-dialog-centered" role="document">
         <div class="modal-content">
             <h3 class="popover-title popover-header">
@@ -206,60 +529,209 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
             </h3>
 
             <div class="modal-body">
-                <div class="row mt-1">
-                    <div class="col-12">
-                        <table width="100%" style="border-top:none;">
-                            <tr>
-                                <td style="width: 12%;">{{reminder.__calculatedactivationdatetime | date : 'dd-MMM-yyyy HH:mm'}}</td>
-                                <td class="text-break">{{reminder.message}}</td>
-                                <td>
-                                    <div *ngIf="reminder.ackstatus=='ivtooral'"
-                                        class="template-switch-to-oral reminder-icon"></div>
-                                    <div *ngIf="reminder.ackstatus=='active'"
-                                        class="template-reminder-icon-active reminder-icon"></div>
-                                    <div *ngIf="reminder.ackstatus=='overdue'"
-                                        class="template-reminder-icon-overdue reminder-icon"></div>
-                                    <div *ngIf="reminder.ackstatus=='set'"
-                                        class="template-reminder-icon-set reminder-icon"></div>
-                                </td>
-                                <td><span *ngIf="!reminder.issystem">{{reminder.lastmodifiedby}}</span>
-                                    <span *ngIf="reminder.issystem"> System Generated</span>
-                                </td>
+                <tabset #tabsetAckReminder *ngIf="nearestAckReminderList.length>0">
+                    <tab tab1 heading="Selected Reminder" id="currentreminder" #currentreminder>
+                        <div *ngFor="let r of sameAckReminderList">
+                            <div class="row mt-1">
+                                <div class="col-12">
+                                    <table width="100%" style="border-top:none;">
+                                        <tr>
+                                            <td style="width: 16%;" style="white-space: nowrap">
+                                                <strong>{{r.__calculatedactivationdatetime | date : 'dd-MMM-yyyy
+                                                    HH:mm'}}</strong>
+                                            </td>
+                                            <td style="width: 50%;" class="text-break">{{r.message}}</td>
+                                            <td *ngIf="!r.isacknowledged">
+                                                <div *ngIf="r.ackstatus=='ivtooral'"
+                                                    class="template-switch-to-oral reminder-icon"></div>
+                                                <div *ngIf="r.ackstatus=='active'"
+                                                    class="template-reminder-icon-active reminder-icon"></div>
+                                                <div *ngIf="r.ackstatus=='overdue'"
+                                                    class="template-reminder-icon-overdue reminder-icon"></div>
+                                                <div *ngIf="r.ackstatus=='set'"
+                                                    class="template-reminder-icon-set reminder-icon"></div>
+                                            </td>
+                                            <td *ngIf="r.isacknowledged">
+                                                <div class="reminder-acknowledged reminder-icon"></div>
+                                            </td>
+                                            <td><span *ngIf="!r.issystem">{{r.lastmodifiedby}}</span>
+                                                <span *ngIf="r.issystem"> System Generated</span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="row mt-1">
+                                <div class="col-12">
+                                    <textarea *ngIf="r.isacknowledged==false" placeholder="Add notes" maxlength="256"
+                                        class="form-control" [(ngModel)]="r.ackmsg" rows="3" width="100%"></textarea>
+                                    <div *ngIf="r.isacknowledged==true" class="border-top">
+                                        {{r.ackmsg}}
+                                    </div>
+                                    <span *ngIf="r.isackmandatory && r.ackstatus != 'set'">
+                                        <span class="text-danger" *ngIf="!r.ackmsg">This
+                                            reminder requires notes to be recorded when acknowledging. Please add
+                                            notes.</span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="row mt-1">
+                                <div class="col">
+                                    <button *ngIf="r.ackstatus != 'set' && r.isacknowledged == false"
+                                        style="color:white; float: right;" type="button"
+                                        (click)="saveAcknowledgeReminder(r)" class="btn btn-sm btn-primary mr-3"> <span
+                                            class="spinner-border spinner-border-sm" *ngIf="r.__showSpinner"
+                                            role="status" aria-hidden="true"></span>Acknowledge</button>
+                                  
+                                    <button *ngIf="r.isacknowledged == true" style="color:white; float: right;"
+                                        type="button" class="btn btn-sm btn-secondary mr-3"
+                                        disabled>Acknowledged</button>
+                                </div>
+                            </div>
+                        </div>
+                    </tab>
 
-                            </tr>
-                        </table>
+                    <tab tab2 heading="Reminders close to selected" id="nearestreminder" #nearestreminder>
+                        <div *ngFor="let r of nearestAckReminderList">
+                            <div class="row mt-1">
+                                <div class="col-12">
+                                    <table width="100%" style="border-top:none;">
+                                        <tr>
+                                            <td style="width: 16%;" style="white-space: nowrap">
+                                                <strong>{{r.__calculatedactivationdatetime | date : 'dd-MMM-yyyy
+                                                    HH:mm'}}</strong>
+                                            </td>
+                                            <td style="width: 50%;" class="text-break">{{r.message}}</td>
+                                            <td *ngIf="!r.isacknowledged">
+                                                <div *ngIf="r.ackstatus=='ivtooral'"
+                                                    class="template-switch-to-oral reminder-icon"></div>
+                                                <div *ngIf="r.ackstatus=='active'"
+                                                    class="template-reminder-icon-active reminder-icon"></div>
+                                                <div *ngIf="r.ackstatus=='overdue'"
+                                                    class="template-reminder-icon-overdue reminder-icon"></div>
+                                                <div *ngIf="r.ackstatus=='set'"
+                                                    class="template-reminder-icon-set reminder-icon"></div>
+                                            </td>
+                                            <td *ngIf="r.isacknowledged">
+                                                <div class="reminder-acknowledged reminder-icon"></div>
+                                            </td>
+                                            <td><span *ngIf="!r.issystem">{{r.lastmodifiedby}}</span>
+                                                <span *ngIf="r.issystem"> System Generated</span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="row mt-1">
+                                <div class="col-12">
+                                    <textarea *ngIf="r.isacknowledged==false" placeholder="Add notes" maxlength="256"
+                                        class="form-control" [(ngModel)]="r.ackmsg" rows="3" width="100%"></textarea>
+                                    <div *ngIf="r.isacknowledged==true" class="border-top">
+                                        {{r.ackmsg}}
+                                    </div>
+                                    <span *ngIf="r.isackmandatory && r.ackstatus != 'set'">
+                                        <span class="text-danger" *ngIf="!r.ackmsg">This
+                                            reminder requires notes to be recorded when acknowledging. Please add
+                                            notes.</span>
+                                    </span>
+
+                                </div>
+                            </div>
+                            <div class="row mt-1">
+                                <div class="col">
+                                    <button *ngIf="r.ackstatus != 'set' && r.isacknowledged == false"
+                                        style="color:white; float: right;" type="button"
+                                        (click)="saveAcknowledgeReminder(r)" class="btn btn-sm btn-primary mr-3"> <span
+                                            class="spinner-border spinner-border-sm" *ngIf="r.__showSpinner"
+                                            role="status" aria-hidden="true"></span>Acknowledge</button>
+                                   
+                                    <button *ngIf="r.isacknowledged == true" style="color:white; float: right;"
+                                        type="button" class="btn btn-sm btn-secondary mr-3"
+                                        disabled>Acknowledged</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div *ngIf="nearestAckReminderList.length==0"> No nearest reminder </div>
+                    </tab>
+                </tabset>
+                <div *ngIf="nearestAckReminderList.length==0">
+                    <div *ngFor="let r of sameAckReminderList">
+                        <div class="row mt-1">
+                            <div class="col-12">
+                                <table width="100%" style="border-top:none;">
+                                    <tr>
+                                        <td style="width: 16%;" style="white-space: nowrap">
+                                            <strong>{{r.__calculatedactivationdatetime | date : 'dd-MMM-yyyy
+                                                HH:mm'}}</strong>
+                                        </td>
+                                        <td style="width: 50%;" class="text-break">{{r.message}}</td>
+                                        <td *ngIf="!r.isacknowledged">
+                                            <div *ngIf="r.ackstatus=='ivtooral'"
+                                                class="template-switch-to-oral reminder-icon"></div>
+                                            <div *ngIf="r.ackstatus=='active'"
+                                                class="template-reminder-icon-active reminder-icon"></div>
+                                            <div *ngIf="r.ackstatus=='overdue'"
+                                                class="template-reminder-icon-overdue reminder-icon"></div>
+                                            <div *ngIf="r.ackstatus=='set'"
+                                                class="template-reminder-icon-set reminder-icon"></div>
+                                        </td>
+                                        <td *ngIf="r.isacknowledged">
+                                            <div class="reminder-acknowledged reminder-icon"></div>
+                                        </td>
+                                        <td><span *ngIf="!r.issystem">{{r.lastmodifiedby}}</span>
+                                            <span *ngIf="r.issystem"> System Generated</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row mt-1">
+                            <div class="col-12">
+                                <textarea *ngIf="r.isacknowledged==false" placeholder="Add notes" maxlength="256"
+                                    class="form-control" [(ngModel)]="r.ackmsg" rows="3" width="100%"></textarea>
+                                <div *ngIf="r.isacknowledged==true" class="border-top">
+                                    {{r.ackmsg}}
+                                </div>
+                                <span *ngIf="r.isackmandatory && r.ackstatus != 'set'">
+                                    <span class="text-danger" *ngIf="!r.ackmsg">This
+                                        reminder requires notes to be recorded when acknowledging. Please add
+                                        notes.</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="row mt-1">
+                            <div class="col">
+                                <button *ngIf="r.ackstatus != 'set' && r.isacknowledged == false"
+                                    style="color:white; float: right;" type="button"
+                                    (click)="saveAcknowledgeReminder(r)" class="btn btn-sm btn-primary mr-3"> <span
+                                        class="spinner-border spinner-border-sm" *ngIf="r.__showSpinner"
+                                        role="status" aria-hidden="true"></span>Acknowledge</button>
+                               
+                                <button *ngIf="r.isacknowledged == true" style="color:white; float: right;"
+                                    type="button" class="btn btn-sm btn-secondary mr-3"
+                                    disabled>Acknowledged</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="row mt-1">
-                    <div class="col-12">
-                        <textarea placeholder="Add notes" maxlength="256" class="form-control" [(ngModel)]="acknowledgeNote" rows="3"
-                            width="100%"></textarea>
-                        <span *ngIf="reminder.isackmandatory">
-                            <span class="text-danger" *ngIf="!acknowledgeNote && isAcknowledgeNoteRequired">This
-                                reminder requires notes to be recorded when acknowledging. Please add notes.</span>
-                        </span>
-
-                    </div>
-                </div>
-
             </div>
-            <div class="modal-footer" style="padding: 0.4rem 0rem;">
+            <!-- <div class="modal-footer" style="padding: 0.4rem 0rem;">
                 <div class="container">
                     <div class="row">
                         <div class="col-6 text-left">
 
                         </div>
                         <div class="col-6 text-right">
-                            <button style="color:white" type="button" (click)="saveAcknowledgeReminder()"
+                            <button *ngIf="ackstatus==false" style="color:white" type="button" (click)="saveAcknowledgeReminder()"
                                 class="btn btn-sm btn-info mr-3"> <span class="spinner-border spinner-border-sm"
                                     *ngIf="showSpinner" role="status" aria-hidden="true"></span>Confirm</button>
                             <button *ngIf="!showSpinner" style="color:white" data-dismiss="modal" type="button"
-                                class="btn btn-sm btn-secondary" (click)="closeAcknowledgePopup()">Cancel</button>
+                                class="btn btn-sm btn-secondary" (click)="closeAcknowledgePopup()">Close</button>
                         </div>
 
                     </div>
                 </div>
-            </div>
+            </div> -->
         </div>
     </div>
 </div>

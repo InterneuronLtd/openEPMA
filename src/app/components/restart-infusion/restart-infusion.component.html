@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -70,17 +70,17 @@ aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
                         <div class="col-8">
                              <span class="float-right">
                                 <input [minDate]="currDate" onkeydown="event.preventDefault()" type="text"   [(ngModel)]="expirydate"  class="epma-adminstration-form-control" style="width:120px"  bsDatepicker
-                                [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'bg-light' }" />
+                                [bsConfig]="{  showWeekNumbers:false, dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'alert-info' }" />
                              </span>   
                         </div>
                     </div>
-                    <div class="row border-bottom  pb-1 pt-1">
+                    <div class="row border-bo showWeekNumbers:false,ttom  pb-1 pt-1">
                         <div class="col-3">
                             RATE
                         </div>
                         <div class="col-9">
                             <span class="float-right">
-                                <input type="number" min="0" class="epma-adminstration-form-control" style="width:80px"  [(ngModel)]="infusionrate" value="infusionrate"> <span *ngIf="doseunit">{{doseunit}}</span> <span *ngIf="!doseunit">ml/h</span>
+                                <input type="number" min="0" class="epma-adminstration-form-control" style="width:80px"  [(ngModel)]="infusionrate" value="infusionrate"><span *ngIf="currentposology.infusionrateunits">{{currentposology.infusionrateunits}}</span> <span *ngIf="!currentposology.infusionrateunits">ml/h</span>
                             </span>   
                         </div>
                     </div>
@@ -92,7 +92,7 @@ aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
                         <div class="col-5">
                             <span class="float-right" style="display: flex;">
                                 <input onkeydown="event.preventDefault()" type="text" [minDate]="minDate" [maxDate]="maxDate"  [(ngModel)]="stardate"  placeholder="Start Date" class="epma-adminstration-form-control" style="width:120px"  bsDatepicker
-                               [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'bg-light' }" />                                 
+                               [bsConfig]="{  showWeekNumbers:false, dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'alert-info' }" />                                 
                                <input type="text" name="startime" [(ngModel)]="startime" style="width:80px;" class="epma-adminstration-form-control" placeholder="HH:mm" [appTimepicker]="timepicker1">
                                 <app-time-picker #timepicker1 (onTimeSelected)="onTimeSelected($event)"></app-time-picker>
                             </span>

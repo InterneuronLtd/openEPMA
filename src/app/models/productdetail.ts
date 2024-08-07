@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -81,6 +81,7 @@ export class Detail {
     isBloodProduct: boolean;
     isDiluent: boolean;
     isModifiedRelease: boolean;
+    isPrescriptionPrintingRequired:boolean;
     isGastroResistant: boolean;
     prescribable: boolean;
     prescribableSource: string;
@@ -163,7 +164,7 @@ export class Detail {
     diluents: any[];
     isCustomControlledDrug: boolean;
     isIndicationMandatory: boolean;
-    reminders: Reminder[]
+    reminders: Reminder[];
 }
 export interface Caution {
     cd: string;

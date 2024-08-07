@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -28,11 +28,11 @@ import { filter, filterparam, filterParams, filters, orderbystatement, selectsta
 import { ApirequestService } from 'src/app/services/apirequest.service';
 import { AppService } from 'src/app/services/app.service';
 import { DataRequest } from 'src/app/services/datarequest';
-import { DoseType } from 'src/app/services/enum';
+import { DoseType, PrescriptionStatus } from 'src/app/services/enum';
 import { SubjectsService } from 'src/app/services/subjects.service';
 import { TimelineServiceService } from 'src/app/services/timeline-service.service';
 import { v4 as uuid } from 'uuid';
-import { Graph2d } from 'vis-timeline/standalone';
+import { Graph2d, Graph2dStyleType } from 'vis-timeline/standalone';
 
 @Component({
   selector: 'app-titration-chart',
@@ -41,6 +41,7 @@ import { Graph2d } from 'vis-timeline/standalone';
 })
 
 export class TitrationChartComponent implements OnInit, OnDestroy {
+  graphStyle: Graph2dStyleType = 'points';
   showTitration: boolean = false;
   componenttype: string;
   isOnlyShowChart: boolean;
@@ -81,6 +82,7 @@ export class TitrationChartComponent implements OnInit, OnDestroy {
   titationDateArray = [];
   vtm_dose_units = [];
   docterDoseEvent: DoseEvents = new DoseEvents();
+  titrationPrescription: any;
   constructor(private timelineService: TimelineServiceService, public subjects: SubjectsService, public appService: AppService, private apiRequest: ApirequestService, private dr: DataRequest) {
 
   }
@@ -103,7 +105,8 @@ export class TitrationChartComponent implements OnInit, OnDestroy {
       this.apiRequest.postRequest(this.appService.baseURI + "/GetListByPost/core/result/", this.CreateResultsFilter(type))
         .subscribe((response) => {
           response.forEach((value, index) => {
-            this.labResult.push({ x: moment(value.observationdatetime, "YYYY-MM-DD HH:mm"), y: value.observationvalue, group: index, label: { content: [value.observationvalue, value.unitstext].join(" "), xOffset: 0, yOffset: -7 } });
+            if (!isNaN(value.observationvalue) && +value.observationvalue > 0 && +value.observationvalue != Infinity)
+              this.labResult.push({ x: moment(value.observationdatetime, "YYYY-MM-DD HH:mm"), y: value.observationvalue, group: 0, label: { content: [value.observationvalue, value.unitstext].join(" "), xOffset: 0, yOffset: -7 } });
           });
 
           this.appService.logToConsole(this.labResult);
@@ -151,7 +154,8 @@ export class TitrationChartComponent implements OnInit, OnDestroy {
           .subscribe((response) => {
             if (response.length > 0) {
               response.forEach((value, index) => {
-                this.labResult.push({ x: moment(value.observationeventdatetime, "YYYY-MM-DD HH:mm"), y: value.value, group: index, label: { content: value.value, xOffset: -5, yOffset: -7 } });
+                if (!isNaN(value.value) && +value.value > 0 && +value.value != Infinity)
+                  this.labResult.push({ x: moment(value.observationeventdatetime, "YYYY-MM-DD HH:mm"), y: value.value, group: 0, label: { content: value.value, xOffset: -5, yOffset: -7 } });
               });
               this.loadGraph();
 
@@ -166,7 +170,7 @@ export class TitrationChartComponent implements OnInit, OnDestroy {
               response.forEach((value, index) => {
                 if (!isNaN(value.systolic) && !isNaN(value.diastolic) && +(value.systolic) > 0 && +(value.systolic) > 0) {
                   let map = +(value.diastolic) + (1 / 3) * (+(value.systolic) - +(value.diastolic));
-                  this.labResult.push({ x: moment(value.observationeventdatetime, "YYYY-MM-DD HH:mm"), y: map.toFixed(2), group: index, label: { content: map.toFixed(2), xOffset: 0, yOffset: -7 } });
+                  this.labResult.push({ x: moment(value.observationeventdatetime, "YYYY-MM-DD HH:mm"), y: map.toFixed(2), group: 0, label: { content: map.toFixed(2), xOffset: 0, yOffset: -7 } });
                 }
               });
               this.loadGraph();
@@ -178,7 +182,8 @@ export class TitrationChartComponent implements OnInit, OnDestroy {
           .subscribe((response) => {
             if (response.length > 0) {
               response.forEach((value, index) => {
-                this.labResult.push({ x: moment(value.observationeventdatetime, "YYYY-MM-DD HH:mm"), y: value.value, group: index, label: { content: value.value, xOffset: -5, yOffset: -7 } });
+                if (!isNaN(value.value) && +value.value > 0 && +value.value != Infinity)
+                  this.labResult.push({ x: moment(value.observationeventdatetime, "YYYY-MM-DD HH:mm"), y: value.value, group: 0, label: { content: value.value, xOffset: -5, yOffset: -7 } });
               });
             }
             this.GetResultsData(type);
@@ -212,65 +217,40 @@ export class TitrationChartComponent implements OnInit, OnDestroy {
 
   loadGraph() {
     this.docterDoseEvent = null;
-    var container = document.getElementById("visualization");
-    var container1 = document.getElementById("visualization1");
-    let administeredDoses = this.appService.Medicationadministration.filter(e => e.prescription_id == this.prescription.prescription_id);
-    if (this.prescription.isinfusion) {
-      administeredDoses.forEach((value, index) => {
-        this.doseResult.push({ x: moment(value.administrationstartime, "YYYY-MM-DD HH:mm"), y: value.administredinfusionrate, group: index, label: { content: [value.administredinfusionrate, value.administreddoseunit ? value.administreddoseunit : "ml/h"].join(" "), xOffset: 0, yOffset: -7 } });
-
-      });
-    } else {
-      administeredDoses.forEach((value, index) => {
-        this.doseResult.push({ x: moment(value.administrationstartime, "YYYY-MM-DD HH:mm"), y: parseFloat(value.administreddosesize).toFixed(0), group: index, label: { content: [value.administreddosesize, value.administreddoseunit].join(" "), xOffset: 0, yOffset: -7 } });
-
-      });
-    }
-
-    //this.doseResult.push({x: moment(new Date(), "YYYY-MM-DD HH:mm"), y: 0 ,group: 0 }); 
-
     if (this.labResult.length > 0) {
       this.graphMinDate = new Date(Math.min.apply(null, this.labResult.map(function (e) { return new Date(e.x); })));
       this.graphMaxDate = new Date(Math.max.apply(null, this.labResult.map(function (e) { return new Date(e.x); })));
       this.graphMaxLabValue = Math.max.apply(Math, this.labResult.map(function (o) { return o.y; }));
     }
-    if (this.doseResult.length > 0) {
-      this.grpahMaxDoseValue = Math.max.apply(Math, this.doseResult.map(function (o) { return o.y; }))
-    }
-
-    this.appService.logToConsole(this.doseResult);
     let hours: any = "hour";
-    var options = {
-      orientation: "none",
+    // lab result chart
+    var container = document.getElementById("visualization");
+    let tchart = new TitrationChart();
+    tchart.graph = new Graph2d(container, this.labResult, null, this.GetChartOption(this.graphMaxLabValue, hours));
+    this.titationChart.push(tchart);
+
+    // administration chart
+    let index = 0;
+    this.titrationPrescription.forEach(element => {
+      let doseResult = this.GetDoseResult(element);
+      let count = Math.max.apply(Math, doseResult.map(function (o) { return o.y; }));
+      var container1 = document.getElementById("visualization" + index);
+      let tchart2 = new TitrationChart();
+      tchart2.graph = new Graph2d(container1, doseResult, null, this.GetChartOption(count, hours));
+      this.titationChart.push(tchart2);
+      index++;
+    });
+
+    // current titration prescription chart
+    let currDoseResult = this.GetDoseResult(this.prescription)
+    let count = Math.max.apply(Math, currDoseResult.map(function (o) { return o.y; }));
+    var container1 = document.getElementById("visualizationCurrent");
+    var bottomChartOptionWithTimeline = {
       dataAxis: {
         left: {
-          range: { min: 0, max: this.graphMaxLabValue + 15 }
+          range: { min: 0, max: count + 5 }
         }
       },
-      //showMajorLabels : false,
-      timeAxis: { scale: hours },
-      legend: false,
-      start: moment().add(-1, "days").format("YYYY-MM-DD HH:mm"),
-      end: moment().format("YYYY-MM-DD HH:mm"),
-      min: moment(this.appService.encounter.sortdate).format("YYYY-MM-DD HH:mm"),
-      width: '100%',
-      format: {
-        minorLabels: {
-          hour: 'HH',
-        }
-      },
-      graphHeight: '180px',
-      //zoomMin: 6000000*35,
-      zoomMax: 6000000 * 15
-    };
-    this.appService.logToConsole(this.grpahMaxDoseValue);
-    var options2 = {
-      dataAxis: {
-        left: {
-          range: { min: 0, max: this.grpahMaxDoseValue + 5 }
-        }
-      },
-      //showMajorLabels : false,
       timeAxis: { scale: hours },
       drawPoints: true,
       legend: false,
@@ -288,15 +268,11 @@ export class TitrationChartComponent implements OnInit, OnDestroy {
       graphHeight: '180px',
     };
 
+    let currentPrescriptionChart = new TitrationChart();
+    currentPrescriptionChart.graph = new Graph2d(container1, currDoseResult, null, bottomChartOptionWithTimeline);
+    this.titationChart.push(currentPrescriptionChart);
 
-    let tchart = new TitrationChart();
-    tchart.graph = new Graph2d(container, this.labResult, null, options);
-
-    let tchart2 = new TitrationChart();
-    tchart2.graph = new Graph2d(container1, this.doseResult, null, options2);
-
-    this.titationChart.push(tchart);
-    this.titationChart.push(tchart2);
+    // zoom in and out all chart together
     for (let ch of this.titationChart) {
       ch.graph.on('rangechange', function (changes) {
         for (let chInner of this.titationChart) {
@@ -304,6 +280,51 @@ export class TitrationChartComponent implements OnInit, OnDestroy {
         }
       }.bind(this));
     }
+  }
+  GetChartOption(masxRange, scale) {
+    var options = {
+      orientation: "none",
+      dataAxis: {
+        left: {
+          range: { min: 0, max: masxRange + 15 }
+        }
+      },
+      //showMajorLabels : false,
+      timeAxis: { scale: scale },
+      legend: false,
+      start: moment().add(-1, "days").format("YYYY-MM-DD HH:mm"),
+      end: moment().format("YYYY-MM-DD HH:mm"),
+      min: moment(this.appService.encounter.sortdate).format("YYYY-MM-DD HH:mm"),
+      width: '100%',
+      format: {
+        minorLabels: {
+          hour: 'HH',
+        }
+      },
+      graphHeight: '180px',
+      zoomMax: 6000000 * 15,
+      style: this.graphStyle
+    };
+    return options;
+  }
+  GetDoseResult(p) {
+    let result = [];
+    let administeredDoses = this.appService.Medicationadministration.filter(e => e.prescription_id == p.prescription_id);
+    if (p.isinfusion) {
+      administeredDoses.forEach((value, index) => {
+        result.push({ x: moment(value.administrationstartime, "YYYY-MM-DD HH:mm"), y: value.administredinfusionrate, group: 0, label: { content: [value.administredinfusionrate, value.administreddoseunit ? value.administreddoseunit : "ml/h"].join(" "), xOffset: 0, yOffset: -7 } });
+
+      });
+    } else {
+      administeredDoses.forEach((value, index) => {
+        if (value.administreddosesize)
+          result.push({ x: moment(value.administrationstartime, "YYYY-MM-DD HH:mm"), y: parseFloat(value.administreddosesize).toFixed(0), group: 0, label: { content: [value.administreddosesize, value.administreddoseunit].join(" "), xOffset: 0, yOffset: -7 } });
+        if (value.administeredstrengthdenominator)
+          result.push({ x: moment(value.administrationstartime, "YYYY-MM-DD HH:mm"), y: parseFloat(value.administeredstrengthdenominator + "").toFixed(0), group: 0, label: { content: [value.administeredstrengthdenominator, value.administeredstrengthdenominatorunits].join(" "), xOffset: 0, yOffset: -7 } });
+
+      });
+    }
+    return result;
   }
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
@@ -318,6 +339,14 @@ export class TitrationChartComponent implements OnInit, OnDestroy {
     this.prescription = this.event.prescription;
     this.isOnlyShowChart = this.event.isOnlyShowChart;
     this.componenttype = this.event.componenttype;
+    let pStopId = this.appService.MetaPrescriptionstatus.find(x => x.status == PrescriptionStatus.stopped).prescriptionstatus_id;
+    let pCancelId = this.appService.MetaPrescriptionstatus.find(x => x.status == PrescriptionStatus.cancelled).prescriptionstatus_id;
+    this.titrationPrescription = this.appService.Prescription.slice().filter(x => x.titrationtypecode == this.prescription.titrationtypecode && x.prescriptionstatus_id != pStopId && x.prescriptionstatus_id != pCancelId);
+
+    //remove current prescription for now
+    const i: number = this.titrationPrescription.indexOf(this.prescription);
+    this.titrationPrescription.splice(i, 1);
+
     if (!this.isOnlyShowChart) {
       this.dose = this.event.dose;
       this.medication = this.prescription.__medications.find(e => e.isprimary == true);
@@ -337,12 +366,24 @@ export class TitrationChartComponent implements OnInit, OnDestroy {
       this.doseEvent.doseevents_id = uuid();
       this.doseEvent.eventtype = "titration";
       this.doseEvent.posology_id = this.dose.posology_id;
-      this.doseEvent.titrateddoseunit = timelineDose.doseunit;
+      //this.doseEvent.titrateddoseunit = timelineDose.doseunit;
+      if (!this.medication.name.startsWith("Warfarin")) {
+        this.dr.SetUnits(this.medication.__codes[0].code, (data) => {
+          this.doseEvent.titrateddoseunit = data;
+        });
+      }
+      if (this.medication.name.startsWith("Warfarin")) {
+        this.doseEvent.titrateddoseunit = "mg";
+      }
       this.doseEvent.prescription_id = this.prescription.prescription_id;
       this.doseEvent.titratedstrengthneumeratorunits = timelineDose.strengthneumeratorunit;
       this.doseEvent.titratedstrengthdenominatorunits = timelineDose.strengthdenominatorunit;
       this.doseEvent.startdatetime = moment(this.dose.eventStart).format('DD-MM-YYYY HH:mm');
       this.doseEvent.titrateduntildatetime = this.doseEvent.startdatetime;
+      this.doseEvent.createdon = this.appService.getDateTimeinISOFormat(moment().toDate());
+      this.doseEvent.modifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());;
+      this.doseEvent.createdby = this.appService.loggedInUserName;
+      this.doseEvent.modifiedby = this.appService.loggedInUserName;
       this.doseEvent.dose_id = this.dose_id;
       this.doseEvent.logicalid = this.dose.dose_id;
       this.doseEvent.grouptitration = false;
@@ -382,10 +423,7 @@ export class TitrationChartComponent implements OnInit, OnDestroy {
       this.doseEvent.logicalid = null;
       this.doseEvent.titrateduntildatetime = moment(this.uptoDateType, "DD-MM-YYYY HH:mm");
       this.doseEvent.titrateduntildatetime = this.appService.getDateTimeinISOFormat(moment(this.doseEvent.titrateduntildatetime).toDate());
-
-
       // delete all previuos titrated dose if found and then insert titration
-
       let recrodToDelete = this.appService.DoseEvents.filter(x => x.eventtype == "titration" && x.posology_id == this.dose.posology_id && (moment(x.titrateduntildatetime, "YYYY-MM-DD HH:mm").format("YYYYMMDDHHmm") <= moment(moment(this.doseEvent.titrateduntildatetime, 'DD-MM-YYYY HH:mm').toDate()).format("YYYYMMDDHHmm") || x.grouptitration == true));
       this.appService.logToConsole(recrodToDelete);
       if (recrodToDelete.length > 0) {
@@ -414,7 +452,7 @@ export class TitrationChartComponent implements OnInit, OnDestroy {
               this.subjects.closeAppComponentPopover.next();
 
               if (this.appService.IsDataVersionStaleError(error)) {
-                this.subjects.ShowRefreshPageMessage.next(error);
+                this.appService.RefreshPageWithStaleError(error);
               }
             }
           );
@@ -479,7 +517,11 @@ export class TitrationChartComponent implements OnInit, OnDestroy {
         dosedatetime: this.appService.getDateTimeinISOFormat(moment(this.dose.eventStart).toDate()),
         comments: this.comments,
         logicalid: this.dose.dose_id,
-        iscancelled: false
+        iscancelled: false,
+        createdon: this.appService.getDateTimeinISOFormat(moment().toDate()),
+        modifiedon: this.appService.getDateTimeinISOFormat(moment().toDate()),
+        createdby: this.appService.loggedInUserName,
+        modifiedby: this.appService.loggedInUserName,
       };
       Object.keys(docterdoseEvents).map((e) => { if (e.startsWith("_")) delete docterdoseEvents[e]; });
       upsertManager.addEntity('core', 'doseevents', JSON.parse(JSON.stringify(docterdoseEvents)));
@@ -520,7 +562,7 @@ export class TitrationChartComponent implements OnInit, OnDestroy {
         this.subjects.closeAppComponentPopover.next();
 
         if (this.appService.IsDataVersionStaleError(error)) {
-          this.subjects.ShowRefreshPageMessage.next(error);
+          this.appService.RefreshPageWithStaleError(error);
         }
       }
     );

@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.If not, see<http://www.gnu.org/licenses/>.
 //END LICENSE BLOCK 
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { forkJoin, Subscription } from 'rxjs';
 import { Epma_Dischargesummarry, Epma_Medsonadmission, Epma_Medsondischarge } from 'src/app/models/EPMA';
 import { ApirequestService } from 'src/app/services/apirequest.service';
@@ -31,7 +31,7 @@ import { SubjectsService } from 'src/app/services/subjects.service';
   templateUrl: './reconciliation-lists.component.html',
   styleUrls: ['./reconciliation-lists.component.css']
 })
-export class ReconciliationListsComponent implements OnInit {
+export class ReconciliationListsComponent implements OnInit , OnDestroy {
 
   constructor(public subjects: SubjectsService, public appService: AppService, private apiRequest: ApirequestService) {
 
@@ -45,17 +45,19 @@ export class ReconciliationListsComponent implements OnInit {
   Medsondischarge: Epma_Medsondischarge;
   isMedsondischargeOnce:false;
   Dischargesummarry: Epma_Dischargesummarry;
+  showDischargesummarryEncounter:boolean;
   ngOnInit(): void {
     this.Medsonadmission = new Epma_Medsonadmission();
     this.Medsondischarge = new Epma_Medsondischarge();
     this.Dischargesummarry = new Epma_Dischargesummarry();
-    
+    this.showDischargesummarryEncounter=false
     this.subscriptions.add(forkJoin([
       this.apiRequest.getRequest(this.appService.baseURI + "/GetListByAttribute?synapsenamespace=local&synapseentityname=epma_medsonadmission&synapseattributename=encounterid&attributevalue=" + this.appService.encounter.encounter_id),
       this.apiRequest.getRequest(this.appService.baseURI + "/GetListByAttribute?synapsenamespace=local&synapseentityname=epma_medsondischarge&synapseattributename=encounterid&attributevalue=" + this.appService.encounter.encounter_id),
-      this.apiRequest.getRequest(this.appService.baseURI + "/GetListByAttribute?synapsenamespace=local&synapseentityname=epma_dischargesummarry&synapseattributename=encounterid&attributevalue=" + this.appService.encounter.encounter_id)
+      this.apiRequest.getRequest(this.appService.baseURI + "/GetListByAttribute?synapsenamespace=local&synapseentityname=epma_dischargesummarry&synapseattributename=encounterid&attributevalue=" + this.appService.encounter.encounter_id),
+      this.apiRequest.getRequest(this.appService.baseURI + '/GetObject?synapsenamespace=core&synapseentityname=dischargesummary&id=' + this.appService.encounter.encounter_id)
 
-    ]).subscribe(([responseArray1, responseArray2, responseArray3]) => {
+    ]).subscribe(([responseArray1, responseArray2, responseArray3, responseArray4]) => {
 
       if (JSON.parse(responseArray1).length > 0) {
         this.Medsonadmission = JSON.parse(responseArray1)[0];
@@ -69,6 +71,9 @@ export class ReconciliationListsComponent implements OnInit {
       if (JSON.parse(responseArray3).length > 0) {
         this.Dischargesummarry = JSON.parse(responseArray3)[0];
       }
+      if (responseArray4!="{}") {
+         this.showDischargesummarryEncounter =true;
+      }
 
       this.showreconcillation = true;
 
@@ -76,7 +81,11 @@ export class ReconciliationListsComponent implements OnInit {
 
   }
 
+  ngOnDestroy() {
 
+    this.subscriptions.unsubscribe();
+
+  }
   EditType(type: FormContext) {
     this.formContext = type;
 

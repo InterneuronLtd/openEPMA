@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -30,8 +30,8 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                     <span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>
                     Refresh
                   </button>
-                <button type="button"  *ngIf="appService.warningService && ws  && !ws.loader" (click)="RefreshWarningsFromApi()" class="btn btn-primary">Save</button>
-                <button type="button"  class="btn btn-secondary" data-dismiss="modal" #close_warningsop>Close</button>
+                <button type="button"  *ngIf="appService.warningService && ws  && !ws.loader" (click)="RefreshWarningsFromApi()" class="btn btn-primary">Refresh</button>
+                <button (click)="HideWarning()"  type="button"  class="btn btn-secondary" data-dismiss="modal" #close_warningsop>Close</button>
             </div>
         </div>
     </div>

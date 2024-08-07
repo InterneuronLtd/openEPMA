@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -80,7 +80,9 @@ export class WarningsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
   }
-
+  HideWarning() {
+    this.appService.HideWarning(WarningContext.ip);
+  }
   OnWarningsModuleUnLoad(e: any) {
   }
 
@@ -108,7 +110,9 @@ export class WarningsComponent implements OnInit, OnDestroy {
         this.appService.warningServiceIPContextInitComplete = true;
         if (this.appService.warningServiceIPContext.existingWarningsStatus == false) {
           this.refreshTemplate();
-          this.subjects.showWarnings.next();
+          if (!this.appService.AuthoriseAction("epma_supress_warningsmodalonload")) {
+            this.subjects.showWarnings.next();
+          }
         }
         else {
           this.refreshTemplate();
@@ -119,7 +123,9 @@ export class WarningsComponent implements OnInit, OnDestroy {
       this.appService.warningServiceIPContextInitComplete = true;
 
       if (this.appService.warningServiceIPContext.existingWarningsStatus == false) {
-        this.OpenWarnings();
+        if (!this.appService.AuthoriseAction("epma_supress_warningsmodalonload")) {
+          this.OpenWarnings();
+        }
       }
     }
     console.log("warnigns component loaded")

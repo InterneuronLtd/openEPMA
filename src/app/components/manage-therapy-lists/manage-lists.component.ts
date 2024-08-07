@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ import { WarningContext, WarningContexts, WarningService } from 'src/app/models/
 import { ApirequestService } from 'src/app/services/apirequest.service';
 import { AppService } from 'src/app/services/app.service';
 import { DataRequest } from 'src/app/services/datarequest';
-import { FormContext, PrescriptionContext } from 'src/app/services/enum';
+import { Common, FormContext, PrescriptionContext } from 'src/app/services/enum';
 import { SubjectsService } from 'src/app/services/subjects.service';
 import { v4 as uuid } from 'uuid';
 
@@ -74,6 +74,7 @@ export class ManageListsComponent implements OnInit, OnDestroy {
   ws: WarningService
 
   constructor(public appService: AppService, public apiRequest: ApirequestService, public changeDetector: ChangeDetectorRef, private dr: DataRequest, private subjects: SubjectsService) {
+    //this.dr.RefreshIfDataVersionChanged(() => { });
   }
 
   GetOPWarningContext() {
@@ -99,7 +100,7 @@ export class ManageListsComponent implements OnInit, OnDestroy {
     this.componentModuleData.moduleContext.newwarnings = true;
 
     if (this.formContext == FormContext.op) {
-      this.componentModuleData.moduleContext.encouterId = this.rContext["epma_outpatientprescriptions_id"];
+      this.componentModuleData.moduleContext.encouterId = Common.op_encounter_placeholder; //this.rContext["epma_outpatientprescriptions_id"];
       this.componentModuleData.moduleContext.warningContext = this.GetOPWarningContext();
       this.componentModuleData.moduleContext.enableOverride = true;
     }
@@ -108,7 +109,7 @@ export class ManageListsComponent implements OnInit, OnDestroy {
       this.componentModuleData.moduleContext.warningContext = WarningContext.mod;
       this.componentModuleData.moduleContext.enableOverride = true;
     }
-    this.componentModuleData.url = this.appService.appConfig.uris.warningscomponent;//"http://127.0.0.1:5500/dist/terminus-module-warnings/main.js"; // "https://csa6155a2f7abb5x42b5xbe7.blob.core.windows.net/terminusmodules/warnings.js";
+    this.componentModuleData.url = this.appService.appConfig.uris.warningscomponent;
   }
 
   ngOnInit(): void {
@@ -137,6 +138,7 @@ export class ManageListsComponent implements OnInit, OnDestroy {
     this.SetComponentModuleData();
     this.InitializeList();
   }
+
   SortList() {
     let config = this.appService.appConfig.AppSettings.PrescribingForm;
     let configvalue = ""
@@ -241,6 +243,7 @@ export class ManageListsComponent implements OnInit, OnDestroy {
         this.PrescriptionBasket.push(new ListItem(ListItemType.unchanged, p));
       });
     }
+    this.UpdateCurrentBasketClone();
     this.SortList();
   }
 
@@ -267,6 +270,11 @@ export class ManageListsComponent implements OnInit, OnDestroy {
     if (index != -1) {
       if ((<string>e.action).toLowerCase() == "delete") {
         this.PrescriptionBasket[index].itemtype = ListItemType.delete;
+        this.UpdateCurrentBasketClone();
+
+        if (this.formContext == FormContext.mod || this.formContext == FormContext.op) {
+          this.GetwarningsForBasket();
+        }
       }
       else if ((<string>e.action).toLowerCase() == "edit") {
         this.editingPrescription = this.PrescriptionBasket[index].prescription;
@@ -278,6 +286,11 @@ export class ManageListsComponent implements OnInit, OnDestroy {
         this.OrderSetPrescriptions = [];
         this.OrderSetPrescriptions.push(op);
         this.OpenOrderSetModal();//invoke orderset ui template
+      }
+      else if ((<string>e.action).toLowerCase() == "copy") {
+        this.editingPrescription = this.PrescriptionBasket[index].prescription;
+        this.clonePrescription = true;
+        this.openInpatientPrescribingModal();
       }
     }
   }
@@ -358,6 +371,9 @@ export class ManageListsComponent implements OnInit, OnDestroy {
       p1.__routes[rindex].prescriptionroutes_id = uuid();
     });
 
+    if (p.__GpConnect) {
+      p1.__GpConnect = Object.assign(p.__GpConnect);
+    }
     this.appService.logToConsole(p);
     this.appService.logToConsole(p1);
 
@@ -402,6 +418,8 @@ export class ManageListsComponent implements OnInit, OnDestroy {
     {
       //push new prescription
       this.PrescriptionBasket.push(new ListItem(ListItemType.new, prescription));
+      this.UpdateCurrentBasketClone();
+
     }
     this.prescibingMedication = null;
     this.editingPrescription = null;
@@ -412,6 +430,13 @@ export class ManageListsComponent implements OnInit, OnDestroy {
     }
 
     this.SortList();
+  }
+
+  UpdateCurrentBasketClone() {
+    this.appService.currentBasket = [];
+    this.PrescriptionBasket.filter(x => x.itemtype != "delete").forEach(p => {
+      this.appService.currentBasket.push(this.ClonePrescription(p.prescription, true));
+    });
   }
 
   GetwarningsForBasket() {
@@ -461,66 +486,122 @@ export class ManageListsComponent implements OnInit, OnDestroy {
     this.formsettings.apiRequest = this.apiRequest;
     this.formsettings.appService = this.appService;
     this.formsettings.subjects = this.subjects;
-    let prescToSave = this.PrescriptionBasket.filter(x => x.itemtype == ListItemType.new || x.itemtype == ListItemType.edit);
-    if (this.formContext == FormContext.op && prescToSave.length == 0) {
-      this.PrescriptionBasket = [];
-      this.finishManageList.emit();
+    let newAndEditList = this.PrescriptionBasket.filter(x => x.itemtype == ListItemType.new || x.itemtype == ListItemType.edit);
+    let deleteList = this.PrescriptionBasket.filter(x => x.itemtype == ListItemType.delete);
+    if (this.formContext == FormContext.op && newAndEditList.length == 0) {
+      if (deleteList.length == 0) { //op- nothign new created, or edited, or deleted, perform no action and return. 
+        this.PrescriptionBasket = [];
+        this.finishManageList.emit();
+      }
+      else { //op- only some prescriptions deleted
+        this.DeleteHandler();
+      }
     }
     else {
+      if (this.formContext == FormContext.op) {
+        let newlist = this.PrescriptionBasket.filter(x => x.itemtype == ListItemType.new);
+        //op-create supply request objects for new prescriptino
+        newlist.forEach(p => {
+          let supplyReqObj = this.appService.GetDefaultSupplyRequestObject(p.prescription)
+          if (supplyReqObj)
+            p.prescription.__SupplyRequests = [supplyReqObj];
+        });
+      }
       this.subscriptions.add(this.formsettings.SaveprescriptionArray(
-        prescToSave.
+        newAndEditList.
           map(e => e.prescription), this.formContext, this.rContext, this.dischargesummaryContext).subscribe(
-            (t) => {
-              if (t.status == true) {
-
-                if ((this.formContext == FormContext.mod || this.formContext == FormContext.op) && this.ws) {
-                  this.ws.CommitNewWarningsToDB((status, data, version = "") => {
-                    this.appService.logToConsole("warnings committed");
-                    if (status == "success") {
-                      if (version) {
-                        this.appService.UpdateDataVersionNumber({ "version": version });
-                      }
-                    }
-                    else {
-                      if (this.appService.IsDataVersionStaleError(data)) {
-                        this.subjects.ShowRefreshPageMessage.next(data);
-                      }
-                    }
-                  });
-                }
-
-                let deletelist = this.PrescriptionBasket.filter(x => x.itemtype == ListItemType.delete).
-                  map(d => d.prescription);
-
-                if (deletelist.length > 0) {
-                  this.subscriptions.add(this.formsettings.DeleteReconciliationPrescriptionArray(
-                    deletelist, this.formContext, this.rContext).subscribe(
-                      (td) => {
-                        this.RefreshAppServicePrescription();
-                      }))
-                }
-                else {
-                  this.RefreshAppServicePrescription();
-                }
-              }
-              else {
-                console.error(t.response);
-              }
-            }
+            t => this.SaveAllPrescriptionsCallback(t)
           ));
+    }
+  }
+
+  SaveAllPrescriptionsCallback(t) {
+    if (t.status == true) {
+      if ((this.formContext == FormContext.mod || this.formContext == FormContext.op) && this.ws) {
+        this.ws.CommitNewWarningsToDB((status, data, version = "") => {
+          this.appService.logToConsole("warnings committed");
+          if (status == "success") {
+            if (version) {
+              this.appService.UpdateDataVersionNumber({ "version": version });
+            }
+          }
+          else {
+            if (this.appService.IsDataVersionStaleError(data)) {
+              this.subjects.ShowRefreshPageMessage.next(data);
+            }
+          }
+          this.DeleteHandler(); //delete for mod/op
+        });
+      }
+      else {
+        this.DeleteHandler();//delete for moa 
+      }
+    }
+    else {
+      console.error(t.response);
+    }
+  }
+
+  DeleteHandler() {
+    let deletelist = this.PrescriptionBasket.filter(x => x.itemtype == ListItemType.delete).
+      map(d => d.prescription);
+    if (deletelist.length > 0) {
+      this.subscriptions.add(this.formsettings.DeleteReconciliationPrescriptionArray(
+        deletelist, this.formContext, this.rContext).subscribe(
+          (td) => {
+            this.RefreshAppServicePrescription();
+          }))
+    }
+    else {
+      this.RefreshAppServicePrescription();
     }
   }
 
   RefreshAppServicePrescription() {
     this.dr.getAllPrescription(() => {
       this.dr.getPharmacyReviewStatus(() => {
-        this.appService.UpdatePrescriptionWarningSeverity(this.appService.Prescription, () => {
-          this.PrescriptionBasket = [];
-          this.finishManageList.emit();
-        });
+        this.appService.Prescription.forEach(p => this.appService.UpdatePrescriptionCompletedStatus(p));
+        if (this.PrescriptionBasket.filter(x => x.itemtype == ListItemType.delete).length != 0 && this.formContext != FormContext.moa) {
 
+          if (this.formContext == FormContext.op) {
+
+            let opp = this.appService.optherapies.find(x => x.opid == this.rContext["epma_outpatientprescriptions_id"]);
+            this.PrescriptionBasket.filter(x => x.itemtype == ListItemType.new).forEach
+              ((p) => {
+                opp.opprescriptions.push(p.prescription.prescription_id);
+              })
+          }
+
+          this.appService.RefreshWarningsFromApi(() => {
+            this.CopyDrugsAndRefreshSupplyRequest();
+          }, this.ws);
+        }
+        else {
+          this.appService.UpdatePrescriptionWarningSeverity(this.appService.Prescription, () => {
+            this.CopyDrugsAndRefreshSupplyRequest();
+          });
+        }
       })
     });
+  }
+
+  CopyDrugsAndRefreshSupplyRequest() {
+    let newlistlength = this.PrescriptionBasket.filter(x => x.itemtype == ListItemType.new).length;
+
+    if (this.formContext == FormContext.mod && newlistlength != 0) {
+      this.dr.CopyPatientDrugsFromIPToDischarge(this.PrescriptionBasket.filter(x => x.itemtype == ListItemType.new).map(b => b.prescription));
+    }
+
+    if (this.formContext == FormContext.op && newlistlength != 0) {
+      this.dr.getSupplyRequest(() => {
+        this.PrescriptionBasket = [];
+        this.finishManageList.emit();
+      });
+    }
+    else {
+      this.PrescriptionBasket = [];
+      this.finishManageList.emit();
+    }
   }
 
   ShowWarnings() {
@@ -532,9 +613,19 @@ export class ManageListsComponent implements OnInit, OnDestroy {
   }
 
   EditOrderSetPrescription(e: Prescription) {
-    this.editingPrescription = this.ClonePrescription(e);
-    this.clonePrescription = true;
-    this.openInpatientPrescribingModal();
+    if (e.__GpConnect && e.__medications[0].producttype.toLowerCase() == "custom") {
+      let config = this.appService.appConfig.AppSettings;
+      let msg = config.prescribeUncodedMedWarning;
+      if (!msg) {
+        msg = "This is an uncoded medication. Please use the search box to find and prescribe this medication."
+      }
+      alert(msg);
+    }
+    else {
+      this.editingPrescription = this.ClonePrescription(e);
+      this.clonePrescription = true;
+      this.openInpatientPrescribingModal();
+    }
   }
 
 
@@ -582,7 +673,20 @@ export class ManageListsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.appService.currentBasket = [];
     this.subscriptions.unsubscribe();
+  }
+
+  GetMedicineSearchAccess(action) {
+    if (this.formContext == FormContext.moa) {
+      return this.appService.AuthoriseAction(action + "_moa")
+    }
+    else if (this.formContext == FormContext.op) {
+      return this.appService.AuthoriseAction(action + "_op")
+    }
+    else if (this.formContext == FormContext.mod) {
+      return this.appService.AuthoriseAction(action + "_mod")
+    }
   }
 
 }

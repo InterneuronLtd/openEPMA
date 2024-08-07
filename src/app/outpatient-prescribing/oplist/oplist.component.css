@@ -1,6 +1,6 @@
 .active{
-   background-color: #8f8f8f!important;
-   color: #fff;
+   background-color: #c1c8d3!important;
+   color: #0c0c0c;
 }
 .card{
     margin-bottom: 0rem !important;   
@@ -21,7 +21,18 @@
     background-image: url("/assets/images/epma/op/edit_therapy.svg");
     margin-left: 12px;
 }
-
+.menu-icon {
+  background-image: url(/assets/images/epma/therapy/Menu.svg);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100%;
+  width: 20px;
+  height: 16px
+}
+.deletedprescription{
+  background-image:linear-gradient(to top right,#fafafa00 calc(50% - 1px),red,#fafafa12 calc(50% + 1px));
+  color: black;
+}
 .add_therapy {
     width: 3em;
     height: 3em;
@@ -45,4 +56,88 @@
 
   .col-9 {
       padding-right: 0px !important;
+  }
+
+  .Print_medication_record {
+    width: 320px;
+    height: 24px;
+    background-repeat: no-repeat;
+    background-color: white;
+    background-image: url("/assets/images/epma/Print_Medication_administration_record.svg");
+  }
+
+  .button-dropdown {
+    padding-top: 37px;
+    border:0;
+    width: 37px;
+    height: 20px;
+  }
+
+  .pdfUseOnly {
+    display: none;
+  }
+
+  .table-dimensions{
+    width: 700px;
+    font-size: 10px;
+    margin-left: 30px;
+    margin-right: 30px;
+    letter-spacing: 0.25px;
+    word-spacing: 2px;
+  }
+
+  .options-width {
+    min-width: 300px;
+  }
+
+  .dropdown-options {
+    padding-left: 25px;
+  }
+
+  #spinner {
+    -webkit-animation: frames 1s infinite linear;
+    animation: frames 1s infinite linear;
+    background: transparent;
+    border: 0.50vw solid #FFF;
+    border-radius: 100%;
+    border-top-color: black;
+    width: 5vw;
+    height: 5vw;
+    opacity: .6;
+    padding: 0;
+    position: absolute;
+    z-index: 999;
+  }
+  @keyframes frames {
+    0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+    }
+    100% {
+    -webkit-transform: rotate(359deg);
+    transform: rotate(359deg);
+    }
+  }
+  
+  #pause {
+    display: block;
+    background:
+      rgba(0, 0, 0, 0.66)
+      no-repeat
+      0 0;
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+  }
+
+  .close-adminstration {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAYdJREFUeNq0VdFtgzAQNVEH8AZtN+gGhQ2SDZoJyH+kJK3U75YJyAZlg5AJ8AiMwAb0jM7UPnzGNMqTLCQbv2ffvTsnfd+LJElECKePTwmfFzKtTod9F9o3cIcEgPgNPrmHfBSBUYDQeZEAEGvCMkBM0cLYgJCiAivm1JcF5BpPMBrc68C5AZ68Ebchg5vUkxBhIhs8jYFJomTIfOt67lkbgIZo5yHPcHQMuW9dItcAWyAnBNodChNHSToMhVkvyN7cEYDwpJ4wHE3SiMhIbpniSPZKmF/bN0iZGJceEUpeMnsHFz5EuEKLaIGz7fMZco1HmoMQvtBlzlxEbUQJmJhTJ3HuMrjaAu0M+RhzJvFsjRiBOoYcY15GitR/Nj3sW49IEXALFSk8rVw5vQhr4UJ+3BpCJgzcuu6s1aRdg8gPfNY3NrsKyDdcu97iI/JfKOtWk14k0IoZk/Q51D47s08mhGuHPUZG1Mk7EH8vfpMtB71iZabWaVsspop7/EeBe2Il7oxfAQYArevp53qUQ7cAAAAASUVORK5CYII=);
+    width: 24px;
+    height: 24px;
+    margin-top: -3px;
+    cursor: pointer;
+    background-size: cover;
   }

@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,18 +18,20 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <!--END LICENSE BLOCK--> 
-<div class="row">
-  <div class="col">
     <button
       [ngClass]="{'btn btn-sm dropdown-toggle text-white':true,  'btn-success':appService.isCurrentEncouner ,'btn-dark': !appService.isCurrentEncouner }"
       type="button" id="ddlEncounters" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
       (click)="encounterClicked()">
       <span>{{ selectedEncounterText }}</span>
     </button>
-    <ul class="dropdown-menu">
+    <div class="dropdown-menu" #encounterDropdown>
+      <input #encounterTypeahead [(ngModel)]="selectedEncounter" [ngModelOptions]="{standalone: true}"
+        [typeahead]="encounters" typeaheadOptionField="displayText" [typeaheadMinLength]="0"
+        (typeaheadOnSelect)="selectEncounter($event.item)" [typeaheadScrollable]="true" [typeaheadOptionsLimit]="1000"
+        [typeaheadOptionsInScrollableView]="15" class="form-control form-control-sm">
+    </div>
+    <!-- <ul class="dropdown-menu" style="max-height: 20rem; overflow:auto">
       <li class="dropdown-item" *ngFor="let encounter of encounters">
-        <a href="#" (click)=" selectEncounter(encounter)" style="display:block">{{ encounter.displayText }}</a>
+        <a href="javascript:void(0)" (click)=" selectEncounter(encounter)" style="display:block; ">{{ encounter.displayText }}</a>
       </li>
-    </ul>
-  </div>
-</div>
+    </ul> -->

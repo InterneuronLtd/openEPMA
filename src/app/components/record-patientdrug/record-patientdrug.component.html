@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                             </div>
                             <div class="col-8">
                                
-                                <div class="row" *ngIf="!isInfusion && productType!='VTM' && frequency!='protocol' && doseType!='descriptive'">
+                                <div class="row" *ngIf="!prescription.titration && !isInfusion && productType!='VTM' && frequency!='protocol' && doseType!='descriptive'">
                                     <div class="col-6" style="display: flex;padding:0;">
                                         <input type="number" positiveNumbersOnly name="nooftablets" [disabled]="!appService.isCurrentEncouner"
                                             class="form-control" maxlength="5"
@@ -66,7 +66,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                     </div>                                    
                                 </div>
 
-                                <div class="row" *ngIf="isInfusion || productType=='VTM' || frequency=='protocol' || doseType=='descriptive'">
+                                <div class="row" *ngIf="prescription.titration || isInfusion || productType=='VTM' || frequency=='protocol' || doseType=='descriptive'">
 
                                     <div class="col-12" style="display: flex;">
                                         <input type="text" name="nooftablets"  [disabled]="!appService.isCurrentEncouner"
@@ -87,12 +87,11 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                             </div>
                             <div class="col-6">                           
                                 <span class="float-right" style="display: flex;">
-                                    {{startdate}}
-                                    <!-- <input onkeydown="event.preventDefault()" type="text" name="startdate"  [(ngModel)]="startdate"  placeholder="Entry Date" class="form-control" style="width:120px"  bsDatepicker
-                                   [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'bg-light' }"
+                                    <input onkeydown="event.preventDefault()" type="text" name="startdate"  [(ngModel)]="startdate"  placeholder="Entry Date" class="form-control" style="width:120px"  bsDatepicker
+                                   [bsConfig]="{ showWeekNumbers:false, dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'alert-info' }"
                                     />                                 
                                    <input type="text" name="startime" [(ngModel)]="startime" style="width:80px;" class="form-control" placeholder="HH:mm" [appTimepicker]="timepicker1">
-                                    <app-time-picker #timepicker1 (onTimeSelected)="onTimeSelected($event)"></app-time-picker> -->
+                                    <app-time-picker #timepicker1 (onTimeSelected)="onTimeSelected($event)"></app-time-picker>
                                 </span>   
                             </div>
                         </div>
@@ -105,7 +104,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                 <select class="form-control form-control-md" name="complianceaid" 
                                     [(ngModel)]="patientDrugs.complianceaid"  [disabled]="!appService.isCurrentEncouner">
                                     <option [ngValue]="null">Select</option>
-                                    <option *ngFor="let compaid of complianceAidList"
+                                    <option *ngFor="let compaid of appService.MetaComplianceAid"
                                         [ngValue]="compaid.complianceaid_id">
                                         {{compaid.complianceaid_name}}
                                     </option>
@@ -123,20 +122,20 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                         <div class="row pb-2 pt-2">
                             <div class="col-4">
                                 <span class="field-heading">Resupply from</span>
-                                <span class="text-danger field-label">&nbsp;*</span>
+                                <!-- <span class="text-danger field-label">&nbsp;*</span> -->
                             </div>
                             <div class="col-8">
                                 <div class="form-check form-check-inline">
-                                    <input type="radio"  [disabled]="!appService.isCurrentEncouner" name="resupplyfrom" [(ngModel)]="patientDrugs.resupplyfrom"
+                                    <input type="radio" id="wardid"  [disabled]="!appService.isCurrentEncouner" name="resupplyfrom" [(ngModel)]="patientDrugs.resupplyfrom"
                                         value="Ward stock" class="form-check-input">
-                                    <label class="form-check-label">
+                                    <label class="form-check-label" for="wardid">
                                         Ward stock
                                     </label>
                                 </div>
                                 <div class="form-check form-check-inline">
-                                    <input type="radio"  [disabled]="!appService.isCurrentEncouner" name="resupplyfrom" [(ngModel)]="patientDrugs.resupplyfrom"
+                                    <input type="radio" id="pharmacyid"  [disabled]="!appService.isCurrentEncouner" name="resupplyfrom" [(ngModel)]="patientDrugs.resupplyfrom"
                                         value="Pharmacy" class="form-check-input">
-                                    <label class="form-check-label">
+                                    <label class="form-check-label" for="pharmacyid">
                                         Pharmacy
                                     </label>
                                 </div>

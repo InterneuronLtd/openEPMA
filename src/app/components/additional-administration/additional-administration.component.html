@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -61,7 +61,19 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                             <div class="col-9">
                                 <span class="float-right">
                                     <span *ngIf="currentposology.dosetype=='units'">
-                                        <span *ngIf="currentposology.frequency=='x' || currentposology.frequency=='h'">
+                                        <span style="display: flex;" class="empa-bold" *ngIf="currentposology.__dose.length>0">
+                                        <input type="number" min="0" class="epma-adminstration-form-control"
+                                                    style="width:80px" [(ngModel)]="dose.dosesize"
+                                                    value="dose.dosesize">
+                                            <strong class="mt-2" *ngIf="medication.producttype.toLowerCase() !='vtm' || !prescription.titration">{{dose.doseunit}}</strong>
+                                            <select class="form-control"  [(ngModel)]="dose.doseunit" 
+                                                *ngIf="medication.producttype.toLowerCase() =='vtm' && prescription.titration">
+                                                <option *ngFor="let un of vtm_dose_units">
+                                                    {{un}}
+                                                </option>
+                                        </select>
+                                     </span>
+                                        <!-- <span *ngIf="currentposology.frequency=='x' || currentposology.frequency=='h'">
                                             <span class="empa-bold" *ngIf="currentposology.__dose.length>0"><input
                                                     type="number" min="0" class="epma-adminstration-form-control"
                                                     style="width:80px" [(ngModel)]="dose.dosesize"
@@ -80,7 +92,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                                     type="number" min="0" class="epma-adminstration-form-control"
                                                     style="width:80px" [(ngModel)]="dose.dosesize"
                                                     value="dose.dosesize"> <strong>{{dose.doseunit}}</strong></span>
-                                        </span>
+                                        </span> -->
                                     </span>
                                     <span *ngIf="currentposology.dosetype=='strength'">
                                         <span class="empa-bold" *ngIf="currentposology.__dose.length>0">
@@ -110,7 +122,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                     <input onkeydown="event.preventDefault()" type="text" [minDate]="minDate"
                                         [maxDate]="maxDate" [(ngModel)]="doseStartDate" placeholder="Start Date"
                                         class="epma-adminstration-form-control" style="width:120px" bsDatepicker
-                                        [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'bg-light' }" />
+                                        [bsConfig]="{  showWeekNumbers:false, dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'alert-info' }" />
                                     <input type="text" name="startime" [(ngModel)]="doseStarTime" style="width:80px;"
                                         class="epma-adminstration-form-control" placeholder="HH:mm"
                                         [appTimepicker]="timepicker1">

@@ -114,8 +114,8 @@
         "patientspecific": true,
         "matchcondition": []
       },
-      "severity": 3,
-      "overriderequired": false
+      "severity": 4,
+      "overriderequired": true
     },
     {
       "matchcriteria": {

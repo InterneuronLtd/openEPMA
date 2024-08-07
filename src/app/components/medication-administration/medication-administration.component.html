@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -59,10 +59,12 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                     (click)="adminStatus('given')">Given</button>
                                 <!-- <button *ngIf="!currentDose.isinfusion || (currentDose.isinfusion && editpopuptypetype != 'Edit Administration')"  type="button" class="btn btn-sm btn-outline-primary" [ngClass]="{'active':administration.adminstrationstatus == 'defer'}" (click)="adminStatus('defer')">Defer</button> -->
                                 <button type="button" class="btn btn-sm btn-outline-primary"
-                                 *ngIf="editpopuptypetype!='OpAdministration'"   [ngClass]="{'active':administration.adminstrationstatus == 'self-administer'}"
+                                    *ngIf="editpopuptypetype!='OpAdministration'"
+                                    [ngClass]="{'active':administration.adminstrationstatus == 'self-administer'}"
                                     (click)="adminStatus('self-administer')">Self admin</button>
                                 <button type="button" class="btn btn-sm btn-outline-primary"
-                                *ngIf="editpopuptypetype!='OpAdministration'"     [ngClass]="{'active':administration.adminstrationstatus == 'notgiven'}"
+                                    *ngIf="editpopuptypetype!='OpAdministration'"
+                                    [ngClass]="{'active':administration.adminstrationstatus == 'notgiven'}"
                                     (click)="adminStatus('notgiven')">Not given</button>
                             </div>
                         </div>
@@ -75,7 +77,8 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                     [ngClass]="{'active':administration.adminstrationstatus == 'given'}"
                                     (click)="adminStatus('given')">Given</button>
                                 <button type="button" class="btn btn-sm btn-outline-primary"
-                                *ngIf="editpopuptypetype!='OpAdministration'"    [ngClass]="{'active':administration.adminstrationstatus == 'self-administer'}"
+                                    *ngIf="editpopuptypetype!='OpAdministration'"
+                                    [ngClass]="{'active':administration.adminstrationstatus == 'self-administer'}"
                                     (click)="adminStatus('self-administer')">Self admin</button>
                             </div>
                         </div>
@@ -83,93 +86,23 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                     </div>
                     <div class="card" *ngIf="administration.adminstrationstatus=='given'">
                         <div class="card-body">
-                            <div class="row border-bottom  pb-1">
-                                <div class="col-4">
-                                    PRODUCT
-                                </div>
-                                <div class="col-8">
-                                    <ng-container *ngTemplateOutlet="productdropdowntemp"></ng-container>
-                                </div>
-                            </div>
-                            <div class="row border-bottom  pb-1 pt-1">
-                                <div class="col-4">
-                                    BATCH NUMBER
-                                </div>
-                                <div class="col-8">
-                                    <span class="float-right">
-                                        <input [(ngModel)]="administration.batchnumber" type="text" maxlength="15"
-                                            class="epma-adminstration-form-control" />
-                                    </span>
+                            <div class="row border-bottom  pb-1 pt-1" *ngIf="(!currentposology.infusiontypeid && productType!='VTM') || currentposology.infusiontypeid=='bolus'">
+                                <div class="col">
+                                    <input type="checkbox" [(ngModel)]="administration.isdifferentproductadministered"
+                                        id="isDifferentProduct">
+                                    <label for="isDifferentProduct" class="ml-1">Different product administered</label>
                                 </div>
                             </div>
-                            <div class="row border-bottom  pb-1 pt-1">
-                                <div class="col-4">
-                                    EXPIRY DATE
-                                </div>
-                                <div class="col-8">
-                                    <span class="float-right">
-                                        <input [minDate]="currDate" onkeydown="event.preventDefault()" type="text"
-                                            [(ngModel)]="expirydate" class="epma-adminstration-form-control"
-                                            style="width:120px" bsDatepicker
-                                            [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'bg-light' }" />
-                                    </span>
-                                </div>
+                            <span *ngIf="!administration.isdifferentproductadministered">
+                                <ng-container *ngTemplateOutlet="singleProductTemplate"></ng-container>
+                            </span>
+                            <span class="pb-2" *ngIf="administration.isdifferentproductadministered">
+                                <ng-container *ngTemplateOutlet="multipleProductTemplate"></ng-container>
+                            </span>
+                            <div class="row mb-3" *ngIf="administration.isdifferentproductadministered">
+
                             </div>
-                            <div class="row border-bottom  pb-1 pt-1"
-                                *ngIf="!currentposology.infusiontypeid || currentposology.infusiontypeid=='bolus'">
-                                <div class="col-3">
-                                    DOSE
-                                </div>
-                                <div class="col-9">
-                                    <span class="float-right">
-                                        <span *ngIf="currentposology.dosetype=='units'">
-                                            <span class="empa-bold" *ngIf="currentposology.__dose.length>0"><input
-                                                    (input)="setMaxDoseWarning()" type="number" min="0"
-                                                    positiveNumbersOnly class="epma-adminstration-form-control"
-                                                    style="width:80px" [(ngModel)]="administration.administreddosesize"
-                                                    value="administration.administreddosesize">
-                                                <strong>{{administration.administreddoseunit}}</strong></span>
-                                        </span>
-                                        <span *ngIf="currentposology.dosetype=='strength'">
-                                            <span class="empa-bold" *ngIf="currentposology.__dose.length>0">
-                                                <input (input)="setMaxDoseWarning()" positiveNumbersOnly min="0"
-                                                    type="number" class="epma-adminstration-form-control"
-                                                    style="width:80px" (change)="volumeFordose()"
-                                                    [(ngModel)]="administration.administeredstrengthneumerator"
-                                                    value="administration.administeredstrengthneumerator">
-                                                <strong>{{administration.administeredstrengthneumeratorunits}} </strong>
-                                                / <input positiveNumbersOnly min="0" type="number"
-                                                    class="epma-adminstration-form-control" style="width:80px"
-                                                    (change)="doseForVolume()"
-                                                    [(ngModel)]="administration.administeredstrengthdenominator"
-                                                    value="administration.administeredstrengthdenominator">
-                                                <strong>{{administration.administeredstrengthdenominatorunits}}
-                                                </strong>
-                                            </span>
-                                        </span>
-                                        <span *ngIf="currentposology.dosetype=='descriptive'">
-                                            <span
-                                                class="empa-bold">{{administration.administereddescriptivedose}}</span>
-                                        </span>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="row border-bottom  pb-1 pt-1"
-                                *ngIf="currentposology.infusiontypeid=='ci' || currentposology.infusiontypeid=='rate'">
-                                <div class="col-3">
-                                    RATE
-                                </div>
-                                <div class="col-9">
-                                    <span class="float-right">
-                                        <input positiveNumbersOnly min="0" type="number"
-                                            class="epma-adminstration-form-control" style="width:80px"
-                                            [(ngModel)]="administration.administredinfusionrate"
-                                            value="administration.administredinfusionrate">
-                                        <span>{{currentposology.infusionrateunits}}</span>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="row border-bottom  pb-1 pt-1" *ngIf="prescription.__routes.length>1">
+                            <div class="row border-bottom  pb-1 pt-3" *ngIf="prescription.__routes.length>1">
                                 <div class="col-3">
                                     ROUTE OF ADMINISTRATION
                                 </div>
@@ -207,7 +140,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                         <input onkeydown="event.preventDefault()" type="text" [minDate]="minDate"
                                             [maxDate]="maxDate" [(ngModel)]="stardate" placeholder="Start Date"
                                             class="epma-adminstration-form-control" style="width:120px" bsDatepicker
-                                            [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'bg-light' }"
+                                            [bsConfig]="{ showWeekNumbers:false, dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'alert-info' }"
                                             (bsValueChange)="setMaxDoseWarning()" />
                                         <input type="text" name="startime" [(ngModel)]="startime" style="width:80px;"
                                             class="epma-adminstration-form-control" placeholder="HH:mm"
@@ -273,7 +206,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                         <input onkeydown="event.preventDefault()" type="text" [maxDate]="maxDate"
                                             [(ngModel)]="stardate" placeholder="Start Date"
                                             class="epma-adminstration-form-control" style="width:120px" bsDatepicker
-                                            [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'bg-light' }" />
+                                            [bsConfig]="{ showWeekNumbers:false, dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'alert-info' }" />
                                         <input type="text" name="startime" [(ngModel)]="startime" style="width:80px;"
                                             class="epma-adminstration-form-control" placeholder="HH:mm"
                                             [appTimepicker]="timepicker1">
@@ -331,90 +264,21 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
                                 </div>
                             </div>
-                            <div class="row border-bottom  pb-1">
-                                <div class="col-4">
-                                    PRODUCT
-                                </div>
-                                <div class="col-8">
-                                    <ng-container *ngTemplateOutlet="productdropdowntemp"></ng-container>
-                                </div>
-                            </div>
-                            <div class="row border-bottom  pb-1 pt-1">
-                                <div class="col-4">
-                                    BATCH NUMBER
-                                </div>
-                                <div class="col-8">
-                                    <span class="float-right">
-                                        <input [(ngModel)]="administration.batchnumber" maxlength="15" type="text"
-                                            class="epma-adminstration-form-control" />
-                                    </span>
+                            <div class="row border-bottom  pb-1 pt-1" *ngIf="(!currentposology.infusiontypeid && productType!='VTM') || currentposology.infusiontypeid=='bolus'">
+                                <div class="col">
+                                    <input type="checkbox" [(ngModel)]="administration.isdifferentproductadministered"
+                                        id="isDifferentProduct">
+                                    <label for="isDifferentProduct" class="ml-1">Different product administered</label>
                                 </div>
                             </div>
-                            <div class="row border-bottom  pb-1 pt-1">
-                                <div class="col-4">
-                                    EXPIRY DATE
-                                </div>
-                                <div class="col-8">
-                                    <span class="float-right">
-                                        <input [minDate]="currDate" type="text" onkeydown="event.preventDefault()"
-                                            [(ngModel)]="expirydate" class="epma-adminstration-form-control"
-                                            style="width:120px" bsDatepicker
-                                            [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'bg-light' }" />
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="row border-bottom  pb-1 pt-1"
-                                *ngIf="!currentposology.infusiontypeid || currentposology.infusiontypeid=='bolus'">
-                                <div class="col-3">
-                                    DOSE
-                                </div>
-                                <div class="col-9">
-                                    <span class="float-right">
-                                        <span *ngIf="currentposology.dosetype=='units'">
-                                            <span class="empa-bold" *ngIf="currentposology.__dose.length>0"><input
-                                                    type="number" min="0" positiveNumbersOnly
-                                                    class="epma-adminstration-form-control" style="width:80px"
-                                                    [(ngModel)]="administration.administreddosesize"
-                                                    value="administration.administreddosesize">
-                                                <strong>{{administration.administreddoseunit}}</strong></span>
-                                        </span>
-                                        <span *ngIf="currentposology.dosetype=='strength'">
-                                            <span class="empa-bold" *ngIf="currentposology.__dose.length>0">
-                                                <input positiveNumbersOnly type="number" min="0"
-                                                    class="epma-adminstration-form-control" style="width:80px"
-                                                    (change)="volumeFordose()"
-                                                    [(ngModel)]="administration.administeredstrengthneumerator"
-                                                    value="administration.administeredstrengthneumerator">
-                                                <strong>{{administration.administeredstrengthneumeratorunits}} </strong>
-                                                / <input positiveNumbersOnly type="number" min="0"
-                                                    class="epma-adminstration-form-control" style="width:80px"
-                                                    (change)="doseForVolume()"
-                                                    [(ngModel)]="administration.administeredstrengthdenominator"
-                                                    value="administration.administeredstrengthdenominator">
-                                                <strong>{{administration.administeredstrengthdenominatorunits}}
-                                                </strong>
-                                            </span>
-                                        </span>
-                                        <span *ngIf="currentposology.dosetype=='descriptive'">
-                                            <span class="empa-bold">{{currentposology.__dose[0].descriptivedose}}</span>
-                                        </span>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="row border-bottom  pb-1 pt-1"
-                                *ngIf="currentposology.infusiontypeid=='ci' || currentposology.infusiontypeid=='rate'">
-                                <div class="col-3">
-                                    RATE
-                                </div>
-                                <div class="col-9">
-                                    <span class="float-right">
-                                        <input positiveNumbersOnly min="0" type="number"
-                                            class="epma-adminstration-form-control" style="width:80px"
-                                            [(ngModel)]="administration.administredinfusionrate"
-                                            value="administration.administredinfusionrate">
-                                        <span>{{currentposology.infusionrateunits}}</span>
-                                    </span>
-                                </div>
+                            <span *ngIf="!administration.isdifferentproductadministered">
+                                <ng-container *ngTemplateOutlet="singleProductTemplate"></ng-container>
+                            </span>
+                            <span class="pb-2" *ngIf="administration.isdifferentproductadministered">
+                                <ng-container *ngTemplateOutlet="multipleProductTemplate"></ng-container>
+                            </span>
+                            <div class="row mb-3" *ngIf="administration.isdifferentproductadministered">
+
                             </div>
                             <div class="row border-bottom  pb-1 pt-1" *ngIf="prescription.__routes.length>1">
                                 <div class="col-3">
@@ -454,7 +318,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                         <input onkeydown="event.preventDefault()" type="text" [minDate]="minDate"
                                             [maxDate]="maxDate" [(ngModel)]="stardate" placeholder="Start Date"
                                             class="epma-adminstration-form-control" style="width:120px" bsDatepicker
-                                            [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'bg-light' }" />
+                                            [bsConfig]="{ showWeekNumbers:false, dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'alert-info' }" />
                                         <input type="text" name="startime" [(ngModel)]="startime" style="width:80px;"
                                             class="epma-adminstration-form-control" placeholder="HH:mm"
                                             [appTimepicker]="timepicker1">
@@ -548,7 +412,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                         <input onkeydown="event.preventDefault()" type="text" [maxDate]="maxDate"
                                             [(ngModel)]="stardate" placeholder="Start Date"
                                             class="epma-adminstration-form-control" style="width:120px" bsDatepicker
-                                            [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'bg-light' }" />
+                                            [bsConfig]="{ showWeekNumbers:false, dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'alert-info' }" />
                                         <input type="text" name="startime" [(ngModel)]="startime" style="width:80px;"
                                             class="epma-adminstration-form-control" placeholder="HH:mm"
                                             [appTimepicker]="timepicker1">
@@ -593,135 +457,9 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                         </div>
                     </div>
                     <div class="row mt-1">
-                        <div class="col-12" *ngIf="warningMessage">
-                            <div class="text-danger" style="display: flex;float: right;">
-                                <div class="High_alert_medication"></div> {{warningMessage}}
-                            </div>
-                        </div>
+                       
                     </div>
-                    <ng-template #productdropdowntemp>
-                        <a *ngIf="productType!='AMP'" style="white-space: normal;cursor: pointer;"
-                            (click)="isDropdownshow=!isDropdownshow" class="dropdown-toggle float-right">
-                            {{productName}}
-                        </a>
-                        <span class="float-right" *ngIf="productType=='AMP'">{{productName}} </span>
-                        <div class="row productspopdown" *ngIf="isLoadingMedication">
-                            <div class="col text-muted card" #loading>
-                                Loading medication...
-                            </div>
-                        </div>
-                        <div class="row productspopdown"
-                            *ngIf="showloadingmessage && (isDropdownshow || isInitializing)">
-                            <div class="col text-muted card" #loading>
-                                Loading {{searchtype}}...
-                            </div>
-                        </div>
-                        <div class="row productspopdown" *ngIf="shownoresultsmessage && isDropdownshow">
-                            <div class="col">
-                                <div class="row">
-                                    <div class="col">
-                                        <div class="mt-2 close close-adminstration" (click)="isDropdownshow=false">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col text-muted" #loading>
-                                        No Results
-                                        <div>
-                                            <a *ngIf="!isFormulary" href="#" (click)="searchProducts(true)">Show Non
-                                                Formulary Medications</a>
-                                            <a *ngIf="isFormulary" href="#" (click)="searchProducts(false)">Show
-                                                Formulary Medications</a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
 
-                        </div>
-                        <div class="row productspopdown" *ngIf="results && results.data.length>0 && isDropdownshow">
-                            <div class="col card" #products>
-                                <div class="row">
-                                    <div class="col">
-                                        <div class="mt-2 close close-adminstration" (click)="isDropdownshow=false">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div *ngFor="let l1 of results.data" class="l1" #l1>
-                                    <div class="row" *ngIf="l1.recStatusCode == null || l1.recStatusCode == '003'">
-                                        <div class="col-md-1">
-                                            <div *ngIf="l1.children.length!=0" style="padding: 0.5rem;">
-                                                <img src="assets/images/epma/down-arrow.png"
-                                                    style="width: 20px; height: 20px;"
-                                                    *ngIf="expanded.indexOf(l1.code)!=-1"
-                                                    (click)="expandtoggle(l1.code)">
-                                                <img src="assets/images/epma/right-arrow.png"
-                                                    style="width: 20px; height: 20px;"
-                                                    *ngIf="expanded.indexOf(l1.code)==-1"
-                                                    (click)="expandtoggle(l1.code)">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-11">
-                                            <div [ngClass]="{'productname':true, 'text-muted':!l1.prescribable}">
-                                                <span (click)="selectmedication(l1)">{{l1.name}}</span>
-                                                <!-- <span style="font-size: .5em;" class="text-muted mt-3 float-right small">
-                                        {{l1.productType}}</span> -->
-                                                <!-- - <i class="text-muted">{{l1.productType}}</i> -->
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div *ngFor="let l2 of l1.children" class="l2" #l2>
-                                        <div class="row"
-                                            *ngIf="(l2.recStatusCode == null || l2.recStatusCode == '003') && expanded.indexOf(l1.code)!=-1">
-                                            <div class="col-md-1">
-                                                <div *ngIf="l2.children.length!=0" style="padding: 0.5rem;">
-                                                    <img src="assets/images/epma/down-arrow.png"
-                                                        style="width: 20px; height: 20px;"
-                                                        *ngIf="expanded.indexOf(l2.code)!=-1"
-                                                        (click)="expandtoggle(l2.code)">
-                                                    <img src="assets/images/epma/right-arrow.png"
-                                                        style="width: 20px; height: 20px;"
-                                                        *ngIf="expanded.indexOf(l2.code)==-1"
-                                                        (click)="expandtoggle(l2.code)">
-                                                </div>
-                                            </div>
-                                            <div class="col-md-11">
-                                                <div [ngClass]="{'productname':true, 'text-muted':!l2.prescribable}"
-                                                    (click)="selectmedication(l2)">
-                                                    {{l2.name}}
-                                                    <!-- <span style="font-size: .5em;" class="text-muted mt-3 float-right small">
-                                            {{l2.productType}}</span> -->
-                                                    <!-- - <i class="text-muted">{{l2.productType}}</i> -->
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div *ngFor="let l3 of l2.children" class="l3" #l3>
-                                            <div class="row"
-                                                *ngIf="(l3.recStatusCode == null || l3.recStatusCode == '003') && (expanded.indexOf(l1.code)!=-1 && expanded.indexOf(l2.code)!=-1 )">
-                                                <div class="col-md-1">
-                                                </div>
-                                                <div class="col-md-11">
-                                                    <div [ngClass]="{'productname':true, 'text-muted':!l3.prescribable}"
-                                                        (click)="selectmedication(l3)">
-                                                        {{l3.name}}
-                                                        <!-- <span style="font-size: .5em;"
-                                                class="text-muted mt-3 float-right small">
-                                                {{l3.productType}}</span> -->
-                                                        <!-- - <i class="text-muted">{{l3.productType}}</i> -->
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <a *ngIf="!isFormulary" href="#" (click)="searchProducts(true)">Show Non Formulary
-                                        Medications</a>
-                                    <a *ngIf="isFormulary" href="#" (click)="searchProducts(false)">Show Formulary
-                                        Medications</a>
-                                </div>
-                            </div>
-                        </div>
-                    </ng-template>
                 </div>
                 <div *ngIf="appService.warningService && !appService.warningServiceIPContext.loader && !appService.warningServiceIPContext.existingWarningsStatus"
                     class="alert alert-danger" role="alert">
@@ -732,20 +470,24 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                     <div class="container">
 
                         <div class="row">
-                            <div class="col-6">
-                                <!-- <span>Revert</span> -->
+                            <div class="col-9">
+                                <div class="col-12" *ngIf="warningMessage">
+                                    <div class="text-danger" style="display: flex;float: right;">
+                                        <div class="High_alert_medication"></div> {{warningMessage}}
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-6 text-right">
+                            <div class="col-3 text-right">
                                 <button
-                                    *ngIf="!(appService.warningService && !appService.warningServiceIPContext.loader && !appService.warningServiceIPContext.existingWarningsStatus) 
-                                    && !appService.isTitrationPopOverOpen && (appService.isCurrentEncouner || editpopuptypetype=='OpAdministration')"
+                                    *ngIf="(!(appService.warningService && !appService.warningServiceIPContext.loader && !appService.warningServiceIPContext.existingWarningsStatus) 
+                                && !appService.isTitrationPopOverOpen && appService.isCurrentEncouner) || editpopuptypetype=='OpAdministration'"
                                     type="button" style="color:white" class="btn btn-sm btn-info mr-3"
                                     (click)="saveAdministrationForm()" [disabled]="showSpinner"> <span
                                         class="spinner-border spinner-border-sm" *ngIf="showSpinner" role="status"
                                         aria-hidden="true"></span> Confirm</button>
-                                <button *ngIf="!appService.isTitrationPopOverOpen && !showSpinner" data-dismiss="modal"
+                                <!-- <button *ngIf="!appService.isTitrationPopOverOpen && !showSpinner" data-dismiss="modal"
                                     type="button" class="btn btn-sm btn-secondary"
-                                    (click)="closePopup()">Cancel</button>
+                                    (click)="closePopup()">Cancel</button> -->
                             </div>
 
                         </div>
@@ -896,6 +638,16 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                 </div>
                                 <div class="col-6">
                                     <div class="emp-comment-block">{{administration.routename}}</div>
+                                </div>
+                            </div>                            
+                            <div class="row" *ngIf="administration.__witnessName">
+                                <div class="col-1">
+                                </div>
+                                <div class="col-5">
+                                    <span class="text-muted empa-label">WITNESSED BY</span>
+                                </div>
+                                <div class="col-6">
+                                    <span>{{administration.__witnessName}}</span>
                                 </div>
                             </div>
                             <div class="row" *ngIf="infusionEvents.batchnumber">
@@ -1156,9 +908,11 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                 </div>
                                 <div class="col-6">
                                     <span *ngIf="administration.adminstrationstatus=='notgiven'">Not given</span>
-                                    <span
-                                        *ngIf="administration.adminstrationstatus!='notgiven'">{{administration.adminstrationstatus
-                                        | titlecase}}</span>
+                                    <span *ngIf="administration.adminstrationstatus!='notgiven'">
+                                        <span *ngIf="administration.isenterinerror">Entered in error</span>
+                                        <span *ngIf="!administration.isenterinerror">
+                                            {{administration.adminstrationstatus | titlecase}}</span>
+                                    </span>
                                 </div>
                             </div>
                             <div class="row"
@@ -1187,15 +941,43 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                     <span>{{administeredDate}}</span>
                                 </div>
                             </div>
-                            <div class="row">
+                            <div class="row"
+                                *ngIf="(administration.__administerMedication && administration.__administerMedication.length>0 && productType!='custom') || productType=='custom'">
                                 <div class="col-1">
                                 </div>
                                 <div class="col-5">
                                     <span class="text-muted empa-label">PRODUCT</span>
 
                                 </div>
-                                <div class="col-6">
-                                    <span>{{productName}}</span>
+                                <div class="col-6" *ngIf="productType!='custom'">
+                                    <div class="row border-bottom"
+                                        *ngFor="let p of administration.__administerMedication">
+                                        <div class="col">
+                                            <b>{{p.name}}</b>
+                                                           <span *ngIf="administration.isdifferentproductadministered">
+                                                            <br />
+                                                             <span *ngIf="p.dosetype=='units'">
+                                                                <b>{{p.administreddosesize}}{{p.administreddoseunit}}(s)</b>
+                                                                <br />
+                                                             </span>
+                                                             <span *ngIf="p.dosetype=='strength'">
+                                                                <b>{{p.administeredstrengthneumerator}}{{p.administeredstrengthneumeratorunits}} / {{p.administeredstrengthdenominator}}{{p.administeredstrengthdenominatorunits}} </b>
+                                                                <br />
+                                                             </span>
+                                                             <span *ngIf="p.dosetype=='descriptive'">
+                                                                <b>{{p.administereddescriptivedose}}</b>
+                                                                <br />
+                                                             </span>
+                                                             <span *ngIf="p.batchnumber">BATCH NUMBER: {{p.batchnumber}} <br/></span>
+                                                             <span *ngIf="p.expirydate">EXPIRY DATE: {{p.expirydate | date:'dd-MM-yyyy'}} <br/></span>
+                                                           </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6" *ngIf="productType=='custom'">
+                                    <div class="row">
+                                        <div class="col">{{productName}}</div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="row" *ngIf="administration.batchnumber">
@@ -1229,7 +1011,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                 <div class="col-6">
                                     <span
                                         *ngIf="administration.administreddosesize">{{administration.administreddosesize}}
-                                        {{administration.administreddoseunit}}</span>
+                                        {{administration.administreddoseunit}}(s)</span>
                                     <span
                                         *ngIf="administration.administeredstrengthneumerator">{{administration.administeredstrengthneumerator}}
                                         {{administration.administeredstrengthneumeratorunits}} /
@@ -1376,27 +1158,27 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                             </div>
                         </div>
                     </div>
-                    
-                    <a *ngIf="!isShowAdministrationHistory && !isShowHistory" href="#" class="btn-administration-history"
+
+                    <a *ngIf="!isShowAdministrationHistory && !isShowHistory" href="#"
+                        class="btn-administration-history"
                         (click)="isShowAdministrationHistory = !isShowAdministrationHistory">Show history</a>
                     <a *ngIf="isShowAdministrationHistory !isShowHistory" href="#" class="btn-administration-history"
                         (click)="isShowAdministrationHistory = !isShowAdministrationHistory">Close history</a>
                     <div style="max-height: 62vw;" class="pt-2" *ngIf="isShowAdministrationHistory || isShowHistory">
-                        <div style="text-align:center;" *ngIf="appService.MedicationadministrationHistory && appService.DoseEventsHistory && appService.InfusionEventsHistory && appService.MedicationadministrationHistory.length==0 && appService.DoseEventsHistory.length==0 && appService.InfusionEventsHistory.length==0">
+                        <div style="text-align:center;"
+                            *ngIf="administrationHistory && administrationHistory.length==0">
                             No Data
                         </div>
-                        <div *ngIf="appService.MedicationadministrationHistory && appService.MedicationadministrationHistory.length>0">
-                            <div
-                                *ngFor="let administration of appService.MedicationadministrationHistory; let i = index">
+                        <div *ngIf="administrationHistory && administrationHistory.length>0">
+                            <div *ngFor="let administration of administrationHistory; let i = index">
                                 <div
-                                    *ngIf="!currentDose.dose_id.includes('bolus') && !currentDose.dose_id.includes('addadjust') && !currentDose.dose_id.includes('changeinfusionset') && !currentDose.dose_id.includes('changeinfusionkit') && !currentDose.dose_id.includes('restart') && !currentDose.dose_id.includes('pause')">
+                                    *ngIf="administration.recordType=='administration' && !currentDose.dose_id.includes('bolus') && !currentDose.dose_id.includes('addadjust') && !currentDose.dose_id.includes('changeinfusionset') && !currentDose.dose_id.includes('changeinfusionkit') && !currentDose.dose_id.includes('restart') && !currentDose.dose_id.includes('pause')">
                                     <div>
                                         <h6
-                                            *ngIf="!currentDose.dose_id.includes('bolus') && !currentDose.dose_id.includes('addadjust') && !currentDose.dose_id.includes('changeinfusionset') && !currentDose.dose_id.includes('changeinfusionkit') && !currentDose.dose_id.includes('restart') && !currentDose.dose_id.includes('pause') && administration._recordstatus==1">
-                                            Administration</h6>
-                                        <h6
-                                            *ngIf="!currentDose.dose_id.includes('bolus') && !currentDose.dose_id.includes('addadjust') && !currentDose.dose_id.includes('changeinfusionset') && !currentDose.dose_id.includes('changeinfusionkit') && !currentDose.dose_id.includes('restart') && !currentDose.dose_id.includes('pause') && administration._recordstatus==2">
-                                            Undo Administration</h6>
+                                            *ngIf="!currentDose.dose_id.includes('bolus') && !currentDose.dose_id.includes('addadjust') && !currentDose.dose_id.includes('changeinfusionset') && !currentDose.dose_id.includes('changeinfusionkit') && !currentDose.dose_id.includes('restart') && !currentDose.dose_id.includes('pause') && administration.data.isenterinerror!=true">
+                                            Administration - {{administration.data.modifiedon | date : 'dd-MM-YYYY
+                                            HH:mm'}}</h6>
+
                                     </div>
                                     <hr>
                                     <div class="card-body">
@@ -1410,15 +1192,20 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                                     <span class="text-muted empa-label">ADMINISTRATION</span>
                                                 </div>
                                                 <div class="col-6">
-                                                    <span *ngIf="administration.adminstrationstatus=='notgiven'">Not
-                                                        given</span>
                                                     <span
-                                                        *ngIf="administration.adminstrationstatus!='notgiven'">{{administration.adminstrationstatus
-                                                        | titlecase}}</span>
+                                                        *ngIf="administration.data.adminstrationstatus=='notgiven'">Not
+                                                        given</span>
+                                                    <span *ngIf="administration.data.adminstrationstatus!='notgiven'">
+                                                        <span *ngIf="administration.data.isenterinerror">Entered in
+                                                            error</span>
+                                                        <span *ngIf="!administration.data.isenterinerror">
+                                                            {{administration.data.adminstrationstatus |
+                                                            titlecase}}</span>
+                                                    </span>
                                                 </div>
                                             </div>
                                             <div class="row"
-                                                *ngIf="administration.adminstrationstatusreason && !currentDose.dose_id.includes('end')">
+                                                *ngIf="administration.data.adminstrationstatusreason && !currentDose.dose_id.includes('end')">
                                                 <div class="col-1">
 
                                                 </div>
@@ -1427,9 +1214,9 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                                 </div>
                                                 <div class="col-6">
                                                     <span
-                                                        *ngIf="administration.adminstrationstatusreason=='Other'">{{administration.adminstrationstatusreasontext}}</span>
+                                                        *ngIf="administration.data.adminstrationstatusreason=='Other'">{{administration.data.adminstrationstatusreasontext}}</span>
                                                     <span
-                                                        *ngIf="administration.adminstrationstatusreason!='Other'">{{administration.adminstrationstatusreason}}</span>
+                                                        *ngIf="administration.data.adminstrationstatusreason!='Other'">{{administration.data.adminstrationstatusreason}}</span>
                                                 </div>
                                             </div>
                                             <div class="row">
@@ -1440,44 +1227,73 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
                                                 </div>
                                                 <div class="col-6">
-                                                    <span>{{administration.administrationstartime | date:'dd-MM-yyyy
+                                                    <span>{{administration.data.administrationstartime |
+                                                        date:'dd-MM-yyyy
                                                         HH:mm'}}</span>
                                                 </div>
                                             </div>
-                                            <div class="row">
+                                            <div class="row"
+                                                *ngIf="(administration.data.__administerMedication && administration.data.__administerMedication.length>0 && productType!='custom') || productType=='custom'">
                                                 <div class="col-1">
                                                 </div>
                                                 <div class="col-5">
                                                     <span class="text-muted empa-label">PRODUCT</span>
 
                                                 </div>
-                                                <div class="col-6">
-                                                    <span>{{setProductHistory(administration.medicationadministration_id,i)}}</span>
+                                                <div class="col-6" *ngIf="productType!='custom'">
+                                                    <div class="row border-bottom"
+                                                        *ngFor="let p of administration.data.__administerMedication">
+                                                        <div class="col">
+                                                           <b>{{p.name}}</b>
+                                                           <span *ngIf="administration.data.isdifferentproductadministered">
+                                                            <br />
+                                                             <span *ngIf="p.dosetype=='units'">
+                                                                <b>{{p.administreddosesize}}{{p.administreddoseunit}}(s)</b>
+                                                                <br />
+                                                             </span>
+                                                             <span *ngIf="p.dosetype=='strength'">
+                                                                <b>{{p.administeredstrengthneumerator}}{{p.administeredstrengthneumeratorunits}} / {{p.administeredstrengthdenominator}}{{p.administeredstrengthdenominatorunits}} </b>
+                                                                <br />
+                                                             </span>
+                                                             <span *ngIf="p.dosetype=='descriptive'">
+                                                                <b>{{p.administereddescriptivedose}}</b>
+                                                                <br />
+                                                             </span>
+                                                             <span *ngIf="p.batchnumber">BATCH NUMBER: {{p.batchnumber}} <br/></span>
+                                                             <span *ngIf="p.expirydate">EXPIRY DATE: {{p.expirydate | date:'dd-MM-yyyy'}} <br/></span>
+                                                           </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6" *ngIf="productType=='custom'">
+                                                    <div class="row">
+                                                        <div class="col">{{productName}}</div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div class="row" *ngIf="administration.batchnumber">
+                                            <div class="row" *ngIf="administration.data.batchnumber">
                                                 <div class="col-1">
                                                 </div>
                                                 <div class="col-5">
                                                     <span class="text-muted empa-label">BATCH NUMBER</span>
                                                 </div>
                                                 <div class="col-6">
-                                                    <span>{{administration.batchnumber}}</span>
+                                                    <span>{{administration.data.batchnumber}}</span>
                                                 </div>
                                             </div>
-                                            <div class="row" *ngIf="administration.expirydate">
+                                            <div class="row" *ngIf="administration.data.expirydate">
                                                 <div class="col-1">
                                                 </div>
                                                 <div class="col-5">
                                                     <span class="text-muted empa-label">EXPIRY DATE</span>
                                                 </div>
                                                 <div class="col-6">
-                                                    <span>{{administration.expirydate | date:'dd-MM-yyyy'}}</span>
+                                                    <span>{{administration.data.expirydate | date:'dd-MM-yyyy'}}</span>
                                                 </div>
                                             </div>
 
                                             <div class="row"
-                                                *ngIf="(administration.administereddescriptivedose || administration.administreddosesize || administration.administeredstrengthneumerator) && !currentDose.dose_id.includes('end')">
+                                                *ngIf="(administration.data.administereddescriptivedose || administration.data.administreddosesize || administration.data.administeredstrengthneumerator) && !currentDose.dose_id.includes('end')">
                                                 <div class="col-1">
                                                 </div>
                                                 <div class="col-5">
@@ -1485,19 +1301,19 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                                 </div>
                                                 <div class="col-6">
                                                     <span
-                                                        *ngIf="administration.administreddosesize">{{administration.administreddosesize}}
-                                                        {{administration.administreddoseunit}}</span>
+                                                        *ngIf="administration.data.administreddosesize">{{administration.data.administreddosesize}}
+                                                        {{administration.data.administreddoseunit}}(s)</span>
                                                     <span
-                                                        *ngIf="administration.administeredstrengthneumerator">{{administration.administeredstrengthneumerator}}
-                                                        {{administration.administeredstrengthneumeratorunits}} /
-                                                        {{administration.administeredstrengthdenominator}}
-                                                        {{administration.administeredstrengthdenominatorunits}}</span>
+                                                        *ngIf="administration.data.administeredstrengthneumerator">{{administration.data.administeredstrengthneumerator}}
+                                                        {{administration.data.administeredstrengthneumeratorunits}} /
+                                                        {{administration.data.administeredstrengthdenominator}}
+                                                        {{administration.data.administeredstrengthdenominatorunits}}</span>
                                                     <span
-                                                        *ngIf="administration.administereddescriptivedose">{{administration.administereddescriptivedose}}</span>
+                                                        *ngIf="administration.data.administereddescriptivedose">{{administration.data.administereddescriptivedose}}</span>
                                                 </div>
                                             </div>
                                             <div class="row"
-                                                *ngIf="administration.administredinfusionrate && !currentDose.dose_id.includes('end')">
+                                                *ngIf="administration.data.administredinfusionrate && !currentDose.dose_id.includes('end')">
                                                 <div class="col-1">
                                                 </div>
                                                 <div class="col-5">
@@ -1505,7 +1321,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
                                                 </div>
                                                 <div class="col-6">
-                                                    <span>{{administration.administredinfusionrate}}
+                                                    <span>{{administration.data.administredinfusionrate}}
                                                         <span>{{currentposology.infusionrateunits}}</span></span>
                                                 </div>
                                             </div>
@@ -1517,17 +1333,18 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
                                                 </div>
                                                 <div class="col-6">
-                                                    <span>{{administration.routename}}</span>
+                                                    <span>{{administration.data.routename}}</span>
                                                 </div>
                                             </div>
-                                            <div class="row" *ngIf="administration.levelofselfadmin">
+                                         
+                                            <div class="row" *ngIf="administration.data.levelofselfadmin">
                                                 <div class="col-1">
                                                 </div>
                                                 <div class="col-5">
                                                     <span class="text-muted empa-label">CHARTED BY</span>
                                                 </div>
                                                 <div class="col-6">
-                                                    <span>{{administration.levelofselfadmin}}</span>
+                                                    <span>{{administration.data.levelofselfadmin}}</span>
                                                 </div>
                                             </div>
                                             <!--                            
@@ -1542,14 +1359,14 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                             </div>
                         </div> -->
                                             <div class="row"
-                                                *ngIf="!currentDose.dose_id.includes('end') && administration.administredby">
+                                                *ngIf="!currentDose.dose_id.includes('end') && administration.data.administredby">
                                                 <div class="col-1">
                                                 </div>
                                                 <div class="col-5">
                                                     <span class="text-muted empa-label">ADMINISTERED BY</span>
                                                 </div>
                                                 <div class="col-6">
-                                                    <span>{{administration.administredby}}</span>
+                                                    <span>{{administration.data.administredby}}</span>
                                                 </div>
                                             </div>
 
@@ -1562,12 +1379,12 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
                                                 </div>
                                                 <div class="col-6">
-                                                    <span>{{administration.planneddatetime | date:'dd-MM-yyyy
+                                                    <span>{{administration.data.planneddatetime | date:'dd-MM-yyyy
                                                         HH:mm'}}</span>
                                                 </div>
                                             </div>
                                             <div class="row"
-                                                *ngIf="(administration.planneddosesize || administration.plannedstrengthneumerator) && !currentDose.dose_id.includes('end')">
+                                                *ngIf="(administration.data.planneddosesize || administration.data.plannedstrengthneumerator) && !currentDose.dose_id.includes('end')">
                                                 <div class="col-1">
                                                 </div>
                                                 <div class="col-5">
@@ -1576,17 +1393,17 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                                 </div>
                                                 <div class="col-6">
                                                     <span
-                                                        *ngIf="administration.planneddosesize">{{administration.planneddosesize}}
-                                                        {{administration.planneddoseunit}}</span>
+                                                        *ngIf="administration.data.planneddosesize">{{administration.data.planneddosesize}}
+                                                        {{administration.data.planneddoseunit}}</span>
                                                     <span
-                                                        *ngIf="administration.plannedstrengthneumerator">{{administration.plannedstrengthneumerator}}
-                                                        {{administration.plannedstrengthneumeratorunits}} /
-                                                        {{administration.plannedstrengthdenominator}}
-                                                        {{administration.plannedstrengthdenominatorunits}}</span>
+                                                        *ngIf="administration.data.plannedstrengthneumerator">{{administration.data.plannedstrengthneumerator}}
+                                                        {{administration.data.plannedstrengthneumeratorunits}} /
+                                                        {{administration.data.plannedstrengthdenominator}}
+                                                        {{administration.data.plannedstrengthdenominatorunits}}</span>
                                                 </div>
                                             </div>
                                             <div class="row"
-                                                *ngIf="administration.plannedinfustionrate && !currentDose.dose_id.includes('end')">
+                                                *ngIf="administration.data.plannedinfustionrate && !currentDose.dose_id.includes('end')">
                                                 <div class="col-1">
                                                 </div>
                                                 <div class="col-5">
@@ -1594,11 +1411,11 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
                                                 </div>
                                                 <div class="col-6">
-                                                    <span>{{administration.plannedinfustionrate}}
+                                                    <span>{{administration.data.plannedinfustionrate}}
                                                         <span>{{currentposology.infusionrateunits}}</span></span>
                                                 </div>
                                             </div>
-                                            <div class="row" *ngIf="administration.comments">
+                                            <div class="row" *ngIf="administration.data.comments">
                                                 <div class="col-1">
                                                 </div>
                                                 <div class="col-5">
@@ -1606,638 +1423,724 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
                                                 </div>
                                                 <div class="col-6">
-                                                    <div class="emp-comment-block">{{administration.comments}}</div>
+                                                    <div class="emp-comment-block">{{administration.data.comments}}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-
-
-                            </div>
-
-
-
-                        </div>
-                        <div *ngIf="appService.DoseEventsHistory && appService.DoseEventsHistory.length>0">
-                            <div *ngFor="let doseevent of appService.DoseEventsHistory">
-                                <div *ngIf="doseevent.eventtype=='Transfer'">
-                                    <div>
+                                <div *ngIf="administration.recordType=='doseevent'">
+                                    <div *ngIf="administration.data.eventtype=='Transfer'">
                                         <div>
-                                            <h6>{{doseevent.eventtype}}</h6>
+                                            <div>
+                                                <h6>{{administration.data.eventtype}} - {{administration.data.createdon
+                                                    | date : 'dd-MM-YYYY HH:mm'}}</h6>
+                                            </div>
+                                            <hr>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">Transferred From</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        {{administration.data.startdatetime | date: 'dd/MM/yyyy HH:mm'}}
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">Transferred To</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        {{administration.data.dosedatetime | date: 'dd/MM/yyyy HH:mm'}}
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">Transferred on</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        {{administration.data.createdon | date: 'dd/MM/yyyy HH:mm'}}
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">Transferred by</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        {{administration.data.createdby}}
+                                                    </div>
+                                                </div>
+
+                                            </div>
                                         </div>
-                                        <hr>
-                                        <div class="card-body">
-                                            <div class="row">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">Transferred From</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    {{doseevent.startdatetime | date: 'dd/MM/yyyy HH:mm'}}
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">Transferred To</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    {{doseevent.dosedatetime | date: 'dd/MM/yyyy HH:mm'}}
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">Transferred on</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    {{doseevent._createddate | date: 'dd/MM/yyyy HH:mm'}}
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">Transferred by</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    {{doseevent._createdby}}
-                                                </div>
-                                            </div>
-                                           
-                                        </div>
+
+
                                     </div>
-
-
-                                </div>
-                                <div *ngIf="doseevent.eventtype=='Comment'">
-                                    <div>
+                                    <div *ngIf="administration.data.eventtype=='Comment'">
                                         <div>
-                                            <h6>{{doseevent.eventtype}}</h6>
+                                            <div>
+                                                <h6>{{administration.data.eventtype}} - {{administration.data.createdon
+                                                    | date : 'dd-MM-YYYY HH:mm'}}</h6>
+                                            </div>
+                                            <hr>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">Comment</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        {{administration.data.comments}}
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">Commented on</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        {{administration.data.createdon | date: 'dd/MM/yyyy HH:mm'}}
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">Commented by</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        {{administration.data.createdby}}
+                                                    </div>
+                                                </div>
+
+                                            </div>
                                         </div>
-                                        <hr>
-                                        <div class="card-body">
-                                            <div class="row">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">Comment</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    {{doseevent.comments}}
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">Commented on</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    {{doseevent._createddate | date: 'dd/MM/yyyy HH:mm'}}
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">Commented by</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    {{doseevent._createdby}}
-                                                </div>
-                                            </div>
-                                            
-                                        </div>
+
+
                                     </div>
-
-
-                                </div>
-                                <div *ngIf="doseevent.eventtype=='Cancel'">
-                                    <div>
+                                    <div *ngIf="administration.data.eventtype=='Cancel'">
                                         <div>
-                                            <h6 *ngIf="doseevent._recordstatus==2">Undo Cancel</h6>
-                                            <h6 *ngIf="doseevent._recordstatus==1">Cancel</h6>
-                                        </div>
-                                        <hr>
-                                        <div class="card-body">
-                                            <div class="row" *ngIf="doseevent.comments">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">Comment</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    {{doseevent.comments}}
-                                                </div>
+                                            <div>
+                                                <h6 *ngIf="administration.data._recordstatus==2">Undo Cancel -
+                                                    {{administration.data.createdon | date : 'dd-MM-YYYY HH:mm'}}</h6>
+                                                <h6 *ngIf="administration.data._recordstatus==1">Cancel -
+                                                    {{administration.data.createdon | date : 'dd-MM-YYYY HH:mm'}}</h6>
                                             </div>
-                                            <div class="row">
-                                                <div class="col-1">
+                                            <hr>
+                                            <div class="card-body">
+                                                <div class="row" *ngIf="administration.data.comments">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">Comment</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        {{administration.data.comments}}
+                                                    </div>
                                                 </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label" *ngIf="doseevent._recordstatus==1">Cancelled on</span>
-                                                    <span class="text-muted empa-label" *ngIf="doseevent._recordstatus==2">Undo Cancel on</span>
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label"
+                                                            *ngIf="administration.data._recordstatus==1">Cancelled
+                                                            on</span>
+                                                        <span class="text-muted empa-label"
+                                                            *ngIf="administration.data._recordstatus==2">Undo Cancel
+                                                            on</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        {{administration.data.createdon | date: 'dd/MM/yyyy HH:mm'}}
+                                                    </div>
                                                 </div>
-                                                <div class="col-6">
-                                                    {{doseevent._createddate | date: 'dd/MM/yyyy HH:mm'}}
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label"
+                                                            *ngIf="administration.data._recordstatus==1">Cancelled
+                                                            by</span>
+                                                        <span class="text-muted empa-label"
+                                                            *ngIf="administration.data._recordstatus==2">Undo Cancel
+                                                            by</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        {{administration.data.createdby}}
+                                                    </div>
                                                 </div>
+
                                             </div>
-                                            <div class="row">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label" *ngIf="doseevent._recordstatus==1">Cancelled by</span>
-                                                    <span class="text-muted empa-label" *ngIf="doseevent._recordstatus==2">Undo Cancel by</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    {{doseevent._createdby}}
-                                                </div>
-                                            </div>
-                                          
                                         </div>
                                     </div>
-
-
-
-                                </div>
-                                <div *ngIf="doseevent.eventtype=='doconfirm'">
-                                    <div>
+                                    <div *ngIf="administration.data.eventtype=='doconfirm'">
                                         <div>
-                                            <h6>PTC Confirmed</h6>
+                                            <div>
+                                                <h6>PTC Confirmed - {{administration.data.createdon | date : 'dd-MM-YYYY
+                                                    HH:mm'}}</h6>
+                                            </div>
+                                            <hr>
+                                            <div class="card-body">
+                                                <div class="row" *ngIf="administration.data.comments">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">Comment</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        {{administration.data.comments}}
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">Confirmed on</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        {{administration.data.createdon | date: 'dd/MM/yyyy HH:mm'}}
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">Confirmed by</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        {{administration.data.createdby}}
+                                                    </div>
+                                                </div>
+
+                                            </div>
                                         </div>
-                                        <hr>
-                                        <div class="card-body">
-                                            <div class="row" *ngIf="doseevent.comments">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">Comment</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    {{doseevent.comments}}
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">Confirmed on</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    {{doseevent._createddate | date: 'dd/MM/yyyy HH:mm'}}
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">Confirmed by</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    {{doseevent._createdby}}
-                                                </div>
-                                            </div>
-                                           
-                                        </div>
+
+
+
                                     </div>
-
-
-
-                                </div>
-                                <div *ngIf="doseevent.eventtype=='titration'">
-                                    <div>
+                                    <div *ngIf="administration.data.eventtype=='titration'">
                                         <div>
-                                            <h6>Titration</h6>
+                                            <div>
+                                                <h6>Titration - {{administration.data.createdon | date : 'dd-MM-YYYY
+                                                    HH:mm'}}</h6>
+                                            </div>
+                                            <hr>
+                                            <div class="card-body">
+                                                <div class="row" *ngIf="administration.data.comments">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">Comment</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        {{administration.data.comments}}
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">Titrated on</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        {{administration.data.createdon | date: 'dd/MM/yyyy HH:mm'}}
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">Titrated by</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        {{administration.data.createdby}}
+                                                    </div>
+                                                </div>
+                                                <div class="row" *ngIf="administration.data.titrateddosesize">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">Dose</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        {{administration.data.titrateddosesize}}
+                                                        {{administration.data.titrateddoseunit}}
+                                                    </div>
+                                                </div>
+                                                <div class="row"
+                                                    *ngIf="administration.data.titratedstrengthdenominator">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">Dose</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        {{administration.data.titratedstrengthneumerator}}
+                                                        {{administration.data.titratedstrengthneumeratorunits}}
+                                                        /
+                                                        {{administration.data.titratedstrengthdenominator}}
+                                                        {{administration.data.titratedstrengthdenominatorunits}}
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <hr>
-                                        <div class="card-body">
-                                            <div class="row" *ngIf="doseevent.comments">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">Comment</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    {{doseevent.comments}}
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">Titrated on</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    {{doseevent._createddate | date: 'dd/MM/yyyy HH:mm'}}
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">Titrated by</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    {{doseevent._createdby}}
-                                                </div>
-                                            </div>
-                                            <div class="row" *ngIf="doseevent.titrateddosesize">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">Dose</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    {{doseevent.titrateddosesize}}
-                                                    {{doseevent.titrateddoseunit}}
-                                                </div>
-                                            </div>
-                                            <div class="row" *ngIf="doseevent.titratedstrengthdenominator">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">Dose</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    {{doseevent.titratedstrengthneumerator}}
-                                                    {{doseevent.titratedstrengthneumeratorunits}}
-                                                    /
-                                                    {{doseevent.titratedstrengthdenominator}}
-                                                    {{doseevent.titratedstrengthdenominatorunits}}
-                                                </div>
-                                            </div>                                           
-                                        </div>
-                                    </div>
 
+                                    </div>
+                                    <div *ngIf="administration.data.eventtype=='Undo'">
+                                        <div>
+                                            <div>
+                                                <h6>{{administration.data.eventtype}} - {{administration.data.createdon
+                                                    | date : 'dd-MM-YYYY HH:mm'}}</h6>
+                                            </div>
+                                            <hr>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">Undo on</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        {{administration.data.createdon | date: 'dd/MM/yyyy HH:mm'}}
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">Undo by</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        {{administration.data.createdby}}
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+
+
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                        <div *ngIf="appService.InfusionEventsHistory && appService.InfusionEventsHistory.length>0">
-                            <div *ngFor="let infusionevent of appService.InfusionEventsHistory; let i = index">
-                                <div class="card"
-                                    *ngIf="currentDose.dose_id.includes('addadjust') || currentDose.dose_id.includes('pause') || currentDose.dose_id.includes('restart') 
+                                <div *ngIf="administration.recordType=='infusionevent'">
+                                    <div
+                                        *ngIf="currentDose.dose_id.includes('addadjust') || currentDose.dose_id.includes('pause') || currentDose.dose_id.includes('restart') 
                         || currentDose.dose_id.includes('bolus') || currentDose.dose_id.includes('changeinfusionset') || currentDose.dose_id.includes('changeinfusionkit')">
-                                    <div class="card-header">
-                                        <h6 *ngIf="currentDose.dose_id.includes('addadjust')">Flowrate Adjusted</h6>
-                                        <h6 *ngIf="currentDose.dose_id.includes('pause')">Pause</h6>
-                                        <h6 *ngIf="currentDose.dose_id.includes('restart')">Restart</h6>
-                                        <h6 *ngIf="currentDose.dose_id.includes('bolus')">Bolus</h6>
-                                        <h6
-                                            *ngIf="currentDose.dose_id.includes('changeinfusionset') || currentDose.dose_id.includes('changeinfusionkit')">
-                                            Change kit/device</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div
-                                            *ngIf="currentDose.dose_id.includes('addadjust') && getAdministrationHistory(infusionevent.logicalid,i)">
-                                            <div class="row"
-                                                *ngIf="getAdministrationHistory(infusionevent.logicalid,i).administrationstartime">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">ADMINISTRATION TIME</span>
+                                        <div>
+                                            <h6 *ngIf="currentDose.dose_id.includes('addadjust')">Flowrate Adjusted -
+                                                {{administration.data.modifiedon | date : 'dd-MM-YYYY HH:mm'}}</h6>
+                                            <h6 *ngIf="currentDose.dose_id.includes('pause')">Pause -
+                                                {{administration.data.modifiedon | date : 'dd-MM-YYYY HH:mm'}}</h6>
+                                            <h6 *ngIf="currentDose.dose_id.includes('restart')">Restart -
+                                                {{administration.data.modifiedon | date : 'dd-MM-YYYY HH:mm'}}</h6>
+                                            <h6 *ngIf="currentDose.dose_id.includes('bolus')">Bolus -
+                                                {{administration.data.modifiedon | date : 'dd-MM-YYYY HH:mm'}}</h6>
+                                            <h6
+                                                *ngIf="currentDose.dose_id.includes('changeinfusionset') || currentDose.dose_id.includes('changeinfusionkit')">
+                                                Change kit/device - {{administration.data.createdon | date : 'dd-MM-YYYY
+                                                HH:mm'}}</h6>
+                                            <h6 *ngIf="currentDose.dose_id.includes('Undo')">Undo -
+                                                {{administration.data.modifiedon | date : 'dd-MM-YYYY HH:mm'}}</h6>
+                                        </div>
+                                        <hr />
+                                        <div class="card-body">
+                                            <div *ngIf="currentDose.dose_id.includes('addadjust')">
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">ADMINISTRATION TIME</span>
 
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.eventdatetime
+                                                            | date:'dd-MM-yyyy HH:mm'}}</span>
+                                                    </div>
                                                 </div>
-                                                <div class="col-6">
-                                                    <span>{{getAdministrationHistory(infusionevent.logicalid,i).administrationstartime
-                                                        | date:'dd-MM-yyyy HH:mm'}}</span>
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">RATE</span>
+
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.__administredinfusionrate}}
+                                                            <span>{{currentposology.infusionrateunits}}</span></span>
+                                                    </div>
                                                 </div>
+
+                                                <div class="row" *ngIf="administration.data.batchnumber">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">BATCH NUMBER</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.batchnumber}}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row" *ngIf="administration.data.expirydate">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">EXPIRY DATE</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.expirydate |
+                                                            date:'dd-MM-yyyy'}}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row" *ngIf="administration.data.__witnessName">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">WITNESSED BY</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.__witnessName}}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row" *ngIf="administration.data.administeredby">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">ADMINISTERED BY</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.administeredby}}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row" *ngIf="administration.data.comments">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">COMMENTS</span>
+
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="emp-comment-block">
+                                                            {{administration.data.comments}}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
                                             </div>
-                                            <div class="row"
-                                                *ngIf="getAdministrationHistory(infusionevent.logicalid,i)">
-                                                <div class="col-1">
+                                            <div *ngIf="currentDose.dose_id.includes('pause')">
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">ADMINISTRATION TIME</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.eventdatetime | date:'dd-MM-yyyy
+                                                            HH:mm'}}</span>
+                                                    </div>
                                                 </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">RATE</span>
+                                                <div class="row" *ngIf="administration.data.administeredby">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">ADMINISTERED BY</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.administeredby}}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row" *ngIf="administration.data.comments">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">COMMENTS</span>
 
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.comments}}</span>
+                                                    </div>
                                                 </div>
-                                                <div class="col-6">
-                                                    <span>{{getAdministrationHistory(infusionevent.logicalid,i).administredinfusionrate}}
-                                                        <span>{{currentposology.infusionrateunits}}</span></span>
-                                                </div>
+
                                             </div>
-                                            <div class="row"
-                                                *ngIf="getAdministrationHistory(infusionevent.logicalid,i).routename">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">ROUTE OF ADMINISTRATION</span>
+                                            <div *ngIf="currentDose.dose_id.includes('restart')">
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">ADMINISTRATION TIME</span>
 
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.eventdatetime
+                                                            | date:'dd-MM-yyyy HH:mm'}}</span>
+                                                    </div>
                                                 </div>
-                                                <div class="col-6">
-                                                    <div class="emp-comment-block">
-                                                        {{getAdministrationHistory(infusionevent.logicalid,i).routename}}
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">RATE</span>
+
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.__administredinfusionrate}}
+                                                            <span>{{currentposology.infusionrateunits}}</span></span>
+                                                    </div>
+                                                </div>
+                                                <div class="row" *ngIf="administration.data.batchnumber">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">BATCH NUMBER</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.batchnumber}}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row" *ngIf="administration.data.expirydate">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">EXPIRY DATE</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.expirydate |
+                                                            date:'dd-MM-yyyy'}}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row" *ngIf="administration.data.administeredby">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">ADMINISTERED BY</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.administeredby}}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row" *ngIf="administration.data.comments">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">COMMENTS</span>
+
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="emp-comment-block">{{administration.data.comments}}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                            <div *ngIf="currentDose.dose_id.includes('bolus')">
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">ADMINISTRATION TIME</span>
+
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.eventdatetime
+                                                            | date:'dd-MM-yyyy HH:mm'}}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">DOSE</span>
+
+                                                    </div>
+                                                    <div class="col-6" *ngIf="currentposology.dosetype == 'units'">
+                                                        <span>{{administration.data.__administreddosesize}}
+                                                            mls</span>
+                                                    </div>
+                                                    <div class="col-6" *ngIf="currentposology.dosetype == 'strength'">
+                                                        <span>{{administration.data.__administeredstrengthneumerator}}
+                                                            {{administration.data.__administeredstrengthneumeratorunits}}</span>
+                                                        <span>/
+                                                            {{administration.data.__administeredstrengthdenominator}}
+                                                            {{administration.data.__administeredstrengthdenominatorunits}}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row" *ngIf="administration.data.batchnumber">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">BATCH NUMBER</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.batchnumber}}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row" *ngIf="administration.data.expirydate">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">EXPIRY DATE</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.expirydate |
+                                                            date:'dd-MM-yyyy'}}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row" *ngIf="administration.data.administeredby">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">ADMINISTERED BY</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.administeredby}}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row" *ngIf="administration.data.comments">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">COMMENTS</span>
+
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="emp-comment-block">{{administration.data.comments}}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="row" *ngIf="infusionevent.batchnumber">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">BATCH NUMBER</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    <span>{{infusionevent.batchnumber}}</span>
-                                                </div>
-                                            </div>
-                                            <div class="row" *ngIf="infusionevent.expirydate">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">EXPIRY DATE</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    <span>{{infusionevent.expirydate | date:'dd-MM-yyyy'}}</span>
-                                                </div>
-                                            </div>
-                                            <div class="row" *ngIf="infusionevent.administeredby">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">ADMINISTERED BY</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    <span>{{infusionevent.administeredby}}</span>
-                                                </div>
-                                            </div>
-                                            <div class="row"
-                                                *ngIf="getAdministrationHistory(infusionevent.logicalid,i)">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">COMMENTS</span>
+                                            <div
+                                                *ngIf="(currentDose.dose_id.includes('changeinfusionset') || currentDose.dose_id.includes('changeinfusionkit'))">
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">ADMINISTRATION TIME</span>
 
-                                                </div>
-                                                <div class="col-6">
-                                                    <div class="emp-comment-block">
-                                                        {{getAdministrationHistory(infusionevent.logicalid,i).comments}}
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.eventdatetime | date:'dd-MM-yyyy
+                                                            HH:mm'}}</span>
                                                     </div>
                                                 </div>
-                                            </div>
+                                                <div class="row">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">Change Set/Bag </span>
 
-                                        </div>
-                                        <div *ngIf="currentDose.dose_id.includes('pause')">
-                                            <div class="row">
-                                                <div class="col-1">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span
+                                                            *ngIf="administration.data.eventtype=='changeinfusionkit'">Change
+                                                            infusion kit</span>
+                                                        <span
+                                                            *ngIf="administration.data.eventtype=='changeinfusionset'">Change
+                                                            infusion</span>
+                                                    </div>
                                                 </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">ADMINISTRATION TIME</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    <span>{{infusionevent.eventdatetime | date:'dd-MM-yyyy
-                                                        HH:mm'}}</span>
-                                                </div>
-                                            </div>
-                                            <div class="row" *ngIf="infusionevent.administeredby">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">ADMINISTERED BY</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    <span>{{infusionevent.administeredby}}</span>
-                                                </div>
-                                            </div>
-                                            <div class="row" *ngIf="infusionevent.comments">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">COMMENTS</span>
 
+                                                <div class="row" *ngIf="administration.data.batchnumber">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">BATCH NUMBER</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.batchnumber}}</span>
+                                                    </div>
                                                 </div>
-                                                <div class="col-6">
-                                                    <span>{{infusionevent.comments}}</span>
+                                                <div class="row" *ngIf="administration.data.expirydate">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">EXPIRY DATE</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.expirydate |
+                                                            date:'dd-MM-yyyy'}}</span>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                                <div class="row" *ngIf="administration.data.administeredby">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">ADMINISTERED BY</span>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.administeredby}}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row" *ngIf="administration.data.comments">
+                                                    <div class="col-1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <span class="text-muted empa-label">COMMENTS</span>
 
-                                        </div>
-                                        <div *ngIf="currentDose.dose_id.includes('restart')">
-                                            <div class="row">
-                                                <div class="col-1">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <span>{{administration.data.comments}}</span>
+                                                    </div>
                                                 </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">ADMINISTRATION TIME</span>
 
-                                                </div>
-                                                <div class="col-6">
-                                                    <span>{{getAdministrationHistory(infusionevent.logicalid,i).administrationstartime
-                                                        | date:'dd-MM-yyyy HH:mm'}}</span>
-                                                </div>
                                             </div>
-                                            <div class="row">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">RATE</span>
+                                            <div *ngIf="administration.data.eventtype=='Undo'">
+                                                <div>
+                                                    <div>
+                                                        <h6>{{administration.data.eventtype}} -
+                                                            {{administration.data.createdon
+                                                            | date : 'dd-MM-YYYY HH:mm'}}</h6>
+                                                    </div>
+                                                    <hr>
+                                                    <div class="card-body">
+                                                        <div class="row">
+                                                            <div class="col-1">
+                                                            </div>
+                                                            <div class="col-5">
+                                                                <span class="text-muted empa-label">Undo on</span>
+                                                            </div>
+                                                            <div class="col-6">
+                                                                {{administration.data.createdon | date: 'dd/MM/yyyy
+                                                                HH:mm'}}
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-1">
+                                                            </div>
+                                                            <div class="col-5">
+                                                                <span class="text-muted empa-label">Undo by</span>
+                                                            </div>
+                                                            <div class="col-6">
+                                                                {{administration.data.createdby}}
+                                                            </div>
+                                                        </div>
 
+                                                    </div>
                                                 </div>
-                                                <div class="col-6">
-                                                    <span>{{getAdministrationHistory(infusionevent.logicalid,i).administredinfusionrate}}
-                                                        <span>{{currentposology.infusionrateunits}}</span></span>
-                                                </div>
-                                            </div>
-                                            <div class="row" *ngIf="infusionevent.batchnumber">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">BATCH NUMBER</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    <span>{{infusionevent.batchnumber}}</span>
-                                                </div>
-                                            </div>
-                                            <div class="row" *ngIf="infusionevent.expirydate">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">EXPIRY DATE</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    <span>{{infusionevent.expirydate | date:'dd-MM-yyyy'}}</span>
-                                                </div>
-                                            </div>
-                                            <div class="row" *ngIf="infusionevent.administeredby">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">ADMINISTERED BY</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    <span>{{infusionevent.administeredby}}</span>
-                                                </div>
-                                            </div>
-                                            <div class="row" *ngIf="infusionevent.comments">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">COMMENTS</span>
 
-                                                </div>
-                                                <div class="col-6">
-                                                    <div class="emp-comment-block">{{infusionevent.comments}}</div>
-                                                </div>
-                                            </div>
 
-                                        </div>
-                                        <div
-                                            *ngIf="currentDose.dose_id.includes('bolus') && getAdministrationHistory(infusionevent.logicalid,i)">
-                                            <div class="row">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">ADMINISTRATION TIME</span>
-
-                                                </div>
-                                                <div class="col-6">
-                                                    <span>{{getAdministrationHistory(infusionevent.logicalid,i).administrationstartime
-                                                        | date:'dd-MM-yyyy HH:mm'}}</span>
-                                                </div>
                                             </div>
-                                            <div class="row">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">DOSE</span>
-
-                                                </div>
-                                                <div class="col-6" *ngIf="currentposology.dosetype == 'units'">
-                                                    <span>{{getAdministrationHistory(infusionevent.logicalid,i).administreddosesize}}
-                                                        mls</span>
-                                                </div>
-                                                <div class="col-6" *ngIf="currentposology.dosetype == 'strength'">
-                                                    <span>{{getAdministrationHistory(infusionevent.logicalid,i).administeredstrengthneumerator}}
-                                                        {{getAdministrationHistory(infusionevent.logicalid,i).administeredstrengthneumeratorunits}}</span>
-                                                    <span>/
-                                                        {{getAdministrationHistory(infusionevent.logicalid,i).administeredstrengthdenominator}}
-                                                        {{getAdministrationHistory(infusionevent.logicalid,i).administeredstrengthdenominatorunits}}</span>
-                                                </div>
-                                            </div>
-                                            <div class="row" *ngIf="infusionevent.batchnumber">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">BATCH NUMBER</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    <span>{{infusionevent.batchnumber}}</span>
-                                                </div>
-                                            </div>
-                                            <div class="row" *ngIf="infusionevent.expirydate">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">EXPIRY DATE</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    <span>{{infusionevent.expirydate | date:'dd-MM-yyyy'}}</span>
-                                                </div>
-                                            </div>
-                                            <div class="row" *ngIf="infusionevent.administeredby">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">ADMINISTERED BY</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    <span>{{infusionevent.administeredby}}</span>
-                                                </div>
-                                            </div>
-                                            <div class="row" *ngIf="infusionevent.comments">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">COMMENTS</span>
-
-                                                </div>
-                                                <div class="col-6">
-                                                    <div class="emp-comment-block">{{infusionevent.comments}}</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div
-                                            *ngIf="(currentDose.dose_id.includes('changeinfusionset') || currentDose.dose_id.includes('changeinfusionkit'))">
-                                            <div class="row">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">ADMINISTRATION TIME</span>
-
-                                                </div>
-                                                <div class="col-6">
-                                                    <span>{{infusionevent.eventdatetime | date:'dd-MM-yyyy
-                                                        HH:mm'}}</span>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">Change Set/Bag </span>
-
-                                                </div>
-                                                <div class="col-6">
-                                                    <span *ngIf="infusionevent.eventtype=='changeinfusionkit'">Change
-                                                        infusion kit</span>
-                                                    <span *ngIf="infusionevent.eventtype=='changeinfusionset'">Change
-                                                        infusion</span>
-                                                </div>
-                                            </div>
-
-                                            <div class="row" *ngIf="infusionevent.batchnumber">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">BATCH NUMBER</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    <span>{{infusionevent.batchnumber}}</span>
-                                                </div>
-                                            </div>
-                                            <div class="row" *ngIf="infusionevent.expirydate">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">EXPIRY DATE</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    <span>{{infusionevent.expirydate | date:'dd-MM-yyyy'}}</span>
-                                                </div>
-                                            </div>
-                                            <div class="row" *ngIf="infusionevent.administeredby">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">ADMINISTERED BY</span>
-                                                </div>
-                                                <div class="col-6">
-                                                    <span>{{infusionevent.administeredby}}</span>
-                                                </div>
-                                            </div>
-                                            <div class="row" *ngIf="infusionevent.comments">
-                                                <div class="col-1">
-                                                </div>
-                                                <div class="col-5">
-                                                    <span class="text-muted empa-label">COMMENTS</span>
-
-                                                </div>
-                                                <div class="col-6">
-                                                    <span>{{infusionevent.comments}}</span>
-                                                </div>
-                                            </div>
-
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
 
+
                         </div>
+
                     </div>
                 </div>
-
+                <!-- <div class="modal-footer">
+                    <input type="button" class="btn btn-secondary" value="Cancel" (click)="closePopup()" />
+                </div> -->
             </div>
         </div>
     </div>
@@ -2248,7 +2151,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
         tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
         aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
-            <div class="modal-content">
+            <div class="modal-content" style="height: 30%">
                 <h3 class="popover-title popover-header">
                     Witness authentication
                     <div class="close close-adminstration" (click)="closeWitnessAuthentication()"></div>
@@ -2324,7 +2227,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <ng-template #confirmWardStockTemplate>
     <div class="modal-body">
         <h5>
-            This drug is resupplied from ward stock. Are you sure to make a request to the pharmacy?
+            This medicine is resupplied from ward stock. Are you sure you want to make a request to pharmacy?
         </h5>
     </div>
     <div class="modal-footer">
@@ -2333,23 +2236,357 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
     </div>
 </ng-template>
 
+<ng-template #singleProductTemplate>
+    <div class="row border-bottom  pb-1">
+        <div class="col-4">
+            PRODUCT
+        </div>
+        <div class="col-8">
+            <ng-container *ngTemplateOutlet="productdropdowntemp"></ng-container>
+        </div>
+    </div>
+    <div class="row border-bottom  pb-1 pt-1">
+        <div class="col-4">
+            BATCH NUMBER
+        </div>
+        <div class="col-8">
+            <span class="float-right">
+                <input [(ngModel)]="administration.batchnumber" type="text" maxlength="15"
+                    class="epma-adminstration-form-control" />
+            </span>
+        </div>
+    </div>
+    <div class="row border-bottom  pb-1 pt-1">
+        <div class="col-4">
+            EXPIRY DATE
+        </div>
+        <div class="col-8">
+            <span class="float-right">
+                <input [minDate]="currDate" onkeydown="event.preventDefault()" type="text" [(ngModel)]="expirydate"
+                    class="epma-adminstration-form-control" style="width:120px" bsDatepicker
+                    [bsConfig]="{ showWeekNumbers:false, dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'alert-info' }" />
+            </span>
+        </div>
+    </div>
+    <div class="row border-bottom  pb-1 pt-1"
+        *ngIf="!currentposology.infusiontypeid || currentposology.infusiontypeid=='bolus'">
+        <div class="col-3">
+            DOSE
+        </div>
+        <div class="col-9">
+            <span class="float-right">
+                <span *ngIf="currentposology.dosetype=='units'">
+                    <span class="empa-bold" *ngIf="currentposology.__dose.length>0"><input (input)="setMaxDoseWarning()"
+                            type="number" min="0" positiveNumbersOnly class="epma-adminstration-form-control"
+                            style="width:80px" [(ngModel)]="administration.administreddosesize"
+                            value="administration.administreddosesize">
+                        <strong>{{administration.administreddoseunit}}</strong></span>
+                </span>
+                <span *ngIf="currentposology.dosetype=='strength'">
+                    <span class="empa-bold" *ngIf="currentposology.__dose.length>0">
+                        <input positiveNumbersOnly min="0" type="number" class="epma-adminstration-form-control"
+                            style="width:80px" (change)="volumeFordose()"
+                            [(ngModel)]="administration.administeredstrengthneumerator"
+                            value="administration.administeredstrengthneumerator">
+                        <strong>{{administration.administeredstrengthneumeratorunits}} </strong>
+                        / <input positiveNumbersOnly min="0" type="number" class="epma-adminstration-form-control"
+                            style="width:80px" (change)="doseForVolume()"
+                            [(ngModel)]="administration.administeredstrengthdenominator"
+                            value="administration.administeredstrengthdenominator">
+                        <strong>{{administration.administeredstrengthdenominatorunits}}
+                        </strong>
+                    </span>
+                </span>
+                <span *ngIf="currentposology.dosetype=='descriptive'">
+                    <span class="empa-bold">{{administration.administereddescriptivedose}}</span>
+                </span>
+            </span>
+        </div>
+    </div>
+    <div class="row border-bottom  pb-1 pt-1"
+        *ngIf="currentposology.infusiontypeid=='ci' || currentposology.infusiontypeid=='pca' || currentposology.infusiontypeid=='rate'">
+        <div class="col-3">
+            RATE
+        </div>
+        <div class="col-9">
+            <span class="float-right">
+                <input positiveNumbersOnly min="0" type="number" class="epma-adminstration-form-control"
+                    style="width:80px" [(ngModel)]="administration.administredinfusionrate"
+                    value="administration.administredinfusionrate">
+                <span>{{currentposology.infusionrateunits}}</span>
+            </span>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #multipleProductTemplate>
+    <div class="row pb-1 pt-1">        
+        <div class="col">
+            <app-search-medication (medicationselected)="onmedicationselected($event)"></app-search-medication>
+        </div>
+    </div>
+    <div class="row pb-1 pt-1 pr-3 pl-3" *ngFor="let d of administermultiplemedication">
+        <div class="col">
+            <div class="row pl-2 pr-2" style="border: 1px solid lightgray;border-radius: 11px;">
+                <div class="col-11">
+                    <div class="row border-bottom  pb-1 pt-1"
+                        *ngIf="!currentposology.infusiontypeid || currentposology.infusiontypeid=='bolus'">
+                        <div class="col-5">
+                            {{d.name}}
+                        </div>
+                        <div class="col-6">
+                            <span class="float-right">
+                                <span *ngIf="d.dosetype=='units'">
+                                    <span class="empa-bold" *ngIf="currentposology.__dose.length>0"><input
+                                              type="number" min="0" positiveNumbersOnly
+                                            class="epma-adminstration-form-control" style="width:80px"
+                                            [(ngModel)]="d.administreddosesize"
+                                            value="d.administreddosesize">
+                                        <strong>{{d.administreddoseunit}}</strong></span>
+                                </span>
+                                <span *ngIf="d.dosetype=='strength'">
+                                    <span class="empa-bold" *ngIf="currentposology.__dose.length>0">
+                                        <input positiveNumbersOnly min="0" type="number" class="epma-adminstration-form-control"
+                                            style="width:80px" (change)="volumeFordoseAdministerMedication(d)"
+                                            [(ngModel)]="d.administeredstrengthneumerator"
+                                            value="d.administeredstrengthneumerator">
+                                        <strong>{{d.administeredstrengthneumeratorunits}} </strong>
+                                        / <input positiveNumbersOnly min="0" type="number" class="epma-adminstration-form-control"
+                                            style="width:80px" (change)="doseForVolumeAdministerMedication(d)"
+                                            [(ngModel)]="d.administeredstrengthdenominator"
+                                            value="d.administeredstrengthdenominator">
+                                        <strong>{{d.administeredstrengthdenominatorunits}}
+                                        </strong>
+                                    </span>
+                                </span>
+                                <span *ngIf="d.dosetype=='descriptive'">
+                                    <span class="empa-bold">{{d.administereddescriptivedose}}</span>
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row border-bottom  pb-1 pt-1"
+                        *ngIf="currentposology.infusiontypeid=='ci' || currentposology.infusiontypeid=='pca' || currentposology.infusiontypeid=='rate'">
+                        <div class="col-5">
+                            {{ d.name}}
+                        </div>
+                        <div class="col-6">
+                            <span class="float-right">
+                                <input positiveNumbersOnly min="0" type="number" class="epma-adminstration-form-control"
+                                    style="width:80px" [(ngModel)]="d.administredinfusionrate"
+                                    value="d.administredinfusionrate">
+                                <span>{{d.administreddoseunit}}</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row border-bottom  pb-1 pt-1">
+                        <div class="col-4">
+                            BATCH NUMBER
+                        </div>
+                        <div class="col-8">
+                            <span class="float-right">
+                                <input [(ngModel)]="d.batchnumber" type="text" maxlength="15"
+                                    class="epma-adminstration-form-control" />
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row pb-1 pt-1">
+                        <div class="col-4">
+                            EXPIRY DATE
+                        </div>
+                        <div class="col-8">
+                            <span class="float-right">
+                                <input [minDate]="currDate" onkeydown="event.preventDefault()" type="text"
+                                    [(ngModel)]="d.expirydate" class="epma-adminstration-form-control" style="width:120px"
+                                    bsDatepicker
+                                    [bsConfig]="{ showWeekNumbers:false, dateInputFormat: 'DD-MM-YYYY', containerClass: 'theme-default', adaptivePosition: true,customTodayClass:'alert-info' }" />
+                            </span>
+                        </div>
+                    </div>
+            
+                </div>
+                <div class="col-1 pr-0">
+                    <div class="removeicon float-right" (click)="removeProductAdministered(d)"></div>
+                </div>
+            </div>
+
+     </div>
+    </div>
+  
+
+</ng-template>
+
+<ng-template #productdropdowntemp>
+    <div *ngIf="productType!='AMP' && productType!='custom'">
+        <div class="row" *ngFor="let m of administermedication;let i=index">
+            <div class="col">
+                <a style="white-space: normal;cursor: pointer;"
+                    (click)="isDropdownshow=!isDropdownshow;medIndexSelected=i" class="dropdown-toggle float-right">
+                    {{m.name}}
+                </a>
+            </div>
+            <div class="col-1" *ngIf="productType!='AMP' && productType!='VMP'">
+                <div *ngIf="i!=0" style="cursor:pointer;" class="removeicon col" (click)="removeMoreMedication(m)">
+                </div>
+                <div *ngIf="i==0" style="cursor:pointer;" class="plusicon col" (click)="addMoreMedication()"></div>
+            </div>
+        </div>
+    </div>
+    <span class="float-right" *ngIf="productType=='AMP' || productType=='custom'">{{productName}}
+    </span>
+    <div class="row productspopdown" *ngIf="isLoadingMedication">
+        <div class="col text-muted card" #loading>
+            Loading medication...
+        </div>
+    </div>
+    <div class="row productspopdown" *ngIf="showloadingmessage && (isDropdownshow || isInitializing)">
+        <div class="col text-muted card" #loading>
+            Loading {{searchtype}}...
+        </div>
+    </div>
+    <div class="row productspopdown" *ngIf="shownoresultsmessage && isDropdownshow">
+        <div class="col">
+            <div class="row">
+                <div class="col">
+                    <div class="mt-2 close close-adminstration" (click)="isDropdownshow=false">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col text-muted" #loading>
+                    No Results
+                    <div>
+                        <a *ngIf="!isFormulary" href="#" (click)="searchProducts(true, true)">Show
+                            Non
+                            Formulary Medications</a>
+                        <a *ngIf="isFormulary" href="#" (click)="searchProducts(false,true)">Show
+                            Formulary Medications</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="row productspopdown" *ngIf="results && results.data.length>0 && isDropdownshow">
+        <div class="col card" #products>
+            <div class="row">
+                <div class="col">
+                    <div class="mt-2 close close-adminstration" (click)="isDropdownshow=false">
+                    </div>
+                </div>
+            </div>
+            <div *ngFor="let l1 of results.data" class="l1" #l1>
+                <div class="row" *ngIf="l1.recStatusCode == null || l1.recStatusCode == '003'">
+                    <div class="col-md-1">
+                        <div *ngIf="l1.children.length!=0" style="padding: 0.5rem;">
+                            <img src="assets/images/epma/down-arrow.png" style="width: 20px; height: 20px;"
+                                *ngIf="expanded.indexOf(l1.code)!=-1" (click)="expandtoggle(l1.code)">
+                            <img src="assets/images/epma/right-arrow.png" style="width: 20px; height: 20px;"
+                                *ngIf="expanded.indexOf(l1.code)==-1" (click)="expandtoggle(l1.code)">
+                        </div>
+                    </div>
+                    <div class="col-md-11">
+                        <div [ngClass]="{'productname':true, 'text-muted':!l1.prescribable}">
+                            <span (click)="selectmedication(l1)">{{l1.name}}</span>
+                            <!-- <span style="font-size: .5em;" class="text-muted mt-3 float-right small">
+                    {{l1.productType}}</span> -->
+                            <!-- - <i class="text-muted">{{l1.productType}}</i> -->
+                        </div>
+                    </div>
+                </div>
+                <div *ngFor="let l2 of l1.children" class="l2" #l2>
+                    <div class="row"
+                        *ngIf="(l2.recStatusCode == null || l2.recStatusCode == '003') && expanded.indexOf(l1.code)!=-1">
+                        <div class="col-md-1">
+                            <div *ngIf="l2.children.length!=0" style="padding: 0.5rem;">
+                                <img src="assets/images/epma/down-arrow.png" style="width: 20px; height: 20px;"
+                                    *ngIf="expanded.indexOf(l2.code)!=-1" (click)="expandtoggle(l2.code)">
+                                <img src="assets/images/epma/right-arrow.png" style="width: 20px; height: 20px;"
+                                    *ngIf="expanded.indexOf(l2.code)==-1" (click)="expandtoggle(l2.code)">
+                            </div>
+                        </div>
+                        <div class="col-md-11">
+                            <div [ngClass]="{'productname':true, 'text-muted':!l2.prescribable}"
+                                (click)="selectmedication(l2)">
+                                {{l2.name}}
+                                <!-- <span style="font-size: .5em;" class="text-muted mt-3 float-right small">
+                        {{l2.productType}}</span> -->
+                                <!-- - <i class="text-muted">{{l2.productType}}</i> -->
+                            </div>
+                        </div>
+                    </div>
+                    <div *ngFor="let l3 of l2.children" class="l3" #l3>
+                        <div class="row"
+                            *ngIf="(l3.recStatusCode == null || l3.recStatusCode == '003') && (expanded.indexOf(l1.code)!=-1 && expanded.indexOf(l2.code)!=-1 )">
+                            <div class="col-md-1">
+                            </div>
+                            <div class="col-md-11">
+                                <div [ngClass]="{'productname':true, 'text-muted':!l3.prescribable}"
+                                    (click)="selectmedication(l3)">
+                                    {{l3.name}}
+                                    <!-- <span style="font-size: .5em;"
+                            class="text-muted mt-3 float-right small">
+                            {{l3.productType}}</span> -->
+                                    <!-- - <i class="text-muted">{{l3.productType}}</i> -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <a *ngIf="!isFormulary" href="#" (click)="searchProducts(true, true)">Show Non
+                    Formulary
+                    Medications</a>
+                <a *ngIf="isFormulary" href="#" (click)="searchProducts(false, true)">Show Formulary
+                    Medications</a>
+            </div>
+        </div>
+    </div>
+</ng-template>
 
 
 <div class="modal fade bd-example-modal-md" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal
-    role="dialog" style="display: block;" *ngIf="displayStyle">
+    role="dialog" style="display: block;height: 40%" *ngIf="displayStyle">
     <div class="modal-dialog modal-md modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title">Undo administration - Error</h6>
             </div>
             <div class="modal-body">
-                <p>This action causes two administration event to occur at the same time - please address the conflicting administration event that is currently at {{undoConflictTime | date : 'dd-MM-yyyy HH:mm'}} before attempting this
+                <p>This action causes two administration event to occur at the same time - please address the
+                    conflicting administration event that is currently at {{undoConflictTime | date : 'dd-MM-yyyy
+                    HH:mm'}} before attempting this
                 </p>
 
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" (click)="undoAdministrationOk()">
                     Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal role="dialog"
+    style="display: block;height: 30%;" *ngIf="undoAdministrationdisplayStyle">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title">Undo administration</h6>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to undo this administration event?
+                </p>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" (click)="undoAdministrationConfirm()">
+                    Yes
+                </button>
+                <button type="button" class="btn btn-primary" (click)="undoAdministrationDecline()">
+                    No
                 </button>
             </div>
         </div>

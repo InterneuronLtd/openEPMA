@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -29,20 +29,27 @@ import { BsDatepickerModule } from 'ngx-bootstrap/datepicker';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TypeaheadModule } from 'ngx-bootstrap/typeahead';
 import { ComponentsModule } from '../components/components.module';
+import { CKEditorModule } from '@ckeditor/ckeditor5-angular';
+import { PrintOpPrescribingComponent } from './print-op-prescribing/print-op-prescribing.component';
+import { GenerateOpPrescribingPdfComponent } from './generate-op-prescribing-pdf/generate-op-prescribing-pdf.component';
 
 
 
 @NgModule({
   declarations: [
-    OplistComponent
+    OplistComponent,
+    PrintOpPrescribingComponent,
+    GenerateOpPrescribingPdfComponent
   ],
   exports: [
+    CKEditorModule,
     OplistComponent,
   ],
   imports: [
     PopoverModule.forRoot(),
     BsDropdownModule.forRoot(),
     BrowserAnimationsModule,
+    CKEditorModule,
     ComponentsModule,
     BsDatepickerModule.forRoot(),
     CommonModule, FormsModule, ModalModule.forRoot(), ReactiveFormsModule,

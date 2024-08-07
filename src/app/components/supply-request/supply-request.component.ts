@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ import { Component, OnInit, TemplateRef, ElementRef, ViewChild, OnDestroy, Input
 import { Subscription } from 'rxjs';
 import { ApirequestService } from 'src/app/services/apirequest.service';
 import { AppService } from 'src/app/services/app.service';
-import { SupplyRequest, AdministerMedication, AdministerMedicationingredients, AdministerMedicationcodes, Prescription, DSMedSupplyRequiredStatus, SupplyRequestMedications } from '../../models/EPMA';
+import { SupplyRequest, AdministerMedication, AdministerMedicationingredients, AdministerMedicationcodes, Prescription, DSMedSupplyRequiredStatus, SupplyRequestMedications, PrescriptionMedicaitonSupply } from '../../models/EPMA';
 import { v4 as uuid } from 'uuid';
 import { filter, filterparam, filterParams, filters, orderbystatement, selectstatement } from '../../models/filter.model';
 import moment from 'moment';
@@ -31,8 +31,8 @@ import { SubjectsService } from 'src/app/services/subjects.service';
 import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal';
 import { DataRequest } from 'src/app/services/datarequest';
 import { Indication } from '../prescribing-form/formhelper';
-import { DoseType, RoleAction, SupplyRequestStatus } from 'src/app/services/enum';
-import { UpsertTransactionManager } from '@interneuroncic/interneuron-ngx-core-lib';
+import { Common, DoseType, RoleAction, SupplyRequestStatus } from 'src/app/services/enum';
+import { UpsertTransactionManager } from 'src/app/services/upsert-transaction-manager.service';
 
 @Component({
   selector: 'app-supply-request',
@@ -45,7 +45,7 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
   validationMessage: string = '';
   informationMessage: string = '';
   quantityMessage: string = '';
-  dsOtherReasonMessage : string = '';
+  dsOtherReasonMessage: string = '';
   isSaving: boolean = false;
   headerLabelText: string;
   isInfusion = false;
@@ -73,7 +73,7 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
   searchCode: string;
   searchtype: string;
   administermedication: AdministerMedication[] = [];
-  supplyRequestStatusList: Array<string> = [];
+  supplyRequestStatusList: any[] = [];
   supplyRequestStatus: string;
   requestedNoOfDays: number;
   requestedQuantity: string;
@@ -110,9 +110,15 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
   @ViewChild('confirmcopy') confirmcopy: ElementRef;
   @Input('event') event: any
   doseType: string;
-  dSMedSupplyNotRequired : DSMedSupplyRequiredStatus = new DSMedSupplyRequiredStatus();
-  supplyRequestMedications: Array<SupplyRequestMedications>=[];
+  dSMedSupplyNotRequired: DSMedSupplyRequiredStatus = new DSMedSupplyRequiredStatus();
+  supplyRequestMedications: Array<SupplyRequestMedications> = [];
   medIndexSelected: number = 0;
+  patientDrug: PrescriptionMedicaitonSupply;
+  patientDrugHistory: PrescriptionMedicaitonSupply[] = [];
+  componenttype : string;
+  encounterId: string;
+  validEncounter:boolean;
+  isEditable: boolean;
   constructor(
     private apiRequest: ApirequestService,
     public appService: AppService,
@@ -129,12 +135,25 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
     this.init(this.event);
   }
   init(preEvent: any) {
-    if (preEvent.componenttype == "SUM" || preEvent.componenttype == "SUMNO") {
+    this.componenttype = preEvent.componenttype ;
+
+    if(this.componenttype == 'OP')
+    {
+      this.encounterId = Common.op_encounter_placeholder;
+    }
+    else 
+    {
+      this.encounterId = this.appService.encounter.encounter_id;
+    }
+
+   this.validEncounter = (this.appService.isCurrentEncouner || (this.appService.isTCI && !this.appService.isTCICancelled) || this.componenttype == 'OP')
+
+    if (this.componenttype == "SUM" ||  this.componenttype == "SUMNO") {
       this.headerLabelText = "Discharge Supply Request";
       this.dr.getDSMedSupplyRequest(this.event.prescription.prescription_id, (data) => {
-            if(data.length>0) {
-              this.dSMedSupplyNotRequired = data[0];
-            }
+        if (data.length > 0) {
+          this.dSMedSupplyNotRequired = data[0];
+        }
       });
     }
     this.allSupplyRequests = [];
@@ -150,6 +169,11 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
     this.doseType = this.appService.GetCurrentPosology(this.prescription).dosetype;
     this.supplyrequest = new SupplyRequest();
     this.isLoading = true;
+    this.patientDrug = this.appService.PrescriptionMedicaitonSupply.find(x => x.prescriptionid == this.prescriptionId);
+    this.appService.PatientDrugHistory =[];
+    if (this.patientDrug) {
+      this.GetMedicationSupplyHistory();
+    }
     // if (this.appService.pleaseResupplyStockValidation) {
     //   this.validateStock();
     // } else {
@@ -158,16 +182,18 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
 
     this.getUserRole();
     this.initializeForm();
-    if(this.productType!='custom') {
+    if (this.productType != 'custom') {
       this.searchProducts(false);
       this.getProductDetail(this.medicationCode, "load");
     } else {
-      this.isLoading =false;
+      this.isLoading = false;
     }
     this.minDate = new Date();
 
   }
-
+  patientDrugs() {
+    this.subjects.patientDrug.next({ prescription: this.prescription });
+  }
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
   }
@@ -195,14 +221,13 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
   //   )
   // }
   newRequest(): void {
+   // this.dr.RefreshIfDataVersionChanged(() => { });
     this.minDate = new Date();
     this.validationMessage = '';
     this.supplyRequestStatus = this.supplyReqStatus.Incomplete;
     this.originalSupplyStatus = this.supplyReqStatus.Incomplete;
-    this.supplyRequestStatusList.push(this.supplyReqStatus.Incomplete);
-    this.supplyRequestStatusList.push(this.supplyReqStatus.Approved);
-    this.supplyRequestStatusList.push(this.supplyReqStatus.Rejected);
-    this.supplyRequestStatusList.push(this.supplyReqStatus.Fulfilled);
+    this.SetSupplyStatus(this.supplyReqStatus.Incomplete);
+
     this.supplyRequestChanges = [];
     this.supplyRequestHistory = [];
     this.supplyRequestId = "";
@@ -216,8 +241,24 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
     }
     this.setIndication();
     this.nonFormularyRequest = !this.prescription.__medications[0].isformulary;
+    this.isEditable = !(this.originalSupplyStatus == this.supplyReqStatus.Incomplete || this.originalSupplyStatus == this.supplyReqStatus.Pending); 
   }
-
+  SetSupplyStatus(status) {
+    this.supplyRequestStatusList = [];
+    if(this.componenttype == 'OP') {
+      this.supplyRequestStatusList.push({ name: status, value: status });
+      this.supplyRequestStatusList.push({ name: this.supplyReqStatus.OutpatientApproved, value: this.supplyReqStatus.Approved });
+      this.supplyRequestStatusList.push({ name: this.supplyReqStatus.Fulfilled, value: this.supplyReqStatus.Fulfilled });
+      this.supplyRequestStatusList.push({ name: this.supplyReqStatus.OutpatientChecked, value: this.supplyReqStatus.OutpatientChecked });
+      this.supplyRequestStatusList.push({ name: this.supplyReqStatus.Rejected, value: this.supplyReqStatus.Rejected });
+      
+    } else {
+      this.supplyRequestStatusList.push({ name: status, value: status });
+      this.supplyRequestStatusList.push({ name: this.supplyReqStatus.Approved, value: this.supplyReqStatus.Approved });
+      this.supplyRequestStatusList.push({ name: this.supplyReqStatus.Rejected, value: this.supplyReqStatus.Rejected });
+      this.supplyRequestStatusList.push({ name: this.supplyReqStatus.Fulfilled, value: this.supplyReqStatus.Fulfilled });
+    }
+  }
   /* Check where the login user is pharmacist or senior pharmacist */
   private getUserRole(): void {
     this.isPharmacist = this.appService.loggedInUserRoles.includes("Pharmacist");
@@ -271,8 +312,8 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
     supplyMed.productname = this.medicationFullName;
     supplyMed.productcode = this.searchCode;
     supplyMed.producttype = this.productType;
-    supplyMed.prescription_id =  this.prescriptionId;
-    supplyMed.encounter_id = this.appService.encounter.encounter_id;
+    supplyMed.prescription_id = this.prescriptionId;
+    supplyMed.encounter_id = this.encounterId;
     supplyMed.person_id = this.appService.personId;
     this.supplyRequestMedications.push(supplyMed);
     if (prescriptionArray[0].isinfusion || prescriptionArray[0].ismedicinalgas) {
@@ -286,16 +327,16 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
     supplyMed.productname = this.medicationFullName;
     supplyMed.productcode = this.searchCode;
     supplyMed.producttype = this.productType;
-    supplyMed.prescription_id =  this.prescriptionId;
-    supplyMed.encounter_id = this.appService.encounter.encounter_id;
+    supplyMed.prescription_id = this.prescriptionId;
+    supplyMed.encounter_id = this.encounterId;
     supplyMed.person_id = this.appService.personId;
     this.supplyRequestMedications.push(supplyMed);
   }
-  removeMoreMedication(m:SupplyRequestMedications) {
+  removeMoreMedication(m: SupplyRequestMedications) {
     const index: number = this.supplyRequestMedications.indexOf(m);
     if (index !== -1) {
-        this.supplyRequestMedications.splice(index, 1);
-    }      
+      this.supplyRequestMedications.splice(index, 1);
+    }
   }
   setQuantityDays() {
     let doseArray = this.appService.GetCurrentPosology(this.prescription).__dose;
@@ -379,7 +420,7 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
           this.administermedication.push(m);
           m.administermedication_id = uuid();
           m.personid = this.appService.encounter.person_id;
-          m.encounterid = this.appService.encounter.encounter_id;
+          m.encounterid = this.encounterId;
           m.name = response.name;
           m.producttype = response.productType;
           m.roundingfactor = response.detail.roundingFactorDesc;
@@ -390,28 +431,13 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
           var fdbc = response.formularyAdditionalCodes ? response.formularyAdditionalCodes.find(x => x.additionalCodeSystem.toString().toLowerCase() == "fdb") : null;
           var cgc = response.formularyAdditionalCodes ? response.formularyAdditionalCodes.find(x => x.additionalCodeSystem.toString().toLowerCase() == "customgroup") : null;
 
-          if (fdbc) {
-            var additionalCodeDesc = fdbc.additionalCodeDesc;
-            if (additionalCodeDesc) {
-              var acs = additionalCodeDesc.split("|");
-              var index = 0;
-              if (acs.length >= 1)
-                index = 1;
-              var lastacs = acs[index];
-              var group = lastacs.split("-")
-              group.splice(group.length - 1, 1);
-              group = group.join('');
-              this.appService.logToConsole(group);
-              m.classification = group;
-
-            }
-            else {
-              m.classification = "Others";
-            }
+          if (fdbc && fdbc.additionalCodeDesc) {
+            m.classification = fdbc.additionalCodeDesc;
+            m.bnf = fdbc.additionalCode;
           }
-          else
+          else {
             m.classification = "Others";
-
+          }
 
           if (cgc) {
             m.customgroup = cgc.additionalCode;
@@ -465,10 +491,10 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
         else { }
       }));
   }
-  selectmedication(e,medIndexSelected) {
-    this.supplyRequestMedications[medIndexSelected].productname= e.name;
-    this.supplyRequestMedications[medIndexSelected].productcode= e.code;
-    this.supplyRequestMedications[medIndexSelected].producttype= e.productType;
+  selectmedication(e, medIndexSelected) {
+    this.supplyRequestMedications[medIndexSelected].productname = e.name;
+    this.supplyRequestMedications[medIndexSelected].productcode = e.code;
+    this.supplyRequestMedications[medIndexSelected].producttype = e.productType;
     this.productName = e.name;
     this.requestedQuantity = null;
     this.requestedNoOfDays = null;
@@ -534,10 +560,12 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
             }
             this.labelInstructionsRequired = this.supplyrequest.labelinstructiosrequired;
             this.nonFormularyRequest = !this.supplyrequest.isformulary;
-            if (this.supplyrequest.fulfilledon) {
-              this.supplyrequest.fulfilledon = moment(this.supplyrequest.fulfilledon).toDate();
-            } else {
-              this.supplyrequest.fulfilledon = moment().toDate();
+            if (this.supplyRequestStatus == this.supplyReqStatus.Fulfilled) {
+              if (this.supplyrequest.fulfilledon) {
+                this.supplyrequest.fulfilledon = moment(this.supplyrequest.fulfilledon).toDate();
+              } else {
+                this.supplyrequest.fulfilledon = moment().toDate();
+              }
             }
             if (this.supplyrequest.indication) {
               let ind = JSON.parse(this.supplyrequest.indication);
@@ -548,21 +576,17 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
               this.supplyrequest.route = this.routeList.find(x => x.code == ind.code);
             }
             this.supplyRequestStatusList = [];
-            //this.supplyRequestStatusList.push(this.supplyRequestStatus);
-            this.supplyRequestStatusList.push(this.supplyReqStatus.Pending);
-            this.supplyRequestStatusList.push(this.supplyReqStatus.Approved);
-            this.supplyRequestStatusList.push(this.supplyReqStatus.Rejected);
-            this.supplyRequestStatusList.push(this.supplyReqStatus.Fulfilled);
-
+            this.SetSupplyStatus(this.supplyReqStatus.Pending)
             // supply request change list
             this.setSupplyRequestChangeData(this.supplyRequestId);
             this.getSupplyRequestMedication(this.supplyRequestId);
+            this.isEditable = !(this.originalSupplyStatus == this.supplyReqStatus.Incomplete || this.originalSupplyStatus == this.supplyReqStatus.Pending); 
           } else {
             this.isActiveRequestExists = false;
             this.supplyRequestStatus = '';
             this.supplyRequestStatusList = [];
             this.requestedNoOfDays = 1;
-            this.requestedQuantity = this.totalDose.toString();
+            this.requestedQuantity = this.totalDose?.toString();
           }
           //this.showSupplyRequestPopup = true;
           // no stock validation for now
@@ -617,24 +641,31 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
     } else {
       this.supplyrequest.daterequired = null;
     }
-    if (this.supplyrequest.fulfilledon) {
-      this.supplyrequest.fulfilledon = moment(this.supplyrequest.fulfilledon).toDate();
-    } else {
-      this.supplyrequest.fulfilledon = moment().toDate();
-    }
-    this.supplyRequestStatusList = [];
-    //this.supplyRequestStatusList.push(this.supplyRequestStatus);
+    if (this.supplyRequestStatus == this.supplyReqStatus.Fulfilled) {
+      if (this.supplyrequest.fulfilledon) {
+        this.supplyrequest.fulfilledon = moment(this.supplyrequest.fulfilledon).toDate();
+      } else {
+        this.supplyrequest.fulfilledon = moment().toDate();
+      }
+   }
+    
     if (this.originalSupplyStatus == this.supplyReqStatus.Incomplete) {
-      this.supplyRequestStatusList.push(this.supplyReqStatus.Incomplete);
+      this.SetSupplyStatus(this.supplyReqStatus.Incomplete);
     } else {
-      this.supplyRequestStatusList.push(this.supplyReqStatus.Pending);
+      this.SetSupplyStatus(this.supplyReqStatus.Pending);
     }
-
-    this.supplyRequestStatusList.push(this.supplyReqStatus.Approved);
-    this.supplyRequestStatusList.push(this.supplyReqStatus.Rejected);
-    this.supplyRequestStatusList.push(this.supplyReqStatus.Fulfilled);
     this.setSupplyRequestChangeData(supplyRequestId);
     this.getSupplyRequestMedication(supplyRequestId);
+    this.isEditable = !(this.originalSupplyStatus == this.supplyReqStatus.Incomplete || this.originalSupplyStatus == this.supplyReqStatus.Pending); 
+  }
+  setFullFilDate() {
+    if (this.supplyRequestStatus == this.supplyReqStatus.Fulfilled) {
+      if (this.supplyrequest.fulfilledon) {
+        this.supplyrequest.fulfilledon = moment(this.supplyrequest.fulfilledon).toDate();
+      } else {
+        this.supplyrequest.fulfilledon = moment().toDate();
+      }
+   }
   }
   setSupplyRequestChangeData(supplyRequestId) {
     this.subscriptions.add(
@@ -655,8 +686,8 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
     );
   }
   getSupplyRequestMedication(supplyRequestId) {
-    this.dr.getSupplyRequestMedication(supplyRequestId,(data) => {
-      if(data.length>0 ) {
+    this.dr.getSupplyRequestMedication(supplyRequestId, (data) => {
+      if (data.length > 0) {
         this.supplyRequestMedications = data;
       }
     });
@@ -719,8 +750,17 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
     }
   }
   statusRBACValidation(status) {
-
-    if (this.prescription.__medications[0].isformulary) {
+    if(this.prescription.isdeleted){
+      return true;
+    }
+    if (status == this.supplyReqStatus.Fulfilled) {
+       if(this.originalSupplyStatus == this.supplyReqStatus.Approved) {
+        return false;
+       } else {
+        return true;
+       }
+    }
+    if (!this.nonFormularyRequest) {
       if (status == this.supplyReqStatus.Pending) {
         if (this.appService.AuthoriseAction(RoleAction.epma_approve_formulary_supplyequest) == true) {
           return false;
@@ -735,7 +775,7 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
           return true;
         }
       }
-      if (status == this.supplyReqStatus.Rejected) {
+      if (status == this.supplyReqStatus.Rejected || status == this.supplyReqStatus.OutpatientChecked) {
         if (this.appService.AuthoriseAction(RoleAction.epma_reject_formulary_supplyequest) == true) {
           return false;
         } else {
@@ -764,7 +804,7 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
           return true;
         }
       }
-      if (status == this.supplyReqStatus.Rejected) {
+      if (status == this.supplyReqStatus.Rejected || status == this.supplyReqStatus.OutpatientChecked) {
         if (this.appService.AuthoriseAction(RoleAction.epma_reject_nonformulary_supplyequest) == true) {
           return false;
         } else {
@@ -782,43 +822,45 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
   }
   onSave(): void {
     if ((this.event.componenttype == 'SUM' || this.event.componenttype == 'SUMNO') && this.dSMedSupplyNotRequired.status == "No") {
-      if(!this.dSMedSupplyNotRequired.epma_dsmedsupplyrequiredstatus_id) {
+      if (!this.dSMedSupplyNotRequired.epma_dsmedsupplyrequiredstatus_id) {
         this.dSMedSupplyNotRequired.epma_dsmedsupplyrequiredstatus_id = uuid();
       }
-      if(this.dSMedSupplyNotRequired.reason!='Not required') {
+      if (this.dSMedSupplyNotRequired.reason != 'Not required') {
         this.dSMedSupplyNotRequired.otherreason = "";
       }
       this.dsOtherReasonMessage = "";
-      if(this.dSMedSupplyNotRequired.reason=='Not required') {
-        if(!this.dSMedSupplyNotRequired.otherreason) {
+      if (this.dSMedSupplyNotRequired.reason == 'Not required') {
+        if (!this.dSMedSupplyNotRequired.otherreason) {
           this.dsOtherReasonMessage = "Please enter reason";
           return;
-       }
+        }
       }
       this.dSMedSupplyNotRequired.prescription_id = this.event.prescription.prescription_id;
       this.dSMedSupplyNotRequired.person_id = this.appService.personId;
-      this.dSMedSupplyNotRequired.encounter_id =this.appService.encounter.encounter_id;
-      this.isSaving = true;  
+      this.dSMedSupplyNotRequired.encounter_id = this.encounterId;
+      this.isSaving = true;
       this.subscriptions.add(this.apiRequest.postRequest(this.appService.baseURI +
-        "/PostObject?synapsenamespace=local&synapseentityname=epma_dsmedsupplyrequiredstatus", JSON.stringify(this.dSMedSupplyNotRequired))
+        "/PostObject?synapsenamespace=local&synapseentityname=epma_dsmedsupplyrequiredstatus", JSON.stringify(this.dSMedSupplyNotRequired),false)
         .subscribe((saveResponse) => {
           this.appService.UpdateDataVersionNumber(saveResponse);
-          this.isSaving = false;  
+          this.isSaving = false;
           this.subjects.closeAppComponentPopover.next();
         }
         )
       )
     } else {
-      if((this.event.componenttype == 'SUM' || this.event.componenttype == 'SUMNO')) {
+      if ((this.event.componenttype == 'SUM' || this.event.componenttype == 'SUMNO')) {
         this.dSMedSupplyNotRequired.prescription_id = this.event.prescription.prescription_id;
         this.dSMedSupplyNotRequired.person_id = this.appService.personId;
-        this.dSMedSupplyNotRequired.encounter_id =this.appService.encounter.encounter_id;
+        this.dSMedSupplyNotRequired.encounter_id = this.encounterId;
         this.dSMedSupplyNotRequired.status = "Yes";
-        if(!this.dSMedSupplyNotRequired.epma_dsmedsupplyrequiredstatus_id) {
+        this.dSMedSupplyNotRequired.otherreason = "";
+        this.dSMedSupplyNotRequired.reason = "";
+        if (!this.dSMedSupplyNotRequired.epma_dsmedsupplyrequiredstatus_id) {
           this.dSMedSupplyNotRequired.epma_dsmedsupplyrequiredstatus_id = uuid();
         }
         this.subscriptions.add(this.apiRequest.postRequest(this.appService.baseURI +
-          "/PostObject?synapsenamespace=local&synapseentityname=epma_dsmedsupplyrequiredstatus", JSON.stringify(this.dSMedSupplyNotRequired))
+          "/PostObject?synapsenamespace=local&synapseentityname=epma_dsmedsupplyrequiredstatus", JSON.stringify(this.dSMedSupplyNotRequired),false)
           .subscribe((saveResponse) => {
             this.appService.UpdateDataVersionNumber(saveResponse);
             this.onSupplyRequestSave();
@@ -828,29 +870,34 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
       } else {
         this.onSupplyRequestSave();
       }
-     
+
     }
   }
   onSupplyRequestSave(): void {
     this.validationMessage = '';
     this.informationMessage = '';
     this.isSaving = false;
+    let isnnewRequest = false;
     if (this.productType == 'VTM') {
       this.validationMessage = 'Please select a VMP or AMP medication';
       return;
     }
-    if (!this.isInfusion && this.originalProductType != 'VTM' && this.appService.GetCurrentPosology(this.prescription).frequency != 'protocol' && this.appService.GetCurrentPosology(this.prescription).dosetype != DoseType.descriptive) {
+    if (!this.prescription.titration && !this.isInfusion && this.originalProductType != 'VTM' && this.appService.GetCurrentPosology(this.prescription).frequency != 'protocol' && this.appService.GetCurrentPosology(this.prescription).dosetype != DoseType.descriptive) {
       if (!this.requestedNoOfDays || this.requestedNoOfDays <= 0) {
+        if(this.supplyRequestStatus != SupplyRequestStatus.Rejected) {
+          this.validationMessage = 'Please enter valid quantity/days';
+          return;
+        }
+      }
+    }
+    if (typeof this.requestedQuantity === 'undefined' || +this.requestedQuantity <= 0 || +this.requestedQuantity > 999999999999) {
+      if(this.supplyRequestStatus != SupplyRequestStatus.Rejected) {
         this.validationMessage = 'Please enter valid quantity/days';
         return;
       }
     }
-    if (typeof this.requestedQuantity === 'undefined' || +this.requestedQuantity <= 0 || +this.requestedQuantity > 999999999999) {
-      this.validationMessage = 'Please enter valid quantity/days';
-      return;
-    }
 
-    if (this.requestedQuantity.toString().indexOf('.') > -1) {
+    if (this.requestedQuantity && this.requestedQuantity.toString().indexOf('.') > -1) {
       if (this.requestedQuantity.toString().split('.')[1].length > 2) {
         this.validationMessage = 'Quantity should be of format nn.nn.';
         return;
@@ -861,17 +908,20 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
         this.validationMessage = 'Date fulfilled should be on/before today.';
         return;
       }
-
-      if (moment(this.supplyrequest.fulfilledon).format("YYYYMMDD") < moment(this.requestedOn).format("YYYYMMDD")) {
-        this.validationMessage = `Date fulfilled should not be earlier than ${moment(this.requestedOn).format('DD-MMM-YYYY')}.`;
-        return;
-      }
+      ////// Romoved for issiue EPMA-2794
+      // if (moment(this.supplyrequest.fulfilledon).format("YYYYMMDD") < moment(this.requestedOn).format("YYYYMMDD")) {
+      //   this.validationMessage = `Date fulfilled should not be earlier than ${moment(this.requestedOn).format('DD-MMM-YYYY')}.`;
+      //   return;
+      // }
     }
     if (this.validationMessage == '' && this.quantityMessage == '') {
       this.isSaving = true;
+
       if (!this.supplyRequestId) {
+        isnnewRequest = true;
         this.supplyrequest.epma_supplyrequest_id = uuid();
         this.supplyrequest.lastmodifiedby = this.appService.loggedInUserName;
+        this.supplyrequest.lastmodifiedon = this.appService.getDateTimeinISOFormat(moment().toDate());
         this.supplyrequest.requestedon = this.appService.getDateTimeinISOFormat(moment().toDate());
         this.supplyrequest.requestedby = this.appService.loggedInUserName;
       } else {
@@ -886,6 +936,9 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
       } else {
         this.supplyrequest.requeststatus = this.supplyRequestStatus;
       }
+      if(this.componenttype!="OP" && this.supplyRequestStatus != this.supplyReqStatus.Rejected) {
+        this.supplyrequest.comment = "";
+      }
       this.supplyrequest.prescription_id = this.prescriptionId;
       this.supplyrequest.medication_id = this.medicationCode;
       this.supplyrequest.selectedproductcode = this.searchCode;
@@ -893,61 +946,87 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
       this.supplyrequest.selectedproductname = this.productName;
 
       this.supplyrequest.requestednoofdays = this.requestedNoOfDays;
-      this.supplyrequest.requestquantity = this.requestedQuantity.toString();
+      this.supplyrequest.requestquantity = this.requestedQuantity?.toString();
       this.supplyrequest.requestedquantityunits = this.doseUnit;
       this.supplyrequest.isformulary = !this.nonFormularyRequest;
       this.supplyrequest.personid = this.appService.personId;
-      this.supplyrequest.encounterid = this.appService.encounter.encounter_id;
+      this.supplyrequest.encounterid = this.encounterId;
       // change object to post data
       let data = Object.assign({}, this.supplyrequest);
       let route = JSON.stringify(this.supplyrequest.route);
       let indication = JSON.stringify(this.supplyrequest.indication);
       data.route = route;
       data.indication = indication;
-      data.daterequired = this.appService.getDateTimeinISOFormat(this.supplyrequest.daterequired);
+      if(this.supplyrequest.daterequired) {
+        data.daterequired = this.appService.getDateTimeinISOFormat(this.supplyrequest.daterequired);
+      }
       if (this.supplyRequestStatus == SupplyRequestStatus.Fulfilled) {
         data.fulfilledon = this.appService.getDateTimeinISOFormat(this.supplyrequest.fulfilledon);
       }
+      if (this.supplyRequestStatus != SupplyRequestStatus.Fulfilled) {
+        data.fulfilledon = null;
+      }
       console.log(JSON.stringify(data));
       // save to database
-     var upsertManager = new UpsertTransactionManager();
-     upsertManager.beginTran(this.appService.baseURI, this.apiRequest);
+      var upsertManager = new UpsertTransactionManager();
+      upsertManager.beginTran(this.appService.baseURI, this.apiRequest);
       if (data) {
         upsertManager.addEntity('local', "epma_supplyrequest", JSON.parse(JSON.stringify(data)));
-        upsertManager.addEntity('local', 'epma_supplyrequestmedications', { "epma_supplyrequest_id" : data.epma_supplyrequest_id}, "del");
+        upsertManager.addEntity('local', 'epma_supplyrequestmedications', { "epma_supplyrequest_id": data.epma_supplyrequest_id }, "del");
         this.supplyRequestMedications.forEach(m => {
           m.epma_supplyrequest_id = data.epma_supplyrequest_id;
           upsertManager.addEntity('local', 'epma_supplyrequestmedications', JSON.parse(JSON.stringify(m)));
         });
       }
-    upsertManager.save((resp) => {
-      this.appService.UpdateDataVersionNumber(resp);
-      this.supplyRequestStatusList = [];
-      this.supplyRequestStatusList.push(this.supplyReqStatus.Pending);
-      this.informationMessage = 'Supply request is saved.';
-      this.isSaving = false;
-      this.dr.getSupplyRequest(() => {
-        this.subjects.refreshTemplate.next();
-        this.subjects.closeAppComponentPopover.next();
-      });
-      upsertManager.destroy();
-      this.appService.logToConsole(resp);   
-    },
-      (error) => {
-        this.appService.logToConsole(error);
-        upsertManager.destroy();
-        if (this.appService.IsDataVersionStaleError(error)) {
-          this.subjects.ShowRefreshPageMessage.next(error);
+      upsertManager.save((resp) => {
+        this.appService.UpdateDataVersionNumber(resp);
+        this.supplyRequestStatusList = [];
+        this.supplyRequestStatusList.push({ name : this.supplyReqStatus.Pending, value : this.supplyReqStatus.Pending});
+     
+        this.informationMessage = 'Supply request is saved.';
+        this.isSaving = false;
+        if (isnnewRequest && !this.supplyrequest.isformulary) {
+          let result: any[] = [];
+          this.supplyRequestMedications.forEach(elm => result.push(elm.productname));
+          const productNameList = result;
+          this.dr.SendEmailForNonFormularyRequest(productNameList, this.supplyrequest.requestquantity, this.supplyrequest.daterequired);
         }
-      }
-    );
+        this.dr.getSupplyRequest(() => {
+          this.subjects.refreshTemplate.next();
+          this.subjects.closeAppComponentPopover.next();
+        });
+        upsertManager.destroy();
+        this.appService.logToConsole(resp);
+      },
+        (error) => {
+          this.appService.logToConsole(error);
+          upsertManager.destroy();
+          if (this.appService.IsDataVersionStaleError(error)) {
+            this.appService.RefreshPageWithStaleError(error);
+          }
+        }, false
+      );
     }
   }
-
+  GetMedicationSupplyHistory() {
+    this.dr.GetMedicationSupplyHistory(this.patientDrug.prescriptionid, (data) => {
+      
+    });
+  }
+  GetComplienceAid(id) {
+    if (id) {
+      return this.appService.MetaComplianceAid.find(x => x.complianceaid_id == id).complianceaid_name;
+    } else {
+      return "";
+    }
+  }
   onCancel(): void {
     this.isSaving = false;
     //this.showSupplyRequestPopup = false;
     this.subjects.closeAppComponentPopover.next();
+  }
+  NewPatientDrug() {
+    this.subjects.patientDrug.next({ prescription: this.prescription });
   }
   alphaNumberOnly(e) {  // Accept only alpha numerics, not special characters 
     var regex = new RegExp("^[a-zA-Z0-9 .]+$");
@@ -981,7 +1060,7 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
     this.supplyRequestStatus = this.supplyReqStatus.Incomplete
     this.originalSupplyStatus = this.supplyReqStatus.Incomplete;
     this.supplyRequestStatusList = [];
-    this.supplyRequestStatusList.push(this.supplyRequestStatus);
+    this.supplyRequestStatusList.push({name : this.supplyRequestStatus , value : this.supplyRequestStatus});
     this.supplyrequest.daterequired = moment().toDate();
     this.supplyrequest.fulfilledon = null;
     this.supplyrequest.ordermessage = "";
@@ -991,7 +1070,7 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
     this.isRequestFulfilled = false;
     this.isRequestRejected = false;
     this.isRequestPending = false;
-
+    this.isEditable = false;
 
 
   }
@@ -1026,7 +1105,9 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
         this.requestedNoOfDays = undefined;
         this.quantityMessage = "The number of days is restricted to a value between 1 and " + noOfDays + ". Please enter a valid value";
       } else if (this.requestedNoOfDays < 1) {
-        this.quantityMessage = "Field should not accept value less than 1";
+        if(this.supplyRequestStatus != SupplyRequestStatus.Rejected) {
+         this.quantityMessage = "Field should not accept value less than 1";
+        }
       }
     }
   }
@@ -1061,7 +1142,9 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
         this.requestedNoOfDays = undefined;
         this.quantityMessage = "The entered quantity would result in a supply request for more than " + noOfDays + " days. Please reduce the required quantity";
       } else if (+this.requestedQuantity < 1) {
-        this.quantityMessage = "Field should not accept value less than 1";
+        if(this.supplyRequestStatus != SupplyRequestStatus.Rejected) {
+         this.quantityMessage = "Field should not accept value less than 1";
+        }
       }
     }
 

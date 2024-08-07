@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -20,18 +20,19 @@
 //END LICENSE BLOCK 
 import { Injectable, OnDestroy } from "@angular/core";
 import { forkJoin, Subscription } from "rxjs";
-import { AdministerMedication, AdministrationWitness, DoseEvents, DSMedSupplyRequiredStatus, InfusionEvents, Medicationadministration, Medreconciliation, NursingInstruction, Prescription, PrescriptionEvent, Prescriptionreminders, Prescriptionreviewstatus, Prescriptionroutes, SupplyRequest, SupplyRequestMedications } from "../models/EPMA";
+import { AdministerMedication, AdministrationWitness, DoseEvents, EmailModel, DSMedSupplyRequiredStatus, InfusionEvents, Medicationadministration, Medreconciliation, NursingInstruction, Prescription, PrescriptionEvent, Prescriptionreminders, Prescriptionreviewstatus, Prescriptionroutes, SupplyRequest, SupplyRequestMedications, PersonAwayPeriod, NursingInstructions, PrescriptionMedicaitonSupply, Remindersack } from "../models/EPMA";
 import { ApirequestService } from "./apirequest.service";
 import { AppService } from "./app.service";
 import { filter, filterparam, filterParams, filters, orderbystatement, selectstatement } from 'src/app/models/filter.model';
 import { Allergyintolerance, Personwarningupdate } from "../models/allergy.model";
 import { Observation } from "../models/observations.model";
 import moment from "moment";
-import { Allergens, PatientInfo, WarningContext } from "../models/WarningServiceModal";
+import { Allergens, Conditions, PatientInfo, WarningContext } from "../models/WarningServiceModal";
 import { v4 as uuid } from 'uuid';
 import { SubjectsService } from "./subjects.service";
-import { PrescriptionContext, RefWeightType, SupplyRequestStatus } from "./enum";
+import { Common, InfusionType, PrescriptionContext, PrescriptionStatus, RefWeightType, SupplyRequestStatus } from "./enum";
 import { UpsertTransactionManager } from "src/app/services/upsert-transaction-manager.service";
+import { DiagnosisModel } from "../models/diagnosis.model";
 @Injectable({
     providedIn: 'root'
 })
@@ -39,22 +40,46 @@ import { UpsertTransactionManager } from "src/app/services/upsert-transaction-ma
 export class DataRequest implements OnDestroy {
     subscriptions = new Subscription();
     patientDetails;
+    nextRefresh;
     constructor(private apiRequest: ApirequestService, private appService: AppService, private subjects: SubjectsService) {
 
     }
 
     getSupplyRequest(cb: () => any) {
         this.appService.SupplyRequest = [];
-        this.subscriptions.add(this.apiRequest.getRequest(this.appService.baseURI + "/GetListByAttribute?synapsenamespace=local&synapseentityname=epma_supplyrequest&synapseattributename=encounterid&attributevalue=" + this.appService.encounter.encounter_id).subscribe(
+        this.subscriptions.add(this.apiRequest.postRequest(this.appService.baseURI + "/GetListByPost?synapsenamespace=local&synapseentityname=epma_supplyrequest", this.createSupplyRequestFilter()).subscribe(
             (response) => {
-                let responseArray: SupplyRequest[] = JSON.parse(response);
-                this.appService.SupplyRequest = responseArray.filter(s => s.requeststatus == SupplyRequestStatus.Incomplete || s.requeststatus == SupplyRequestStatus.Pending || s.requeststatus == SupplyRequestStatus.Approved);
+                let responseArray: SupplyRequest[] = response;
+                this.appService.SupplyRequest = responseArray; //.filter(s => s.requeststatus == SupplyRequestStatus.Incomplete || s.requeststatus == SupplyRequestStatus.Pending || s.requeststatus == SupplyRequestStatus.Approved);
                 cb();
             }
         ));
     }
-    getDSMedSupplyRequest(pId:string, cb: (data) => any) {
-        this.appService.SupplyRequest = [];
+
+    private createSupplyRequestFilter() {
+        let condition = "encounterid = @encounterid or encounterid = @op_encounterid";
+        let f = new filters()
+        f.filters.push(new filter(condition));
+
+        let pm = new filterParams();
+        pm.filterparams.push(new filterparam("encounterid", this.appService.encounter.encounter_id));
+        pm.filterparams.push(new filterparam("op_encounterid", Common.op_encounter_placeholder));
+
+        let select = new selectstatement("SELECT *");
+
+        let orderby = new orderbystatement("ORDER BY lastmodifiedon DESC");
+
+        let body = [];
+        body.push(f);
+        body.push(pm);
+        body.push(select);
+        body.push(orderby);
+
+        return JSON.stringify(body);
+    }
+
+
+    getDSMedSupplyRequest(pId: string, cb: (data) => any) {
         this.subscriptions.add(this.apiRequest.getRequest(this.appService.baseURI + "/GetListByAttribute?synapsenamespace=local&synapseentityname=epma_dsmedsupplyrequiredstatus&synapseattributename=prescription_id&attributevalue=" + pId).subscribe(
             (response) => {
                 let responseArray: DSMedSupplyRequiredStatus[] = JSON.parse(response);
@@ -62,8 +87,7 @@ export class DataRequest implements OnDestroy {
             }
         ));
     }
-    getSupplyRequestMedication(srId:string, cb: (data) => any) {
-        this.appService.SupplyRequest = [];
+    getSupplyRequestMedication(srId: string, cb: (data) => any) {
         this.subscriptions.add(this.apiRequest.getRequest(this.appService.baseURI + "/GetListByAttribute?synapsenamespace=local&synapseentityname=epma_supplyrequestmedications&synapseattributename=epma_supplyrequest_id&attributevalue=" + srId).subscribe(
             (response) => {
                 let responseArray: SupplyRequestMedications[] = JSON.parse(response);
@@ -79,6 +103,24 @@ export class DataRequest implements OnDestroy {
                     this.appService.Prescriptionreminders = [];
                     for (let r of responseArray) {
                         this.appService.Prescriptionreminders.push(<Prescriptionreminders>r);
+                    }
+                    this.getRemindersAck(() => {
+                        cb();
+                    });
+
+                }));
+    }
+    getRemindersAck(cb: () => any) {
+        this.subscriptions.add(
+            this.apiRequest.getRequest(this.appService.baseURI + "/GetListByAttribute?synapsenamespace=local&synapseentityname=epma_remindersack&synapseattributename=encounter_id&attributevalue=" + this.appService.encounter.encounter_id)
+                .subscribe(reminders => {
+                    let responseArray = JSON.parse(reminders);
+                    this.appService.remindersack = [];
+                    for (let r of responseArray) {
+                        let reminder = this.appService.Prescriptionreminders.find(x => x.epma_prescriptionreminders_id == r.epma_prescriptionreminders_id);
+                        r.__remindertext = reminder.message;
+                        r.__lastmodifiedby = reminder.lastmodifiedby;
+                        this.appService.remindersack.push(<Remindersack>r);
                     }
                     cb();
                 }));
@@ -109,18 +151,26 @@ export class DataRequest implements OnDestroy {
 
         if (this.appService.Prescription && this.appService.Prescription.length != 0) {
             let medicationAdministration = this.apiRequest.getRequest(this.appService.baseURI + "/GetListByAttribute?synapsenamespace=core&synapseentityname=medicationadministration&synapseattributename=encounter_id&attributevalue=" + this.appService.encounter.encounter_id);
+            let medicationAdministration_op = this.apiRequest.getRequest(this.appService.baseURI + "/GetListByAttribute?synapsenamespace=core&synapseentityname=medicationadministration&synapseattributename=encounter_id&attributevalue=" + Common.op_encounter_placeholder);
+
             let doseEvent = this.apiRequest.postRequest(this.appService.baseURI + "/GetBaseViewListByPost/epma_doseevents", this.createEventsFilter());
             let infusionEvent = this.apiRequest.postRequest(this.appService.baseURI + "/GetBaseViewListByPost/epma_infusionevents", this.createEventsFilter());
 
             this.subscriptions.add(forkJoin([
                 medicationAdministration,
                 doseEvent,
-                infusionEvent
-            ]).subscribe(([medicationadministration, doseevent, infusionevent]) => {
+                infusionEvent,
+                medicationAdministration_op
+            ]).subscribe(([medicationadministration, doseevent, infusionevent, medicationAdministration_op]) => {
 
                 // initialize medication administration data
                 let responseArrayMed = JSON.parse(medicationadministration);
                 for (let r of responseArrayMed) {
+                    this.appService.Medicationadministration.push(<Medicationadministration>r);
+                }
+
+                let responseArrayMed_op = JSON.parse(medicationAdministration_op);
+                for (const r of responseArrayMed_op) {
                     this.appService.Medicationadministration.push(<Medicationadministration>r);
                 }
 
@@ -162,6 +212,8 @@ export class DataRequest implements OnDestroy {
         prescriptionreviewstatus.modifiedby = this.appService.loggedInUserName;
         prescriptionreviewstatus.modifiedon =
             this.appService.getDateTimeinISOFormat(moment().toDate());
+        prescriptionreviewstatus.modifieddatetime =
+            this.appService.getDateTimeinISOFormat(moment().toDate());
         prescriptionreviewstatus.reviewcomments = "";
 
         prescriptionreviewstatus.status = 'd219dd6d-aafc-4aa3-bad0-5ffcc87d0134';
@@ -198,19 +250,45 @@ export class DataRequest implements OnDestroy {
                 cb();
 
                 if (this.appService.IsDataVersionStaleError(error)) {
-                    this.subjects.ShowRefreshPageMessage.next(error);
+                    this.appService.RefreshPageWithStaleError(error);
                 }
             }
         );
 
     }
+
+    SendEmailForNonFormularyRequest(MedicationName: any[], Quantity: string, dateRequired: any) {
+        let Model = new EmailModel()
+        Model.Username = this.appService.appConfig.AppSettings.EmailSettings.Username;
+        Model.emailFrom = this.appService.appConfig.AppSettings.EmailSettings.emailFrom;
+        Model.fromName = this.appService.appConfig.AppSettings.EmailSettings.fromName;
+        Model.emailTo = this.appService.appConfig.AppSettings.EmailSettings.emailTo;
+        Model.subject = "Non-formulary request";
+        Model.password = this.appService.appConfig.AppSettings.EmailSettings.password;
+        let nhsnumber = this.appService.patientDetails.nhsnumber ? this.appService.patientDetails.nhsnumber.replaceAll(" ", "").toString() : ""
+        Model.body = "A non-formulary request has been created for " + this.appService.patientDetails.fullname + ", " + this.appService.patientDetails.hospitalnumber + " " + nhsnumber + ", who is under the care of " + this.appService.encounterDetails.consultingdoctortext + ".  <br> <br>";
+        for (let name of MedicationName) {
+            Model.body = Model.body + "The request is for the supply of " + name + " " + Quantity + " is required by " + moment(dateRequired).format("DD-MM-YYYY") + ".<br> <br>  The request was created by " + this.appService.loggedInUserName + "<br><br>";
+        }
+        this.subscriptions.add(
+            this.apiRequest.postRequest(this.appService.platfromServiceURI + "/Email/SendEmail", JSON.stringify(JSON.stringify(Model)))
+                .subscribe((response) => {
+
+                    console.log(response);
+
+
+
+                })
+        )
+    }
+
     UndoTransfer(dose: any, cb: () => any) {
         let doselist = [];
         let existingDoseEvent: DoseEvents = new DoseEvents();
+        let pres = this.appService.Prescription.find(p => p.prescription_id == dose.prescription_id).__posology.find(po => po.posology_id == dose.posology_id);
 
-        if (this.appService.Prescription.find(p => p.prescription_id == dose.prescription_id).__posology.find(po => po.posology_id == dose.posology_id).infusiontypeid == "ci" ||
-            this.appService.Prescription.find(p => p.prescription_id == dose.prescription_id).__posology.find(po => po.posology_id == dose.posology_id).infusiontypeid == "rate" &&
-            this.appService.Prescription.find(p => p.prescription_id == dose.prescription_id).__posology.find(po => po.posology_id == dose.posology_id).frequency == "variable"
+        if ((pres.infusiontypeid == "ci" || pres.infusiontypeid == InfusionType.pca) ||
+            (pres.infusiontypeid == "rate" && pres.frequency == "variable")
         ) {
             doselist = this.appService.events.sort((a, b) => new Date(a.eventStart).getTime() - new Date(b.eventStart).getTime()).filter(e => e.posology_id == dose.posology_id && !e.dose_id.includes("dur") && !e.dose_id.includes("flowrate") && !e.dose_id.includes("infusionevent"));
         }
@@ -221,6 +299,9 @@ export class DataRequest implements OnDestroy {
             var index = alldoselist.findIndex(x => x.dose_id == dose.dose_id);
             doselist.push(dose)
             let currentend = alldoselist[index + 1];
+            if (currentend.dose_id.includes("start")) {
+                currentend = this.createEndevent(dose, pres)
+            }
             doselist.push(currentend)
 
 
@@ -254,7 +335,7 @@ export class DataRequest implements OnDestroy {
                     upsertManager.destroy();
 
                     if (this.appService.IsDataVersionStaleError(error)) {
-                        this.subjects.ShowRefreshPageMessage.next(error);
+                        this.appService.RefreshPageWithStaleError(error);
                     }
                 }
             );
@@ -307,15 +388,20 @@ export class DataRequest implements OnDestroy {
 
             console.log(v)
             let doseEvents = {};
+            let fromDate = moment(startDateTime.slice(0, 4) + "-" + startDateTime.slice(4, 6) + "-" + startDateTime.slice(6, 8) + "T" + startDateTime.slice(8, 10) + ":" + startDateTime.slice(10, 12), "YYYY-MM-DDTHH:mm").toDate();
             doseEvents = {
                 doseevents_id: newDoseEventId,
                 dose_id: newDoseId,
                 posology_id: dose.posology_id,
-                startdatetime: startDateTime.slice(0, 4) + "-" + startDateTime.slice(4, 6) + "-" + startDateTime.slice(6, 8) + "T" + startDateTime.slice(8, 10) + ":" + startDateTime.slice(10, 12) + ":00.000Z",
+                startdatetime: this.appService.getDateTimeinISOFormat(fromDate),
                 eventtype: Transfertype,
                 dosedatetime: this.appService.getDateTimeinISOFormat(dosedatetime),
                 iscancelled: false,
                 logicalid: dose.dose_id,
+                createdon: this.appService.getDateTimeinISOFormat(moment().toDate()),
+                modifiedon: this.appService.getDateTimeinISOFormat(moment().toDate()),
+                createdby: this.appService.loggedInUserName,
+                modifiedby: this.appService.loggedInUserName,
             };
             upsertManager.addEntity('core', 'doseevents', JSON.parse(JSON.stringify(doseEvents)));
 
@@ -337,20 +423,55 @@ export class DataRequest implements OnDestroy {
                 cb("error");
 
                 if (this.appService.IsDataVersionStaleError(error)) {
-                    this.subjects.ShowRefreshPageMessage.next(error);
+                    this.appService.RefreshPageWithStaleError(error);
                 }
             }
         );
     }
 
-    transferRateInfution(dose: any, startDate: Date, startTime: string, transferStart: boolean, cb: (message: string) => any) {
-        let doselist = [];
+    createEndevent(dose: any, pres: any) {
+        let originalDoseStartTime = this.appService.Prescription.find(x => x.prescription_id == pres.prescription_id).__posology.find(y => y.posology_id == dose.posology_id).__dose.find(z => z.dose_id == dose.dose_id.split("_")[2]).dosestartdatetime;
+        let originalDoseEndTime = this.appService.Prescription.find(x => x.prescription_id == pres.prescription_id).__posology.find(y => y.posology_id == dose.posology_id).__dose.find(z => z.dose_id == dose.dose_id.split("_")[2]).doseenddatatime;
 
+        var a = moment(originalDoseEndTime);//now
+        var b = moment(originalDoseStartTime);
+        var convertToMinites = a.diff(b, 'minutes');
+
+        let splitLogicalId = dose.dose_id.split('_');
+        let date = moment();
+        date.set({ 'year': splitLogicalId[1].substring(0, 4), 'month': splitLogicalId[1].substring(4, 6) - 1, 'date': splitLogicalId[1].substring(6, 8), 'hour': splitLogicalId[1].substring(8, 10), 'minute': splitLogicalId[1].substring(10, 12), 'second': 0 })
+        let originalLogicid = moment(date).add(convertToMinites, "minutes");
+        let endtDatetemp = moment(dose.eventStart).add(convertToMinites, "minutes");
+
+        let endaddedtime = 'end_' + moment(originalLogicid).format('YYYYMMDDHHmm') + "_" + dose.dose_id.split("_")[2];
+        return {
+            "prescription_id": dose.prescription_id,
+            "posology_id": dose.posology_id,
+            "dose_id": endaddedtime,
+            "eventStart": endtDatetemp,
+            "eventEnd": null,
+            "prn": false,
+            "iscancel": false,
+            "doctorsorder": false,
+            "isinfusion": true,
+            "content": "<div class='InfusionCompleteoverdue'></div>",
+            "title": "Infusion Complete overdue",
+            "admitdone": false,
+            "opacityclass": "",
+            "diffrence": 0,
+            "stackclass": false
+        }
+    }
+    transferRateInfution(dose: any, startDate: Date, startTime: string, transferStart: boolean, cb: (message: string) => any ) {
+        let doselist = [];
+   
         doselist = this.appService.events.sort((a, b) => new Date(a.eventStart).getTime() - new Date(b.eventStart).getTime()).filter(e => e.posology_id == dose.posology_id && !e.dose_id.includes("dur") && !e.dose_id.includes("flowrate") && !e.dose_id.includes("infusionevent"));
         // if (this.appService.Prescription.find(p => p.__posology[0].posology_id == dose.posology_id && p.__posology[0].infusiontypeid == "ci")) {
-        if (this.appService.Prescription.find(p => p.prescription_id == dose.prescription_id).__posology.find(po => po.posology_id == dose.posology_id).infusiontypeid == "ci" ||
-            (this.appService.Prescription.find(p => p.prescription_id == dose.prescription_id).__posology.find(po => po.posology_id == dose.posology_id).infusiontypeid == "rate" &&
-                this.appService.Prescription.find(p => p.prescription_id == dose.prescription_id).__posology.find(po => po.posology_id == dose.posology_id).frequency == "variable")
+
+        let pres = this.appService.Prescription.find(p => p.prescription_id == dose.prescription_id).__posology.find(po => po.posology_id == dose.posology_id);
+
+        if ((pres.infusiontypeid == "ci" || pres.infusiontypeid == InfusionType.pca) ||
+            (pres.infusiontypeid == "rate" && pres.frequency == "variable")
         ) {
             this.transferCIAndRatevariable(doselist, startDate, startTime, transferStart, (message) => {
                 cb(message);
@@ -369,10 +490,37 @@ export class DataRequest implements OnDestroy {
             let nexttime
             let endtime
             let currentendtime
+            if (doselist.length == 1 && doselist[0].dose_id.includes("start")) {
+                currentend = this.createEndevent(dose, pres);
+                let dosesrate = [];
+                dosesrate.push(dose);
+
+                dosesrate.push(currentend);
+
+                this.transferCIAndRatevariable(dosesrate, startDate, startTime, transferStart, (message) => {
+                    cb(message);
+
+                });
+            }
             if (index >= 0 && index < doselist.length - 1) {
 
                 currentend = doselist[index + 1];
                 nextstartItem = doselist[index + 2];
+
+                if (currentend.dose_id.includes("start")) {
+
+                    currentend = this.createEndevent(dose, pres);
+                    nextstartItem = doselist[index + 1];
+                    let testcurrenttime= moment(currentend.eventStart).clone();
+                    testcurrenttime.add(this.appService.administrationTimeDiffInMinute, 'minutes')
+                    testcurrenttime = moment(currentend.eventStart).add(moment(newDoseDateTime).diff(dose.eventStart, 'minutes'), 'minutes')
+                    if(testcurrenttime.isSameOrAfter(moment(nextstartItem.eventStart))){
+                        cb("The administration event cannot be administered at a time after the next administration event.");
+                        return;
+                    }
+                    
+                }
+
 
                 lastenditem = doselist[index - 1];
                 if (nextstartItem) {
@@ -418,6 +566,7 @@ export class DataRequest implements OnDestroy {
                 else {
                     let dosesrate = [];
                     dosesrate.push(dose);
+
                     dosesrate.push(currentend);
                     this.transferCIAndRatevariable(dosesrate, startDate, startTime, transferStart, (message) => {
                         cb(message);
@@ -436,7 +585,9 @@ export class DataRequest implements OnDestroy {
                 else {
                     let dosesrate = [];
                     dosesrate.push(dose);
+
                     dosesrate.push(currentend);
+
                     this.transferCIAndRatevariable(dosesrate, startDate, startTime, transferStart, (message) => {
                         cb(message);
 
@@ -507,7 +658,8 @@ export class DataRequest implements OnDestroy {
     }
     // get all prescription
     getAllPrescription(cb: () => any) {
-
+        this.GetManageAwayPeriod(() => {
+        });
         this.getmedreconciliaCompletedobject();
         this.subscriptions.add(
             this.apiRequest.postRequest(this.appService.baseURI + "/GetBaseViewListByPost/epma_prescriptiondetail", this.createPrescriptionFilter())
@@ -543,7 +695,7 @@ export class DataRequest implements OnDestroy {
                     this.appService.MetaPrescriptionadditionalcondition = [];
                     this.appService.MetaPrescriptionSource = [];
                     this.appService.MetaPrescriptioncontext = [];
-
+                    this.appService.MetaComplianceAid = [];
                     for (let meta of JSON.parse(response)) {
                         switch (meta.field) {
                             case "oxygendevices": this.appService.oxygenDevices = JSON.parse(meta.data);
@@ -563,6 +715,8 @@ export class DataRequest implements OnDestroy {
                             case "prescriptionsource": this.appService.MetaPrescriptionSource = JSON.parse(meta.data);
                                 break;
                             case "prescriptioncontext": this.appService.MetaPrescriptioncontext = JSON.parse(meta.data);
+                                break;
+                            case "complianceaid": this.appService.MetaComplianceAid = JSON.parse(meta.data);
 
                         }
                     }
@@ -625,44 +779,61 @@ export class DataRequest implements OnDestroy {
             }));
     }
     // get medication administration history
-    getMedicationAdministrationHistory(administrationId, id, cb: () => any) {
+    getMedicationAdministrationHistory(id, cb: (data) => any) {
         this.appService.MedicationadministrationHistory = [];
         this.subscriptions.add(this.apiRequest.postRequest(this.appService.baseURI + "/GetBaseViewListByPost/epma_medicationadministrationhistory", this.createAdministrationHistoryFilter(id)).subscribe(
             (response) => {
                 let responseArray = response.sort((a, b) => b._sequenceid - a._sequenceid);
-                let i = 0;
                 for (let r of responseArray) {
-                    r._index = i++;
                     this.appService.MedicationadministrationHistory.push(<Medicationadministration>r);
                 }
-                this.getProductHistory(administrationId, () => {
-                    cb();
-                });
+                if (this.appService.MedicationadministrationHistory.length > 0) {
+                    this.getProductHistory(this.appService.MedicationadministrationHistory, () => {
+                        this.getWitnessAuthHistory(this.appService.MedicationadministrationHistory, (data) => {
+                            cb(data);
+                        });
+                    });
+                } else {
+                    cb([]);
+                }
 
             }));
     }
-    getProductHistory(id: string, cb: () => any) {
+    getProductHistory(administration: any, cb: () => any) {
         this.appService.AdministermedicationHistory = [];
-        this.subscriptions.add(this.apiRequest.postRequest(this.appService.baseURI + "/GetBaseViewListByPost/epma_administeredmedhistory", this.createProductHistoryFilter(id)).subscribe(
+        this.subscriptions.add(this.apiRequest.postRequest(this.appService.baseURI + "/GetBaseViewListByPost/epma_administeredmedhistory", this.createAdministerMedHistoryFilter(administration)).subscribe(
             (response) => {
 
                 let responseArray = response.sort((a, b) => b._sequenceid - a._sequenceid);;
                 if (responseArray.length > 0) {
-                    let i = 0;
                     for (let r of responseArray) {
-                        r._index = i++;
                         this.appService.AdministermedicationHistory.push(<AdministerMedication>r);
                     }
-                    cb();
+
                 }
+                cb();
             }));
     }
-    createProductHistoryFilter(id) {
-        let condition = "medicationadministrationid = @medicationadministrationid";
+    getWitnessAuthHistory(administration: any, cb: (data) => any) {
+        this.subscriptions.add(this.apiRequest.postRequest(this.appService.baseURI + "/GetBaseViewListByPost/epma_administrationwitnesshistory", this.createAdministerMedHistoryFilter(administration)).subscribe(
+            (response) => {
+                let responseArray = response.sort((a, b) => b._sequenceid - a._sequenceid);;
+                cb(responseArray);
+            }));
+    }
+    getPrescriptionAdministrationHistory(id: string, cb: (data) => any) {
+        this.subscriptions.add(this.apiRequest.postRequest(this.appService.baseURI + "/GetBaseViewListByPost/epma_prescriptionadministrationhistory", this.createPrescriptionAdministrationHistoryFilter(id)).subscribe(
+            (response) => {
+                let responseArray = response; //.sort((a, b) => b._sequenceid - a._sequenceid);;
+                cb(responseArray);
+            }));
+    }
+    createAdministrationHistoryFilter(id) {
+        let condition = "logicalid = @logicalid";
         let f = new filters()
         f.filters.push(new filter(condition));
         let pm = new filterParams();
-        pm.filterparams.push(new filterparam("medicationadministrationid", id));
+        pm.filterparams.push(new filterparam("logicalid", id));
         let select = new selectstatement("SELECT *");
         let orderby = new orderbystatement("ORDER BY 2");
         let body = [];
@@ -672,15 +843,14 @@ export class DataRequest implements OnDestroy {
         body.push(orderby);
         return JSON.stringify(body);
     }
-
-    createAdministrationHistoryFilter(id) {
-        let condition = "logicalid = @logicalid";
+    createPrescriptionAdministrationHistoryFilter(id) {
+        let condition = "prescription_id = @prescription_id";
         let f = new filters()
         f.filters.push(new filter(condition));
         let pm = new filterParams();
-        pm.filterparams.push(new filterparam("logicalid", id));
+        pm.filterparams.push(new filterparam("prescription_id", id));
         let select = new selectstatement("SELECT *");
-        let orderby = new orderbystatement("ORDER BY 2");
+        let orderby = new orderbystatement("");
         let body = [];
         body.push(f);
         body.push(pm);
@@ -724,15 +894,29 @@ export class DataRequest implements OnDestroy {
                 this.appService.patientInfo.allergens = this.appService.allergyintolerance.filter(x => x.causativeagentcodesystem.toLowerCase() == "SNOMED CT".toLowerCase() && x.clinicalstatusvalue.toLowerCase() == "Active".toLowerCase()).map<Allergens>((r: Allergyintolerance) => {
                     return { uname: r.causativeagentdescription, code: r.causativeagentcode, type: 1 };
                 });
+                this.GetDiagnosis(() => {
+                    cb();
+                });
+            }
+        ));
+    }
+    GetDiagnosis(cb: () => any) {
+        this.subscriptions.add(this.apiRequest.getRequest(this.appService.baseURI + "/GetListByAttribute?synapsenamespace=core&synapseentityname=diagnosis&synapseattributename=person_id&attributevalue=" + this.appService.personId).subscribe(
+            (response) => {
+                let responseArray: DiagnosisModel[] = JSON.parse(response);
+                this.appService.patientInfo.conditions = responseArray.filter(x => x.clinicalstatus.toLowerCase() == "Active".toLowerCase()).map<Conditions>((r: DiagnosisModel) => {
+                    return { uname: r.diagnosistext, code: r.diagnosiscode, type: 1 };
+                });
                 cb();
             }
         ));
     }
     TriggerWarningUpdateOnChanges(cb: () => any, wc: string = WarningContext.ip) {
 
-        //get new allergies from entity
+        //get new allergies and diagnoses from entity
         this.getAllergy(() => {
             this.appService.patientInfo.allergens.sort((a, b) => a.code.localeCompare(b.code));
+            this.appService.patientInfo.conditions.sort((a, b) => a.code.localeCompare(b.code));
 
             //get new height weight from entity
             this.getHeightWeight(() => {
@@ -755,32 +939,46 @@ export class DataRequest implements OnDestroy {
 
                         if (curr_warningupdate.length > 0) {
                             curr_dbWarningUpdate = curr_warningupdate[0];
+                            if (curr_dbWarningUpdate.allergens == 'null')
+                                curr_dbWarningUpdate.allergens = '[]';
+                            if (curr_dbWarningUpdate.conditions == 'null')
+                                curr_dbWarningUpdate.conditions = '[]';
                             curr_patientInfo.age = this.appService.personAgeInDays;
-                            curr_patientInfo.allergens = JSON.parse(curr_dbWarningUpdate.allergens);
+                            curr_patientInfo.allergens = JSON.parse(curr_dbWarningUpdate.allergens ?? "[]");
+                            curr_patientInfo.conditions = JSON.parse(curr_dbWarningUpdate.conditions ?? "[]");
                             curr_patientInfo.bsa = curr_dbWarningUpdate.bsa
                             curr_patientInfo.gender = this.appService.gender.toLowerCase() == 'm' ? 1 : this.appService.gender.toLowerCase() == 'f' ? 2 : 3
                             curr_patientInfo.height = curr_dbWarningUpdate.height;
                             curr_patientInfo.weight = curr_dbWarningUpdate.weight;
                             curr_patientInfo.allergens.sort((a, b) => a.code.localeCompare(b.code));
+                            curr_patientInfo.conditions.sort((a, b) => a.code.localeCompare(b.code));
+
                         } else {
                             curr_dbWarningUpdate.epma_personwarningupdate_id = uuid();
                         }
                         if (this.appService.warningService) {
                             let c1 = this.ComparePatientInfoObjects(curr_patientInfo, this.appService.patientInfo);
                             let c2 = JSON.stringify(curr_patientInfo.allergens) == JSON.stringify(this.appService.patientInfo.allergens);
-                            if (!c1 || !c2) {
+                            let c3 = JSON.stringify(curr_patientInfo.conditions) == JSON.stringify(this.appService.patientInfo.conditions);
+
+                            if (!c1 || !c2 || !c3) {
                                 // call to refresh the warning from fdb
                                 this.appService.RefreshWarningsFromApi(() => {
                                     cb();
                                 }, wservice);
                                 // insert/update epma_personwarningupdate if does not exist and anything chnage
                                 curr_dbWarningUpdate.allergens = JSON.stringify(this.appService.patientInfo.allergens);
+                                curr_dbWarningUpdate.conditions = JSON.stringify(this.appService.patientInfo.conditions);
                                 curr_dbWarningUpdate.height = +this.appService.patientInfo.height;
                                 curr_dbWarningUpdate.weight = +this.appService.patientInfo.weight;
                                 curr_dbWarningUpdate.bsa = +this.appService.patientInfo.bsa; //+(Math.sqrt(+this.appService.refWeightValue * + this.appService.patientInfo.weight) / 60).toFixed(2);
                                 curr_dbWarningUpdate.person_id = this.appService.personId;
                                 curr_dbWarningUpdate.encounter_id = this.appService.encounter.encounter_id;
                                 curr_dbWarningUpdate.warningcontextid = warningcontextid;
+                                if (curr_dbWarningUpdate.allergens == 'null')
+                                    curr_dbWarningUpdate.allergens = '[]';
+                                if (curr_dbWarningUpdate.conditions == 'null')
+                                    curr_dbWarningUpdate.conditions = '[]';
                                 this.subscriptions.add(this.apiRequest.postRequest(this.appService.baseURI +
                                     "/PostObject?synapsenamespace=local&synapseentityname=epma_personwarningupdate", curr_dbWarningUpdate, false)
                                     .subscribe((saveResponse) => { })
@@ -1043,72 +1241,204 @@ export class DataRequest implements OnDestroy {
         this.subscriptions.unsubscribe();
     }
 
+    // GetNursingInstructionsAndCustomWarnings(parray: Array<Prescription>, cb: Function) {
+    //     let i = 0;
+    //     let inpatientid = this.appService.MetaPrescriptioncontext.find(pc => pc.context == PrescriptionContext.Inpatient).prescriptioncontext_id;
+    //     let dischargeid = this.appService.MetaPrescriptioncontext.find(pc => pc.context == PrescriptionContext.Discharge).prescriptioncontext_id;
+    //     let ordersetid = this.appService.MetaPrescriptioncontext.find(pc => pc.context == PrescriptionContext.Orderset).prescriptioncontext_id;
+    //     let opid = this.appService.MetaPrescriptioncontext.find(pc => pc.context == PrescriptionContext.Outpatient).prescriptioncontext_id;
+
+    //     let filtered = parray.filter(p => p.prescriptioncontext_id == inpatientid || p.prescriptioncontext_id == ordersetid || p.prescriptioncontext_id == dischargeid || p.prescriptioncontext_id == opid);
+    //     if (filtered.length == 0) {
+    //         cb();
+    //     }
+    //     else {
+    //         let medcodes = [];
+    //         filtered.forEach(p => {
+    //             const m = p.__medications.find(x => x.isprimary && x.producttype != "custom");
+    //             if (m) {
+    //                 const code = m.__codes.find(x => x.terminology == "formulary");
+    //                 if (code && !medcodes.includes(code.code)) {
+    //                     medcodes.push(code.code);
+    //                 }
+    //             }
+    //         });
+    //         if (medcodes.length == 0) {
+    //             cb();
+    //         }
+    //         else {
+    //             medcodes.forEach(async (mc) => {
+    //                 var endpoint = this.appService.appConfig.uris.terminologybaseuri + "/Formulary/getformularydetailruleboundbycode";
+    //                 this.subscriptions.add(this.apiRequest.getRequest(`${endpoint}/${mc}?api-version=1.0`)
+    //                     .subscribe((response) => {
+    //                         i++;
+    //                         if (response && response.length != 0) {
+
+    //                             let fp = filtered.filter(p => p.__medications.find(m => m.isprimary == true).__codes.find(x => x.terminology == "formulary").code == mc);
+    //                             fp.forEach(p => {
+    //                                 p.__nursinginstructions = [];
+    //                                 p.__customWarning = [];
+    //                                 p.__drugcodes = [];
+    //                                 p.__drugindications = [];
+    //                                 console.log(response.detail);
+    //                                 p.__ignoreDuplicateWarnings = response.detail.ignoreDuplicateWarnings;
+    //                                 if (response.detail.customWarnings)
+    //                                     p.__customWarning = Object.assign(response.detail.customWarnings);
+    //                                 else
+    //                                     p.__customWarning = [];
+
+    //                                 if (response.detail.titrationTypes && response.detail.titrationTypes.length > 0) {
+    //                                     p.titrationtype = response.detail.titrationTypes[0].desc;
+    //                                     p.titrationtypecode = response.detail.titrationTypes[0].cd;
+    //                                 }
+
+    //                                 response.detail.endorsements.forEach(e => {
+    //                                     p.__nursinginstructions.push(new NursingInstruction(null, "Endorsement", e));
+    //                                 });
+    //                                 response.detail.medusaPreparationInstructions.forEach(e => {
+    //                                     p.__nursinginstructions.push(new NursingInstruction(null, "Medusa Instructions", e));
+    //                                 });
+
+    //                                 if (response.formularyAdditionalCodes)
+    //                                     p.__drugcodes = Object.assign(response.formularyAdditionalCodes);
+    //                                 else
+    //                                     p.__drugcodes = null;
+
+    //                                 if (response.detail.licensedUses)
+    //                                     response.detail.licensedUses.forEach(u => {
+    //                                         p.__drugindications.push(u);
+    //                                     });
+    //                                 if (response.detail.unLicensedUses)
+    //                                     response.detail.unLicensedUses.forEach(u => {
+    //                                         p.__drugindications.push(u);
+    //                                     });
+    //                             });
+    //                         }
+    //                         if (i == medcodes.length)
+    //                             cb();
+    //                     }, (error) => {
+    //                         i++;
+    //                         this.appService.logToConsole(error);
+    //                         console.log("no response for medication:" + mc)
+    //                         if (i == medcodes.length)
+    //                             cb();
+    //                     }));
+    //             });
+    //         }
+    //     }
+    // }
+
     GetNursingInstructionsAndCustomWarnings(parray: Array<Prescription>, cb: Function) {
-        let i = 0;
         let inpatientid = this.appService.MetaPrescriptioncontext.find(pc => pc.context == PrescriptionContext.Inpatient).prescriptioncontext_id;
         let dischargeid = this.appService.MetaPrescriptioncontext.find(pc => pc.context == PrescriptionContext.Discharge).prescriptioncontext_id;
         let ordersetid = this.appService.MetaPrescriptioncontext.find(pc => pc.context == PrescriptionContext.Orderset).prescriptioncontext_id;
+        let opid = this.appService.MetaPrescriptioncontext.find(pc => pc.context == PrescriptionContext.Outpatient).prescriptioncontext_id;
+        let moaid = this.appService.MetaPrescriptioncontext.find(pc => pc.context == PrescriptionContext.Admission).prescriptioncontext_id;
 
-        let filtered = parray.filter(p => p.prescriptioncontext_id == inpatientid || p.prescriptioncontext_id == ordersetid || p.prescriptioncontext_id == dischargeid);
+
+        let filtered = parray.filter(p => p.prescriptioncontext_id == inpatientid || p.prescriptioncontext_id == ordersetid || p.prescriptioncontext_id == dischargeid || p.prescriptioncontext_id == opid || p.prescriptioncontext_id == moaid);
         if (filtered.length == 0) {
             cb();
         }
         else {
-            filtered.forEach((p) => {
-                p.__nursinginstructions = [];
-                p.__customWarning = [];
-                p.__drugcodes = [];
-                p.__drugindications = [];
+            let medcodes = []
 
-                let primarymedication = p.__medications.find(x => x.isprimary);
-                if (primarymedication) {
-                    let dmd = primarymedication.__codes.find(x => x.terminology == "formulary");
-                    if (dmd && primarymedication.producttype != 'custom') {
-                        let formularyid = dmd.code;
-                        var endpoint = this.appService.appConfig.uris.terminologybaseuri + "/Formulary/getformularydetailruleboundbycode"
-                        this.subscriptions.add(this.apiRequest.getRequest(`${endpoint}/${formularyid}?api-version=1.0`)
-                            .subscribe((response) => {
-                                i++;
-                                if (response && response.length != 0) {
-                                    p.__customWarning = response.detail.customWarnings;
-                                    if (response.detail.titrationTypes && response.detail.titrationTypes.length > 0) {
-                                        p.titrationtype = response.detail.titrationTypes[0].desc;
-                                        p.titrationtypecode = response.detail.titrationTypes[0].cd;
-                                    }
-
-                                    response.detail.endorsements.forEach(e => {
-                                        p.__nursinginstructions.push(new NursingInstruction(null, "Endorsement", e));
-                                    });
-                                    response.detail.medusaPreparationInstructions.forEach(e => {
-                                        p.__nursinginstructions.push(new NursingInstruction(null, "Medusa Instructions", e));
-                                    });
-                                    p.__drugcodes = response.formularyAdditionalCodes;
-                                    if (response.detail.licensedUses)
-                                        response.detail.licensedUses.forEach(u => {
-                                            p.__drugindications.push(u);
-                                        });
-                                    if (response.detail.unLicensedUses)
-                                        response.detail.unLicensedUses.forEach(u => {
-                                            p.__drugindications.push(u);
-                                        });
-                                }
-                                if (i == filtered.length)
-                                    cb();
-                            }, (error) => {
-                                i++;
-                                this.appService.logToConsole(error);
-                                console.log("no response for medication:" + formularyid)
-                            }));
-                    }
-                    else {
-                        i++;
-                        if (i == filtered.length)
-                            cb();
+            filtered.forEach(p => {
+                const m = p.__medications.find(x => x.isprimary && x.producttype != "custom");
+                if (m) {
+                    const code = m.__codes.find(x => x.terminology == "formulary");
+                    if (code && !medcodes.includes(code.code)) {
+                        medcodes.push(code.code);
                     }
                 }
-            })
+
+            });
+
+            if (medcodes.length > 0) {
+                // medcodes = []
+                // medcodes.push("test");
+                // medcodes.push("323739006");
+                let exitcounter = 0;
+                let splitrequests = this.appService.appConfig.AppSettings.SplitOnLoadRuleBoundReqs;
+                const triggercount = this.appService.appConfig.AppSettings.SplitOnLoadRuleBoundReqsTrigger;
+                const endpoint = this.appService.appConfig.uris.terminologybaseuri + "/Formulary/getformularybasicdetailruleboundbycodes"
+                splitrequests = medcodes.length > triggercount ? splitrequests : 1
+                const perreq_count = Math.floor(medcodes.length / splitrequests);
+                const lastreq_count = perreq_count + (medcodes.length % splitrequests);
+                for (let i = 0; i < splitrequests; i++) {
+                    const st = i == 0 ? 0 : i * perreq_count;
+                    const ed = (i == splitrequests - 1) ? (st + lastreq_count) : (st + perreq_count);
+                    this.subscriptions.add(this.apiRequest.postRequest(endpoint, medcodes.slice(st, ed), false)
+                        .subscribe((response) => {
+                            exitcounter++;
+                            if (response && response.length != 0) {
+                                filtered.forEach(p => {
+                                    const primarymedication = p.__medications.find(x => x.isprimary);
+                                    const dmd = primarymedication.__codes.find(x => x.terminology == "formulary");
+                                    if (dmd && primarymedication.producttype != 'custom') {
+                                        const formulary = response.find(x => x.code == dmd.code);
+                                        if (formulary) {
+
+                                            p.__nursinginstructions = [];
+                                            p.__customWarning = [];
+                                            p.__drugcodes = [];
+                                            p.__drugindications = [];
+
+                                            if (formulary.detail.ignoreDuplicateWarnings)
+                                                p.__ignoreDuplicateWarnings = formulary.detail.ignoreDuplicateWarnings;
+
+                                            if (formulary.detail.customWarnings)
+                                                p.__customWarning = Object.assign(formulary.detail.customWarnings);
+                                            else
+                                                p.__customWarning = [];
+
+                                            if (formulary.detail.titrationTypes && formulary.detail.titrationTypes.length > 0) {
+                                                p.titrationtype = formulary.detail.titrationTypes[0].desc;
+                                                p.titrationtypecode = formulary.detail.titrationTypes[0].cd;
+                                            }
+
+                                            formulary.detail.endorsements.forEach(e => {
+                                                p.__nursinginstructions.push(new NursingInstruction(null, "Endorsement", e));
+                                            });
+                                            formulary.detail.medusaPreparationInstructions.forEach(e => {
+                                                p.__nursinginstructions.push(new NursingInstruction(null, "Medusa Instructions", e));
+                                            });
+
+                                            if (formulary.formularyAdditionalCodes)
+                                                p.__drugcodes = Object.assign(formulary.formularyAdditionalCodes);
+                                            else
+                                                p.__drugcodes = null;
+
+                                            if (formulary.detail.licensedUses)
+                                                formulary.detail.licensedUses.forEach(u => {
+                                                    p.__drugindications.push(u);
+                                                });
+                                            if (formulary.detail.unLicensedUses)
+                                                formulary.detail.unLicensedUses.forEach(u => {
+                                                    p.__drugindications.push(u);
+                                                });
+                                        }
+                                    }
+                                });
+                            }
+                            if (exitcounter == splitrequests)
+                                cb();
+                        }, (error) => {
+                            this.appService.logToConsole(error);
+                            console.log("Error loading formulary details by codes");
+                            if (exitcounter == splitrequests)
+                                cb();
+                            if (error.status == 404) //single medication, 404
+                                cb();
+                        }));
+                }
+            }
+            else {
+                cb();
+            }
         }
     }
+
     GetWitnesAuthentication(cb: () => any) {
         this.appService.administrationWitness = [];
         this.subscriptions.add(this.apiRequest.getRequest(this.appService.baseURI + "/GetListByAttribute?synapsenamespace=local&synapseentityname=epma_administrationwitness&synapseattributename=encounter_id&attributevalue=" + this.appService.encounter.encounter_id).subscribe(
@@ -1139,6 +1469,229 @@ export class DataRequest implements OnDestroy {
             }
         ));
     }
+    GetMedicationSupplyHistory(id, cb: (data) => any) {
+        this.appService.PatientDrugHistory = [];
+        this.subscriptions.add(this.apiRequest.postRequest(this.appService.baseURI + "/GetBaseViewListByPost/epma_medicationsupplyhistory", this.createMedicationSupplyHistoryFilter(id)).subscribe(
+            (response) => {
+                let data = response;
+                this.appService.PatientDrugHistory = data;
+                cb(data);
+            }
+        ));
+    }
 
+    createMedicationSupplyHistoryFilter(prescriptionid) {
+        let condition = "prescriptionid = @prescriptionid";
+        let f = new filters()
+        f.filters.push(new filter(condition));
+        let pm = new filterParams();
+        pm.filterparams.push(new filterparam("prescriptionid", prescriptionid));
+        let select = new selectstatement("SELECT *");
+        let orderby = new orderbystatement("ORDER BY _createddate desc");
+        let body = [];
+        body.push(f);
+        body.push(pm);
+        body.push(select);
+        body.push(orderby);
+        return JSON.stringify(body);
+    }
+
+    public RefreshIfDataVersionChanged(cb: (response) => any) {
+        if (!this.nextRefresh || moment().isAfter(this.nextRefresh)) {
+            this.apiRequest.getRequest(`${this.appService.baseURI}/GetSynchronousPostVersion/?personId=${this.appService.personId}&moduleName=${this.appService.modulename}`).subscribe(
+                (version) => {
+                    this.nextRefresh = moment().add(5, "seconds");
+                    if (version) {
+                        let versionobject = JSON.parse(version);
+                        let serverversion_versionid = versionobject.moduleDataVersion.versionid;
+                        let serverversion_userid = versionobject.createdby;
+
+                        if (this.appService.dataversion && this.appService.dataversion != serverversion_versionid) {
+                            cb(true);
+                            this.subjects.ShowRefreshPageMessage.next(serverversion_userid);
+                            return;
+                        }
+                        else {
+                            cb(false);
+                        }
+                    }
+                    else {
+                        cb(false)
+                    }
+                }
+            )
+        }
+        else {
+            cb(false);
+        }
+    }
+
+    GetManageAwayPeriod(cb: () => any) {
+        this.subscriptions.add(this.apiRequest.getRequest(this.appService.baseURI + "/GetListByAttribute?synapsenamespace=local&synapseentityname=epma_personawayperiod&synapseattributename=encounter_id&attributevalue=" + this.appService.encounter.encounter_id).subscribe(
+            (response) => {
+                let responseArray: PersonAwayPeriod[] = JSON.parse(response);
+                let data = responseArray.sort((a, b) => (moment(a.modifiedon) > moment(b.modifiedon)) ? -1 : 0);
+                this.appService.PersonAwayPeriod = data;
+                cb();
+            }
+        ));
+    }
+
+    private createAdministerMedHistoryFilter(administration) {
+        let index = 0
+        const pm = new filterParams();
+        const condition = []
+        for (let d of administration) {
+            let para = this.makeId(5);
+            if (index === 0)
+                condition.push("correlationid =@" + para);
+            else
+                condition.push(" or correlationid =@" + para);
+
+            pm.filterparams.push(new filterparam("@" + para, d.correlationid));
+            index = index + 1
+        }
+        const f = new filters()
+        f.filters.push(new filter(condition.join('')));
+        const select = new selectstatement("SELECT * ");
+        const orderby = new orderbystatement("ORDER BY 1");
+        const body = [];
+        body.push(f);
+        body.push(pm);
+        body.push(select);
+        body.push(orderby);
+        let jsonobj = JSON.stringify(body);
+        return jsonobj;
+    }
+
+    public SetUnits(code: string, cb: (data) => any) {
+        this.subscriptions.add(this.apiRequest.getRequest(this.appService.baseURI + "/GetBaseViewListObjectByAttribute/epma_frequentvtmunit?&synapseattributename=code&attributevalue=" + code).subscribe(
+            (response) => {
+                let units;
+                let responseArray = JSON.parse(response);
+                if (responseArray && responseArray.doseunit) {
+                    units = responseArray.doseunit.toString().trim();
+                    cb(units);
+                }
+                else {
+                    this.getProductDetail(code, (data) => {
+                        if (data.formularyIngredients) {
+                            var ing = data.formularyIngredients;
+                            units = this.appService.GetMostFrequentElementInArray(ing.map(ig => ig.strengthValueNumeratorUnitDesc));
+                            cb(units);
+                        }
+                    });
+
+                }
+            }
+        ));
+    }
+    getProductDetail(code, cb: (data) => any) {
+        var endpoint = this.appService.appConfig.uris.terminologybaseuri + "/Formulary/getformularydetailruleboundbycode"
+        this.subscriptions.add(this.apiRequest.getRequest(`${endpoint}/${code}?api-version=1.0`)
+            .subscribe((response) => {
+                if (response) {
+                    cb(response);
+                } else {
+                    cb({});
+                }
+            }));
+    }
+    GetAwayPeriodHistory(id: string, cb: (data) => any) {
+        this.subscriptions.add(this.apiRequest.getRequest(this.appService.baseURI + "/GetObjectHistory?synapsenamespace=local&synapseentityname=epma_personawayperiod&id=" + id).subscribe(
+            (response) => {
+                cb(response);
+            })
+        );
+    }
+    GetNursingInstruction(cb: () => any) {
+        this.subscriptions.add(
+            this.apiRequest.getRequest(this.appService.baseURI + "/GetListByAttribute?synapsenamespace=local&synapseentityname=epma_nursinginstructions&synapseattributename=encounter_id&attributevalue=" + this.appService.encounter.encounter_id)
+                .subscribe(nursing => {
+                    let responseArray = JSON.parse(nursing);
+                    this.appService.NursingInstructions = [];
+                    for (let r of responseArray) {
+                        this.appService.NursingInstructions.push(<NursingInstructions>r);
+                    }
+                    cb();
+                }));
+    }
+    GetNursingInstructionHistory(id, cb: (data) => any) {
+        this.subscriptions.add(this.apiRequest.getRequest(this.appService.baseURI + "/GetObjectHistory?synapsenamespace=local&synapseentityname=epma_nursinginstructions&id=" + id).subscribe(
+            (history) => {
+                var historyData = JSON.parse(history).sort((a, b) => (moment(a.modifiedon) > moment(b.modifiedon)) ? -1 : 0);
+                cb(historyData);
+            }
+        ));
+    }
+    CopyPatientDrugsFromIPToDischarge(prescriptionBasket: Array<Prescription>) {
+        //copy patient drugs from moa to ip
+        let modcontextid = this.appService.MetaPrescriptioncontext.find(x => x.context.toLowerCase() == PrescriptionContext.Discharge.toLowerCase()).prescriptioncontext_id
+        let ipcontextid = this.appService.MetaPrescriptioncontext.find(x => x.context.toLowerCase() == PrescriptionContext.Inpatient.toLowerCase()).prescriptioncontext_id
+
+        let stoppedid = this.appService.MetaPrescriptionstatus.find(x => x.status == PrescriptionStatus.stopped).prescriptionstatus_id;
+        let cancelledid = this.appService.MetaPrescriptionstatus.find(x => x.status == PrescriptionStatus.cancelled).prescriptionstatus_id;
+
+        let mods = this.appService.Prescription.filter(p => p.prescriptioncontext_id == modcontextid);
+        let ips = this.appService.Prescription.filter(p => p.prescriptioncontext_id == ipcontextid && p.prescriptionstatus_id != stoppedid && p.prescriptionstatus_id != cancelledid);
+        prescriptionBasket.forEach(p => {
+            //if not editing
+            if (!p.__editingprescription) {
+                //and if there is only one mod for this dmd code
+                let medcode = p.__medications.find(m => m.isprimary == true).__codes.find(c => c.terminology == "formulary").code;
+                let p_mods = mods.filter(mp => mp.__medications.find(m => m.isprimary == true).__codes.find(c => c.terminology == "formulary").code == medcode);
+
+                if (p_mods && p_mods.length == 1) {
+                    let p_ip = ips.filter(mp => mp.__medications.find(m => m.isprimary == true).__codes.find(c => c.terminology == "formulary").code == medcode);
+
+                    //and if this drug been prescribed only once
+                    if (p_ip && p_ip.length == 1) {
+                        //copy patient drugs over to discharge prescription
+                        // get current patient drugs for prescription
+                        this.subscriptions.add(
+                            this.apiRequest
+                                .getRequest(
+                                    this.appService.baseURI +
+                                    '/GetListByAttribute?synapsenamespace=local&synapseentityname=epma_prescriptionmedicaitonsupply&synapseattributename=prescriptionid' +
+                                    '&attributevalue=' + p_ip[0].prescription_id
+                                )
+                                .subscribe((response) => {
+                                    let responseArray = JSON.parse(response);
+                                    if (responseArray.length != 0) {
+                                        let patientDrugs = new PrescriptionMedicaitonSupply();
+                                        patientDrugs.epma_prescriptionmedicaitonsupply_id = uuid();
+                                        patientDrugs.prescriptionid = p.prescription_id;
+                                        patientDrugs.noofdays = responseArray[0].noofdays;;
+                                        patientDrugs.availablequantity = responseArray[0].availablequantity;
+                                        patientDrugs.quantityunits = responseArray[0].quantityunits;
+                                        patientDrugs.complianceaid = responseArray[0].complianceaid;
+                                        patientDrugs.selectedproductcode = responseArray[0].selectedproductcode;
+                                        patientDrugs.selectproductcodetype = responseArray[0].selectproductcodetype;
+                                        patientDrugs.ownsupplyathome = responseArray[0].ownsupplyathome;
+                                        patientDrugs.resupplyfrom = responseArray[0].resupplyfrom;
+                                        patientDrugs.lastmodifiedby = responseArray[0].lastmodifiedby;
+                                        patientDrugs.updatesouce = responseArray[0].updatesouce;
+                                        patientDrugs.prescribedmedicationid = responseArray[0].prescribedmedicationid;
+                                        patientDrugs.person_id = responseArray[0].person_id;
+                                        patientDrugs.encounter_id = responseArray[0].encounter_id;
+                                        patientDrugs.quantityentrydate = responseArray[0].quantityentrydate;
+                                        patientDrugs.createdby = responseArray[0].createdby;
+                                        patientDrugs.createdon = responseArray[0].createdon;
+                                        patientDrugs.modifiedon = responseArray[0].modifiedon;
+
+                                        //marked for syncpost
+                                        this.subscriptions.add(this.apiRequest.postRequest(this.appService.baseURI +
+                                            "/PostObject?synapsenamespace=local&synapseentityname=epma_prescriptionmedicaitonsupply", JSON.stringify(patientDrugs), false)
+                                            .subscribe((saveResponse) => {
+                                                this.GetMedicationSupply(() => { });
+                                            }
+                                            ))
+                                    }
+                                }));
+                    }
+                }
+            }
+        });
+    }
 }
 

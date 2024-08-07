@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,84 +18,132 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <!--END LICENSE BLOCK--> 
-<span *ngFor="let med of prescription.__medications; let i = index">
-    <span class="empa-template-bold text-break">{{med.name}} </span>
-    <!-- <ng-container *ngIf="fromPrinting"><span class="empa-template-bold" *ngIf="!fromPrinting">{{med.name.split(' ').join('  ')}} </span></ng-container> -->
-    <span *ngIf="fromPrinting">&nbsp;</span>
-    <span *ngIf="med.__ingredients.length==1"> ({{med.__ingredients[0].name}}) </span>
-    <span *ngIf="fromPrinting">&nbsp;</span>
+<div *ngFor="let med of prescription.__medications; let i = index">
     <span *ngIf="med.isprimary">
-        <span  
-        *ngIf="appService.GetCurrentPosology(prescription, posologyid).__dose.length>0 && (appService.GetCurrentPosology(prescription, posologyid).__dose[0].dosesize || appService.GetCurrentPosology(prescription, posologyid).__dose[0].strengthneumerator || appService.GetCurrentPosology(prescription, posologyid).__dose[0].descriptivedose)">
-        <span class="empa-template-dose text-primary"> DOSE:</span>
-        <span  *ngIf="appService.GetCurrentPosology(prescription, posologyid).dosetype=='units'">
-            <span class="empa-template-dose text-primary" *ngIf="!appService.GetCurrentPosology(prescription, posologyid).__dose[0].dosestrength">
-                {{appService.GetCurrentPosology(prescription, posologyid).__dose[0].dosesize| number}}{{appService.GetCurrentPosology(prescription, posologyid).__dose[0].doseunit}}
-                <span *ngIf="appService.GetCurrentPosology(prescription, posologyid).__dose[0].dosesizerangemax">
-                    - {{appService.GetCurrentPosology(prescription, posologyid).__dose[0].dosesizerangemax|number}}{{appService.GetCurrentPosology(prescription, posologyid).__dose[0].doseunit}}
-               </span>
-                
+        <span
+            *ngIf="appService.GetCurrentPosology(prescription, posologyid).__dose.length>0 && (appService.GetCurrentPosology(prescription, posologyid).__dose[0].dosesize || appService.GetCurrentPosology(prescription, posologyid).__dose[0].strengthneumerator || appService.GetCurrentPosology(prescription, posologyid).__dose[0].descriptivedose)">
+            <span class="empa-template-dose text-primary"> DOSE:</span>
+            <span
+                *ngIf="appService.GetCurrentPosology(prescription, posologyid).frequency=='variable' || !appService.GetCurrentPosology(prescription, posologyid).infusiondoserate">
+                <span *ngIf="appService.GetCurrentPosology(prescription, posologyid).dosetype=='units'">
+                    <span class="empa-template-dose text-primary"
+                        *ngIf="!appService.GetCurrentPosology(prescription, posologyid).__dose[0].dosestrength">
+                        {{appService.GetCurrentPosology(prescription, posologyid).__dose[0].dosesize|
+                        number}}{{appService.GetCurrentPosology(prescription, posologyid).__dose[0].doseunit}}
+                        <span *ngIf="appService.GetCurrentPosology(prescription, posologyid).__dose[0].dosesizerangemax">
+                            - {{appService.GetCurrentPosology(prescription,
+                            posologyid).__dose[0].dosesizerangemax|number}}{{appService.GetCurrentPosology(prescription,
+                            posologyid).__dose[0].doseunit}}
+                        </span>
+    
+                    </span>
+    
+                    <span class="empa-template-dose text-primary"
+                        *ngIf="appService.GetCurrentPosology(prescription, posologyid).__dose[0].dosestrength">
+                        {{appService.GetCurrentPosology(prescription, posologyid).__dose[0].dosestrength|
+                        number}}{{appService.GetCurrentPosology(prescription, posologyid).__dose[0].dosestrengthunits}}
+                        <span
+                            *ngIf="appService.GetCurrentPosology(prescription, posologyid).__dose[0].dosestrengthrangemax">
+                            - {{appService.GetCurrentPosology(prescription,
+                            posologyid).__dose[0].dosestrengthrangemax|number}}{{appService.GetCurrentPosology(prescription,
+                            posologyid).__dose[0].dosestrengthunits}}
+                        </span>
+    
+                    </span>
+    
+                </span>
+                <span *ngIf="fromPrinting">&nbsp;</span>
+                <span *ngIf="appService.GetCurrentPosology(prescription, posologyid).dosetype=='strength'">
+                    <span *ngIf="!fromPrinting" class="empa-template-dose text-primary">
+                        <span> {{appService.GetCurrentPosology(prescription, posologyid).__dose[0].strengthneumerator |
+                            number}}{{appService.GetCurrentPosology(prescription,
+                            posologyid).__dose[0].strengthneumeratorunit}}</span>
+                        <span *ngIf="prescription.__medications.length==1"> /
+                            {{appService.GetCurrentPosology(prescription, posologyid).__dose[0].strengthdenominator |
+                            number}}{{appService.GetCurrentPosology(prescription,
+                            posologyid).__dose[0].strengthdenominatorunit}}
+                        </span>
+                    </span>
+    
+                    <span *ngIf="fromPrinting" class="empa-template-dose text-primary">
+                        <span> {{appService.GetCurrentPosology(prescription, posologyid).__dose[0].strengthneumerator |
+                            number}}&nbsp;&nbsp;{{appService.GetCurrentPosology(prescription,
+                            posologyid).__dose[0].strengthneumeratorunit}}
+                        </span>
+                        <span *ngIf="prescription.__medications.length==1"> /
+                            {{appService.GetCurrentPosology(prescription, posologyid).__dose[0].strengthdenominator |
+                            number}}&nbsp;&nbsp;{{appService.GetCurrentPosology(prescription,
+                            posologyid).__dose[0].strengthdenominatorunit}}
+                        </span>
+                    </span>
+    
+                </span>
+                <span *ngIf="fromPrinting">&nbsp;</span>
+                <span *ngIf="appService.GetCurrentPosology(prescription, posologyid).dosetype=='descriptive'">
+                    <span class="empa-template-dose text-break">{{appService.GetCurrentPosology(prescription,
+                        posologyid).__dose[0].descriptivedose}}</span>
+                </span>
             </span>
-
-            <span class="empa-template-dose text-primary" *ngIf="appService.GetCurrentPosology(prescription, posologyid).__dose[0].dosestrength">
-                {{appService.GetCurrentPosology(prescription, posologyid).__dose[0].dosestrength| number}}{{appService.GetCurrentPosology(prescription, posologyid).__dose[0].dosestrengthunits}}
-                <span *ngIf="appService.GetCurrentPosology(prescription, posologyid).__dose[0].dosestrengthrangemax">
-                    - {{appService.GetCurrentPosology(prescription, posologyid).__dose[0].dosestrengthrangemax|number}}{{appService.GetCurrentPosology(prescription, posologyid).__dose[0].dosestrengthunits}}
-               </span>
-                
-            </span>
-
+            <span
+                    *ngIf="appService.GetCurrentPosology(prescription, posologyid).frequency!='variable' &&  appService.GetCurrentPosology(prescription, posologyid).infusiondoserate">
+                         <span class="empa-template-dose text-primary">{{appService.GetCurrentPosology(prescription, posologyid).infusiondoserate}} {{appService.GetCurrentPosology(prescription, posologyid).infusiondoserateunits}}</span>
+                   </span>
+        </span>
+        <span class="empa-template-dose-text" *ngIf="appService.GetCurrentPosology(prescription, posologyid).frequency=='mor'">
+            - Morning
+        </span>
+        
+        <span class="empa-template-dose-text" *ngIf="appService.GetCurrentPosology(prescription, posologyid).frequency=='mid'">
+            - Noon
+        </span>
+        <span class="empa-template-dose-text" *ngIf="appService.GetCurrentPosology(prescription, posologyid).frequency=='night'">
+            - Night
+        </span>
+        <span class="empa-template-dose-text" *ngIf="appService.GetCurrentPosology(prescription, posologyid).frequency=='eve'">
+           - Evening
+        </span>
+        
+        <span class="empa-template-dose-text" *ngIf="appService.GetCurrentPosology(prescription, posologyid).frequency=='stat'">
+            - Stat. dose
+        </span>
+        
+        <span class="empa-template-dose-text" *ngIf="appService.GetCurrentPosology(prescription, posologyid).frequency=='x'">
+            - {{appService.GetCurrentPosology(prescription, posologyid).frequencysize}} time(s) per day
+        </span>
+        
+        <span class="empa-template-dose-text" *ngIf="appService.GetCurrentPosology(prescription, posologyid).frequency=='h'">
+            - Every {{appService.GetCurrentPosology(prescription, posologyid).frequencysize}} hour(s)
+        </span>
+        <span class="empa-template-dose-text" *ngIf="appService.GetCurrentPosology(prescription, posologyid).frequency=='m'">
+            - Every {{appService.GetCurrentPosology(prescription, posologyid).frequencysize}} min(s)
         </span>
         <span *ngIf="fromPrinting">&nbsp;</span>
-        <span *ngIf="appService.GetCurrentPosology(prescription, posologyid).dosetype=='strength'">
-            <span *ngIf="!fromPrinting" class="empa-template-dose text-primary">
-                <span>  {{appService.GetCurrentPosology(prescription, posologyid).__dose[0].strengthneumerator |
-                    number}}{{appService.GetCurrentPosology(prescription, posologyid).__dose[0].strengthneumeratorunit}}</span>
-                <span *ngIf="prescription.__medications.length==1"> /
-                    {{appService.GetCurrentPosology(prescription, posologyid).__dose[0].strengthdenominator |
-                    number}}{{appService.GetCurrentPosology(prescription, posologyid).__dose[0].strengthdenominatorunit}}
-                </span>
-            </span>
-              
-            <span *ngIf="fromPrinting" class="empa-template-dose text-primary">
-                <span>  {{appService.GetCurrentPosology(prescription, posologyid).__dose[0].strengthneumerator |
-                    number}}&nbsp;&nbsp;{{appService.GetCurrentPosology(prescription, posologyid).__dose[0].strengthneumeratorunit}}
-                </span>
-                <span *ngIf="prescription.__medications.length==1"> /
-                    {{appService.GetCurrentPosology(prescription, posologyid).__dose[0].strengthdenominator |
-                    number}}&nbsp;&nbsp;{{appService.GetCurrentPosology(prescription, posologyid).__dose[0].strengthdenominatorunit}}
-                </span>
-            </span>
-                
-        </span>
- 
+        <span class="empa-template-dose-text text-break"
+            *ngIf="appService.GetCurrentPosology(prescription, posologyid).daysofweek && appService.GetCurrentPosology(prescription, posologyid).daysofweek.length>2"> - Every
+            {{choosenDays}}</span>
+        <span class="empa-template-dose-text"
+            *ngIf="appService.GetCurrentPosology(prescription, posologyid).dosingdaysfrequencysize && appService.GetCurrentPosology(prescription, posologyid).dosingdaysfrequencysize>0"> -
+            Every {{appService.GetCurrentPosology(prescription, posologyid).dosingdaysfrequencysize}} {{appService.GetCurrentPosology(prescription, posologyid).dosingdaysfrequency}}</span>
+        <span class="empa-template-dose-text"
+            *ngIf="prescriptionAdditionalCondition && prescriptionAdditionalCondition!='No additional criteria'"> –
+            {{prescriptionAdditionalCondition}}</span>
         <span *ngIf="fromPrinting">&nbsp;</span>
-        <span *ngIf="appService.GetCurrentPosology(prescription, posologyid).dosetype=='descriptive'">
-            <span class="empa-template-dose">{{appService.GetCurrentPosology(prescription, posologyid).__dose[0].descriptivedose}}</span>
-        </span>
-
+        <span class="empa-template-dose-text" *ngIf="appService.GetCurrentPosology(prescription, posologyid).doctorsorder"> - Prescriber to confirm</span>
+        <span *ngIf="fromPrinting">&nbsp;</span>
+        <span class="empa-template-dose-text" *ngIf="appService.GetCurrentPosology(prescription, posologyid).prn"> - When needed<span *ngIf="prnmaxdosestring">(Max {{prnmaxdosestring}} per day)</span></span>
+        <span *ngIf="fromPrinting">&nbsp;</span>
     </span>
-    </span>
-    <span *ngIf="!med.isprimary">
-        <span class="text-primary empa-template-dose" *ngIf="med.doseformunits">- {{med.doseformsize}} {{med.doseformunits}}</span>
-        <span class="text-primary empa-template-dose" *ngIf="med.strengthdenominatorunit">- {{med.strengthdenominator}} {{med.strengthdenominatorunit}}</span>
-    </span>
-    <span *ngIf="prescription.ismodifiedrelease">-MR</span>
-    <span *ngIf="prescription.isgastroresistant">-GR</span>
-    <span *ngIf="i!=prescription.__medications.length-1">
-        <br />
-    </span>
-</span>
-
-<br />
+</div>
 <span *ngIf="appService.GetCurrentPosology(prescription, posologyid).totalinfusionvolume"><span class="empa-template-dose-label">TOTAL VOLUME: </span>
     <span *ngIf="fromPrinting">&nbsp;</span>
-    <span class="empa-template-dose">{{appService.GetCurrentPosology(prescription, posologyid).totalinfusionvolume}}ml</span> - </span>
+    <span class="empa-template-dose">{{appService.GetCurrentPosology(prescription, posologyid).totalinfusionvolume | number}}ml</span> - </span>
 <span class="empa-template-dose-label">RATE: </span>
+
 <span *ngIf="prescription.titration" class="empa-template-dose">Titrate</span>
 
 
-<span *ngIf="appService.GetCurrentPosology(prescription, posologyid).infusiontypeid=='ci' && !prescription.titration">
+<span *ngIf="(appService.GetCurrentPosology(prescription, posologyid).infusiontypeid=='ci' || 
+                appService.GetCurrentPosology(prescription, posologyid).infusiontypeid=='pca') && !prescription.titration">
     <span *ngIf="appService.GetCurrentPosology(prescription, posologyid).frequency=='variable'">
         <span class="empa-template-dose">Variable</span>
     </span>
@@ -109,8 +157,11 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
     </span>
 
     <span *ngIf="primaryMedication">
-        <span *ngIf="!prescription.ismedicinalgas"><span> - CONTINUOUS
+        <span *ngIf="!prescription.ismedicinalgas && appService.GetCurrentPosology(prescription, posologyid).infusiontypeid=='ci'"><span> - CONTINUOUS
                 INFUSION</span>
+        </span>
+        <span *ngIf="appService.GetCurrentPosology(prescription, posologyid).infusiontypeid=='pca'"><span> - PCA/NCA
+            </span>
         </span>
     </span>
     <span *ngIf="fromPrinting">&nbsp;</span>
@@ -127,23 +178,45 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
             class="empa-template-dose">{{appService.GetCurrentPosology(prescription, posologyid).infusionrate | number}}
             {{appService.GetCurrentPosology(prescription, posologyid).infusionrateunits}}
         </span>
-        - <span class="empa-template-dose-label">DURATION: </span> {{appService.GetCurrentPosology(prescription, posologyid).infusionduration}}h </span>
+        <span *ngIf="appService.GetCurrentPosology(prescription, posologyid).infusiontypeid=='rate'"> - INTERMITTENT </span>
+        - <span class="empa-template-dose-label">DURATION: </span> {{appService.GetCurrentPosology(prescription, posologyid).infusionduration}}h(s) </span>
 </span>
 <span *ngIf="fromPrinting">&nbsp;</span>
 <span *ngIf="appService.GetCurrentPosology(prescription, posologyid).infusiontypeid=='bolus' && !prescription.titration">
     <span> BOLUS</span> <span *ngIf="fromPrinting">&nbsp;</span> <span class="empa-template-dose-label" *ngIf="appService.GetCurrentPosology(prescription, posologyid).infusionduration"> -
-        DURATION: {{appService.GetCurrentPosology(prescription, posologyid).infusionduration}}h </span>
+        DURATION: {{appService.GetCurrentPosology(prescription, posologyid).infusionduration}}h(s) </span>
 </span>
 <span *ngIf="fromPrinting">&nbsp;</span>
 <span *ngIf="device">
     - <span>{{device}} </span> <span *ngIf="fromPrinting">&nbsp;</span>
 </span>
-
+<div *ngIf="appService.GetCurrentPosology(prescription, posologyid).concentration">
+        <span class="empa-template-dose-label">CONCENTRATION: </span> 
+        <!-- <span class="empa-template-dose">{{appService.GetCurrentPosology(prescription, posologyid).concentration}}</span>  -->
+        <span class="empa-template-dose">{{prescribedConcentration}}</span> 
+        
+</div>
 <span *ngIf="prescription.oxygenadditionalinfo && prescription.oxygenadditionalinfo.length>2">
     - <span>{{oxygenAdditionalInformation}} </span> <span *ngIf="fromPrinting">&nbsp;</span>
 </span>
+<div *ngFor="let med of prescription.__medications; let i = index">
+    <span class="empa-template-bold text-break">{{med.name}} </span>
+    <!-- <ng-container *ngIf="fromPrinting"><span class="empa-template-bold" *ngIf="!fromPrinting">{{med.name.split(' ').join('  ')}} </span></ng-container> -->
+    <span *ngIf="fromPrinting">&nbsp;</span>
+    <span class="text-break" *ngIf="med.__ingredients.length==1"> ({{med.__ingredients[0].name}}) </span>
+    <span *ngIf="fromPrinting">&nbsp;</span>
+    <span *ngIf="!med.isprimary">
+        <span class="text-primary empa-template-dose" *ngIf="med.doseformunits">- {{med.doseformsize | number}} {{med.doseformunits}}</span>
+        <span class="text-primary empa-template-dose" *ngIf="med.strengthdenominatorunit">- {{med.strengthdenominator | number}} {{med.strengthdenominatorunit}}</span>
+    </span>
+    <span *ngIf="prescription.ismodifiedrelease">-MR</span>
+    <span *ngIf="prescription.isgastroresistant">-GR</span>
+    <span *ngIf="i!=prescription.__medications.length-1">
+        <br />
+    </span>
+</div>
 <span class="empa-template-dose-text" *ngIf="prescription.__routes.length>0">
-  <br/>  <span> <span class="empa-template-dose-label">ROUTE: </span>{{routes}}
+   <span> <span class="empa-template-dose-label">ROUTE: </span>{{routes}}
         <!-- <span *ngIf="primaryMedication">
             <span *ngIf="!prescription.ismedicinalgas"><span>
                     (infusion)</span>
@@ -155,9 +228,9 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 </span>
 
 <span class="empa-template-dose-label" *ngIf="prescription.titration"> TARGET {{prescription.titrationtype}}
-    <span *ngIf="prescription.titrationtargetmin"> {{prescription.titrationtargetmin}}
+    <span *ngIf="prescription.titrationtargetmin"> {{prescription.titrationtargetmin | number}}
         {{prescription.titrationtargetunits}} </span>
-    <span *ngIf="prescription.titrationtargetmax"> - {{prescription.titrationtargetmax}}
+    <span *ngIf="prescription.titrationtargetmax"> - {{prescription.titrationtargetmax | number}}
         {{prescription.titrationtargetunits}} </span>
         <span *ngIf="fromPrinting">&nbsp;</span>
 </span>
@@ -183,47 +256,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
 </span> -->
 
-<span class="empa-template-dose-text" *ngIf="appService.GetCurrentPosology(prescription, posologyid).frequency=='mor'">
-    - Morning
-</span>
 
-<span class="empa-template-dose-text" *ngIf="appService.GetCurrentPosology(prescription, posologyid).frequency=='mid'">
-    - Noon
-</span>
-<span class="empa-template-dose-text" *ngIf="appService.GetCurrentPosology(prescription, posologyid).frequency=='night'">
-    - Night
-</span>
-<span class="empa-template-dose-text" *ngIf="appService.GetCurrentPosology(prescription, posologyid).frequency=='eve'">
-   - Evening
-</span>
-
-<span class="empa-template-dose-text" *ngIf="appService.GetCurrentPosology(prescription, posologyid).frequency=='stat'">
-    - Stat. dose
-</span>
-
-<span class="empa-template-dose-text" *ngIf="appService.GetCurrentPosology(prescription, posologyid).frequency=='x'">
-    - {{appService.GetCurrentPosology(prescription, posologyid).frequencysize}} time(s) per day
-</span>
-
-<span class="empa-template-dose-text" *ngIf="appService.GetCurrentPosology(prescription, posologyid).frequency=='h'">
-    - Every {{appService.GetCurrentPosology(prescription, posologyid).frequencysize}} hour(s)
-</span>
-
-<span *ngIf="fromPrinting">&nbsp;</span>
-<span class="empa-template-dose-text text-break"
-    *ngIf="appService.GetCurrentPosology(prescription, posologyid).daysofweek && appService.GetCurrentPosology(prescription, posologyid).daysofweek.length>2"> - Every
-    {{choosenDays}}</span>
-<span class="empa-template-dose-text"
-    *ngIf="appService.GetCurrentPosology(prescription, posologyid).dosingdaysfrequencysize && appService.GetCurrentPosology(prescription, posologyid).dosingdaysfrequencysize>0"> -
-    Every {{appService.GetCurrentPosology(prescription, posologyid).dosingdaysfrequencysize}} {{appService.GetCurrentPosology(prescription, posologyid).dosingdaysfrequency}}</span>
-<span class="empa-template-dose-text"
-    *ngIf="prescriptionAdditionalCondition && prescriptionAdditionalCondition!='No additional criteria'"> –
-    {{prescriptionAdditionalCondition}}</span>
-<span *ngIf="fromPrinting">&nbsp;</span>
-<span class="empa-template-dose-text" *ngIf="appService.GetCurrentPosology(prescription, posologyid).doctorsorder"> - Prescriber to confirm</span>
-<span *ngIf="fromPrinting">&nbsp;</span>
-<span class="empa-template-dose-text" *ngIf="appService.GetCurrentPosology(prescription, posologyid).prn"> - When needed<span *ngIf="appService.GetCurrentPosology(prescription, posologyid).maxnumofdosesperday">(Max {{appService.GetCurrentPosology(prescription, posologyid).maxnumofdosesperday}} doses per day)</span></span>
-<span *ngIf="fromPrinting">&nbsp;</span>
 <span *ngIf="(componenttype=='OP' || componenttype=='medication_rec' || componenttype=='MOD' || componenttype=='SUM' || componenttype=='MODNO' || componenttype=='SUMNO') && (appService.GetCurrentPosology(prescription, posologyid).totalquantity || appService.GetCurrentPosology(prescription, posologyid).totalquantitytext)">
     <br/><span class="empa-template-induction-label">TOTAL QUANTITY</span>
     <span *ngIf="fromPrinting">&nbsp;</span>
@@ -291,9 +324,9 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
         </div>
     </span>
 </span>
-<!-- <span *ngIf="componenttype!='additional' && componenttype!='MOA' && componenttype!='MOD' && componenttype!='SUM' && componenttype!='SUMNO' && componenttype!='MODNO'">
+<span *ngIf="fromPrinting">
     <br />
-    <span *ngIf="componenttype=='administer' && !appService.GetCurrentPosology(prescription, posologyid).prn">
+    <!-- <span *ngIf="componenttype=='administer' && !appService.GetCurrentPosology(prescription, posologyid).prn">
         <span *ngIf="administration.planneddatetime"><span class="empa-template-induction-label">PLANNED TIME </span>
         <span *ngIf="fromPrinting">&nbsp;</span><span class="dose-text"><strong>{{plannedTime}} </strong> </span></span>
     </span>
@@ -311,7 +344,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                       "HH:mm"}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span>
     </span>
     <span *ngIf="prescription.comments"><span class="empa-template-induction-label">COMMENTS </span> <span *ngIf="fromPrinting">&nbsp;</span><span
-            class="empa-template-dose-text break-word">{{prescription.comments}} </span></span>
+            class="empa-template-dose-text break-word">{{prescription.comments}} </span></span> -->
             <span *ngIf="prescription.indication"><span class="empa-template-induction-label">INDICATION </span> <span *ngIf="fromPrinting">&nbsp;</span> <span
             class="empa-template-dose-text break-word">{{indicationstring}} </span></span>
-</span> -->
+</span>

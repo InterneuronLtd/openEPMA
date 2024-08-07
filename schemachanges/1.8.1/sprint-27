@@ -1,0 +1,44 @@
+New Role
+------------------------
+EPMA RMO Doctor
+
+
+Action Role Mapping
+---------------------
+Role :- EPMA RMO Doctor{
+epma_access_amendprescription ,
+epma_access_favourites_list
+epma_access_favourites_list_moa
+epma_access_inpatientprescribing
+epma_access_moanotes
+epma_access_moanotes_save
+epma_access_org_ordersets
+epma_access_org_ordersets_moa
+epma_access_patient_list
+epma_access_patient_list_moa
+epma_access_supplyrequest_ip
+epma_add_doctorscomments
+epma_add_pharmacyreviewcomments_ip
+epma_administer_administrationevent
+epma_approve_formulary_supplyequest
+epma_approve_nonformulary_supplyequest
+epma_cancel_plannedevent
+epma_canwitnessauth
+epma_confirm_doctorsorder
+epma_copy_ip
+epma_create_supplyrequest_fromadministration
+epma_edit_ip
+epma_fulfil_formulary_supplyrequest
+epma_fulfil_nonformulary_supplyrequest
+epma_override_warning
+epma_prescribe_new_ip
+epma_record_additionaladministration
+epma_reject_formulary_supplyequest
+epma_reject_nonformulary_supplyequest
+epma_schedule_additionaladministration
+epma_start_moa
+epma_transfer_administrationevent
+epma_view_ordersetlists
+
+
+}

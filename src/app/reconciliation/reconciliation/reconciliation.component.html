@@ -1,7 +1,7 @@
 <!--BEGIN LICENSE BLOCK--> 
 <!--Interneuron Terminus
 
-Copyright(C) 2023  Interneuron Holdings Ltd
+Copyright(C) 2024  Interneuron Holdings Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <!--END LICENSE BLOCK--> 
-<table class="table table-sm table-bordered">
+<table class="table table-sm table-bordered" style="height: 56vh;border-bottom: 0;">
     <thead>
         <tr>
             <td class="colwidth card-header container-fluid" scope="col">
@@ -39,10 +39,13 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                 <div class="row">
                     <form class="pl-3 form-inline">
                         <div class="pt-2 form-group mb-2">
-                            <div *ngIf="isMOAStarted && appService.AuthoriseAction('epma_complete_moa')"
-                                [ngClass]="isMOAComplete == true ? 'Approved' : 'PendingApproval'"
-                                (click)="setCompletiontype('MOA')">
+                            <div *ngIf="isMOAComplete && isMOAStarted && !appService.AuthoriseAction('epma_complete_moa')"
+                                [ngClass]="isMOAComplete == true ? 'Approved' : 'PendingApproval'">                               
                             </div>
+                            <div *ngIf="isMOAStarted && appService.AuthoriseAction('epma_complete_moa')"
+                            [ngClass]="isMOAComplete == true ? 'Approved' : 'PendingApproval'"
+                            (click)="setCompletiontype('MOA')">
+                        </div>
                         </div>
 
                         <button
@@ -74,6 +77,10 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                 <div class="row">
                     <form class="pl-3 form-inline">
                         <div class="pt-2 form-group mb-2">
+                            <div *ngIf="isMODComplete && isMODStarted && !appService.AuthoriseAction('epma_complete_mod') &&  appService.bannerWarningStatus && appService.warningServiceIPContext.existingWarningsStatus &&  
+                            (appService.warningService && appService.warningService.encounterId && appService.warningServiceMODContext && !appService.warningServiceMODContext.loader  && appService.warningServiceMODContext.existingWarningsStatus)"
+                                [ngClass]="isMODComplete == true ? 'Approved' : 'PendingApproval'">                                
+                            </div>
                             <div *ngIf="isMODStarted && appService.AuthoriseAction('epma_complete_mod') &&  appService.bannerWarningStatus && appService.warningServiceIPContext.existingWarningsStatus &&  
                             (appService.warningService && appService.warningService.encounterId && appService.warningServiceMODContext && !appService.warningServiceMODContext.loader  && appService.warningServiceMODContext.existingWarningsStatus)"
                                 [ngClass]="isMODComplete == true ? 'Approved' : 'PendingApproval'"
@@ -82,10 +89,10 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                         </div>
 
                         <button
-                            *ngIf="!isMODStarted && (appService.AuthoriseAction('epma_start_mod') || appService.AuthoriseAction('epma_edit_mod')) && appService.isCurrentEncouner && appService.bannerWarningStatus && appService.warningServiceIPContext.existingWarningsStatus"
+                            *ngIf="!isMODStarted && (appService.AuthoriseAction('epma_start_mod') || appService.AuthoriseAction('epma_edit_mod')) && (appService.isCurrentEncouner || !isMODComplete ) && !appService.isTCI && !appService.isOP && !appService.outpatientPrescribingMode && appService.bannerWarningStatus && appService.warningServiceIPContext.existingWarningsStatus"
                             class="btn btn-link  " (click)="startMOD()">Start</button>
                         <button
-                            *ngIf="isMODStarted && (appService.AuthoriseAction('epma_start_mod') || appService.AuthoriseAction('epma_edit_mod')) && appService.isCurrentEncouner && appService.bannerWarningStatus && appService.warningServiceIPContext.existingWarningsStatus"
+                            *ngIf="isMODStarted && (appService.AuthoriseAction('epma_start_mod') || appService.AuthoriseAction('epma_edit_mod')) && (appService.isCurrentEncouner || !isMODComplete ) && !appService.isTCI && !appService.isOP && !appService.outpatientPrescribingMode && appService.bannerWarningStatus && appService.warningServiceIPContext.existingWarningsStatus"
                             (click)="EditMOD()" class="btn btn-link  ">Edit</button>
 
                     </form>
@@ -124,12 +131,19 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                         </div>
 
 
-                        <button class="btn btn-link-rec" *ngIf="appService.AuthoriseAction('epma_access_modnotes')"
+                        <button class="btn btn-link-rec" *ngIf="appService.AuthoriseAction('epma_access_modnotes') && (isMODStarted || isMOAStarted)"
                             (click)="ShowRecNotes('SUM')">Notes</button>
-                        <button class="btn btn-link-rec"
+                        <a *ngIf="isMedsondischargeOnce == true && showDischargesummarryEncounter"
+                            href="javascript:void(0)"  (click)="viewDischargeSummary()">
+                            <img src="../../../assets/images/epma/Discharge icon.svg">
+                        </a>
+                        <!-- <button class="btn btn-link-rec"
+                            *ngIf="isMedsondischargeOnce == true && showDischargesummarryEncounter"
+                            (click)="viewDischargeSummary()">View Discharge Summary</button> -->
+                        <!-- <button class="btn btn-link-rec"
                             *ngIf="isMODComplete == true && 
                         (   appService.warningService && appService.warningService.encounterId && appService.warningServiceMODContext && !appService.warningServiceMODContext.loader  && appService.warningServiceMODContext.existingWarningsStatus)"
-                            (click)="printDischargeRecPdf()">Print</button>
+                            (click)="printDischargeRecPdf()">Print</button>  -->
 
                     </div>
                 </div>
@@ -138,7 +152,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
         </tr>
     </thead>
-    
+
     <tbody>
         <tr *ngIf="arrrPescriptionMOAUnchange.length !=  0">
             <td class="zeropadding">
@@ -279,7 +293,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
             </td>
             <td class="zeropadding">
                 <div class="card-header zeropadding pl-1">
-                    <b> Suspended </b>
+                    <b> Suspended - for review post discharge </b>
                 </div>
                 <div *ngFor="let pres of arrrPescriptionMOASuspended;">
                     <app-prescription-template [prescription]=pres sumstatus="suspended" componenttype="SUMNO">
@@ -606,7 +620,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
                     </div>
                     <div class="col-4">
-                        <button *ngIf="(appService.isCurrentEncouner || appService.isTCI) && !appService.isTCICancelled"
+                        <button *ngIf="(appService.isCurrentEncouner || appService.isTCI || !isMODComplete) && !appService.isTCICancelled"
                             type="button " (click)="submitComplete()" class="btn btn-primary btn-sm">Yes</button>
                         <button type="button" (click)="closeComplete()" class="btn btn-sm"
                             data-dismiss="modal">Close</button>

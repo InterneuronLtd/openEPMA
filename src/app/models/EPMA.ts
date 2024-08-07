@@ -1,7 +1,7 @@
 //BEGIN LICENSE BLOCK 
 //Interneuron Terminus
 
-//Copyright(C) 2023  Interneuron Holdings Ltd
+//Copyright(C) 2024  Interneuron Holdings Ltd
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -75,7 +75,11 @@ export class Prescription {
 	public otherprescriptionsource: string
 	public lastmodifiedfrom: any;
 	public startdatetime: any;
-
+	public printingrequired: any;
+	public createdbyrole:string
+	public lastmodifiedbyrole:string
+	public oxygenadditionalinfo: string
+	public isdeleted : boolean;
 	public __customWarning: any;
 	public __warningOverrideREQ: boolean;
 	public __severityWarning: string
@@ -84,7 +88,6 @@ export class Prescription {
 	public __medications: Array<Medication>
 	public __editingprescription: Prescription
 	public __therapydate: any
-	public oxygenadditionalinfo: string
 	public __editingreviewstatus: Prescriptionreviewstatus
 	public __index: number
 	public __initialreminder: Prescriptionreminders[]
@@ -92,9 +95,38 @@ export class Prescription {
 	public __drugindications: any[]
 	public __drugcodes: any[]
 	public __basicGroup: string
+	public __medicationsummary : Medicationsummary
+	public __ignoreDuplicateWarnings: string
+	public __completed:boolean
+	public __completedOn: any;
+  	public __SupplyRequests: any[];
+	public __GpConnect:any
 
 }
 
+export class Medicationsummary {
+	public	medicationid:string
+	public	prescriptionid:string
+	public	displayname:string
+	public	displaydose:string
+	public	displayroute:string
+	public	displayquantity:string
+	public	displaystatus:string
+	public	iscontrolleddrug:boolean
+	public  comments:string
+	public prescriptionenddate: any
+	public startdatetime: any;
+	public protocoldose: Array<ProtocalDose> = [];
+	public protocolmessage: any;
+	public indication: any;
+	public printingrequired: boolean
+}
+
+export class ProtocalDose {
+	public date: any
+	public text: string
+	public isShowDate: boolean
+}
 export class Posology {
 
 	public posology_id: string
@@ -130,6 +162,7 @@ export class Posology {
 	public totalquantity: number
 	public infusionrateunits: string;
 	public maxnumofdosesperday: number;
+	public prnmaxdose: string;
 	public totalquantitytext: string;
 	public titration: boolean
 	public titrationtype: string
@@ -140,7 +173,10 @@ export class Posology {
 	public iscurrent: boolean;
 	public infusiondoserate: number;
 	public infusiondoserateunits: string;
-
+  	public concentration: string;
+	public referenceweighttype: string;
+	public doseperkgrangemax: number;
+	public dosepersarangemax: number;
 }
 
 export class Dose {
@@ -180,6 +216,11 @@ export class Dose {
 	public __doseEvent: Array<DoseEvents>
 	public infusiondoserate: number;
 	public infusiondoserateunits: string;
+	public referenceweighttype: string;
+	public doseperkg:any;
+	public dosepersa:any;
+	public doseperkgrangemax: any;
+	public dosepersarangemax: any;
 }
 
 export class Medicationadministration {
@@ -231,11 +272,18 @@ export class Medicationadministration {
 	public planneddosesizerangemax: string
 	public levelofselfadmin: string;
 	public administereddescriptivedose: string;
-	public _sequenceid:any;
-	public _index: number;
-	public _productName: string;
 	public _recordstatus: number;
+	public correlationid: string
+	public createdon: any
+	public modifiedon: any
+	public __administerMedication: Array<AdministerMedication>;
+	public __witnessName: string;
+	public isadhoc : boolean;
+	public isdifferentproductadministered : boolean;
+	public isenterinerror : boolean
+	public isinfusionkitchange:boolean
 }
+
 export class Medication {
 	public medication_id: string;
 	public correlationid: string
@@ -398,9 +446,12 @@ export class DoseEvents {
 	public grouptitration: boolean
 	public titrateduntildatetime: any
 	public prescription_id: string;
-	public _createddate:any;
-	public _createdby:string;
 	public _recordstatus: number;
+	public createdby: any
+	public modifiedby: any
+	public createdon: any
+	public modifiedon: any
+	public correlationid: string
 }
 
 export class InfusionEvents {
@@ -418,8 +469,18 @@ export class InfusionEvents {
 	public modifiedby: string
 	public batchnumber: string
 	public expirydate: any
-	public _index: number;
 	public _recordstatus: number;
+	public correlationid: string
+	public createdby: any
+	public createdon: any
+	public modifiedon: any
+	public __administredinfusionrate: number;
+	public __administreddosesize: string;
+	public __administeredstrengthneumerator: number;
+	public __administeredstrengthneumeratorunits: string;
+	public __administeredstrengthdenominator: number;
+	public __administeredstrengthdenominatorunits: string;
+	public __witnessName :string;
 }
 
 export class PrescriptionSource {
@@ -439,6 +500,7 @@ export class Orderset {
 	public inclusive_value: number
 	public exclusive_value: number
 	public groupsauthorizedtoview: string
+	public criteriajson:string;
 }
 
 export class OrdersetPrescription {
@@ -505,6 +567,18 @@ export class AdministerMedication {
 	public ishighalert: boolean;
 	public customgroup: string;
 	public _index: number;
+	public correlationid: string
+	public administreddosesize: string
+	public administreddoseunit: string
+	public administeredstrengthneumerator: number
+	public administeredstrengthneumeratorunits: string
+	public administeredstrengthdenominator: number
+	public administeredstrengthdenominatorunits: string
+	public administredinfusionrate: number
+	public administereddescriptivedose: string
+	public batchnumber: string
+	public expirydate: any
+	public dosetype : string
 }
 
 export class AdministerMedicationcodes {
@@ -513,6 +587,7 @@ export class AdministerMedicationcodes {
 	public medicationadministrationid: string;
 	public code: string
 	public terminology: string
+	public correlationid: string
 }
 
 export class AdministerMedicationingredients {
@@ -526,6 +601,7 @@ export class AdministerMedicationingredients {
 	public strengthneumeratorunit: string
 	public strengthdenominatorunit: string
 	public isprimaryingredient: boolean
+	public correlationid: string
 }
 
 export class ComplianceAid {
@@ -550,6 +626,9 @@ export class PrescriptionMedicaitonSupply {
 	public person_id: string;
 	public encounter_id: string;
 	public quantityentrydate: any;
+	public createdon: any;
+	public createdby: any;
+	public modifiedon: any;
 
 }
 
@@ -563,6 +642,7 @@ export class PrescriptionEvent {
 	public correlationid: string
 	public person_id: string;
 	public encounter_id: string;
+	public createdbyrole:string;
 }
 
 
@@ -607,6 +687,7 @@ export class SupplyRequest {
 	public reasonforprescribingnonformulary: string;
 	public reasonfornotprescribingformulary: string;
 	public costofmedicine: string;
+	public comment:string;
 }
 
 
@@ -661,11 +742,34 @@ export class Prescriptionreminders {
 	public issystem: boolean
 	public isivtooral: boolean
 	public ackcomments: string
-	public ackstatus: string
+	public ackstatus: string	
+	public remindertype: number
+	public repeattype: string
+	public repeatsize: number
+	public enddatetime: any
+	public createdby:string
+	public createdon:any
 	public __calculatedactivationdatetime: any
 	public __noactivationdatetime: any
+	public __logicalid:string;
+	public __issamereminder:boolean;
+	public __showSpinner : boolean;
 }
-
+export class Remindersack{
+	public  epma_remindersack_id : string
+	public  epma_prescriptionreminders_id :string
+	public  logicalid:string
+	public  acknowledgedby:string
+	public  acknowledgedon:any
+	public  acknowledgecomments:string	
+	public  ackstatus: string
+	public  plandatetime : any	 
+	public  encounter_id:string;
+	public  person_id: string;
+	public  prescription_id: string
+	public  __remindertext: string;
+	public  __lastmodifiedby: any;
+	}
 export class Epma_Medsonadmission {
 	public epma_medsonadmission_id: string
 	public createdby: string
@@ -775,6 +879,7 @@ export class AdministrationWitness {
 	public administredby: string
 	public person_id: string
 	public encounter_id: string
+	public correlationid: string
 }
 
 export class Bannerwarningoverrides {
@@ -814,11 +919,19 @@ export class Outpatientprescriptions {
 	public prescriber: string;
 	public person_id: string;
 	public encounter_id: string;
+	public prescriptiontype: string;
+	public prescriptioncategory: string;
+	public dispensingto: string;
+	public createdbyrole:string;
+	public modifiedbyrole:string;
+	public prescriberrole:string;
+	public deletedcomments:string;
+	public isdeleted : boolean;
 }
 export class Opprescriptiontherapies {
 
 	public epma_opprescriptiontherapies_id: string;
-	public epma_outpatientprescriptions_id:string
+	public epma_outpatientprescriptions_id: string
 	public prescription_id: string;
 	public notes: string;
 	public person_id: string;
@@ -833,7 +946,7 @@ export class DSMedSupplyRequiredStatus {
 	public otherreason: string;
 	public encounter_id: string;
 	public person_id: string;
-	public status : string;
+	public status: string;
 }
 
 export class SupplyRequestMedications {
@@ -845,5 +958,66 @@ export class SupplyRequestMedications {
 	public producttype: string;
 	public encounter_id: string;
 	public person_id: string;
-	public epma_supplyrequest_id : string;
+	public epma_supplyrequest_id: string;
+}
+
+export class Opnotes {
+
+	public epma_opnotes_id: string;
+	public encounter_id: string;
+	public person_id: string;
+	public notes: string;
+	public createdon: string;
+	public modifiedon: string;
+	public createdby: string;
+	public modifiedby: string;
+	public epma_outpatientprescriptions_id: string;
+}
+export class EmailModel {
+	public emailFrom: string;
+	public fromName: string;
+	public Username: string;
+
+	public password: string;
+
+	public emailTo: any;
+
+	public subject: string;
+
+	public body: string;
+
+}
+
+export class PersonAwayPeriod {
+
+	public epma_personawayperiod_id: string
+	public awayfrom: any;
+	public awayto: any;
+	public encounter_id: string;
+	public person_id: string;
+	public awayreason: string
+	public createdby: string
+	public modifiedby: string
+	public createdon: any
+	public modifiedon: any
+	public comments: any
+	public isenabled: boolean
+}
+export class MetaComplianceAid {
+	public complienceaid_id: string
+	public complienceaid_name: string
+
+}
+
+export class NursingInstructions {
+
+	public epma_nursinginstructions_id: string
+	public nursinginstructionstext:string;
+	public encounter_id: string;
+	public prescription_id :string;
+	public person_id: string;
+	public createdby: string
+	public modifiedby: string
+	public createdon: any
+	public modifiedon: any
 }

@@ -24,3 +24,11 @@
   color: #080808 !important;
   font-weight: bold;
 }
+
+.medicationexist{
+  background-color: #f6e9df;
+}
+
+.medicationadded{
+  background-color: #fafae7;
+}
