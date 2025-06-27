@@ -116,7 +116,7 @@ export class AddBolusComponent implements OnInit, OnDestroy {
   }
   closePopup() {
     // this.showAddBolus = false;
-    this.subjects.closeAppComponentPopover.next();
+    this.subjects.closeAppComponentPopover.next(undefined);
   }
   createLogicalId(dosedate: any, dose_id: any) {
     let logicalid = moment(dosedate).format('YYYYMMDDHHmm') + "_" + dose_id.toString();
@@ -191,14 +191,14 @@ export class AddBolusComponent implements OnInit, OnDestroy {
         //this.showAddBolus = false;
         this.showSpinner = false;
         this.subjects.refreshDrugChart.next("Refresh");
-        this.subjects.closeAppComponentPopover.next();
+        this.subjects.closeAppComponentPopover.next(undefined);
       });
 
     },
       (error) => {
         this.appService.logToConsole(error);
         upsertManager.destroy();
-        this.subjects.closeAppComponentPopover.next();
+        this.subjects.closeAppComponentPopover.next(undefined);
 
         if (this.appService.IsDataVersionStaleError(error)) {
           this.appService.RefreshPageWithStaleError(error);

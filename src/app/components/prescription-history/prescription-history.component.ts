@@ -44,7 +44,7 @@ export class PrescriptionHistoryComponent implements OnInit, OnDestroy {
   }
  
   hidePrescriptionHistory() {
-    this.subjects.closeAppComponentPopover.next();
+    this.subjects.closeAppComponentPopover.next(undefined);
   }
   
   ngOnInit(): void {

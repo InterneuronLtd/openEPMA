@@ -72,7 +72,7 @@ export class RecordPatientdrugComponent implements OnInit {
   }
   closePopup() {
     this.isSaving = false;
-    this.subjects.closeAppComponentPopover.next();
+    this.subjects.closeAppComponentPopover.next(undefined);
   }
 
   init(preEvent: any) {
@@ -170,14 +170,14 @@ export class RecordPatientdrugComponent implements OnInit {
           this.isSaving = false;
           this.dr.GetMedicationSupply(() => {
             this.dr.GetMedicationSupplyHistory(this.patientDrugs.prescriptionid ,(data)=>{});
-            this.subjects.refreshTemplate.next();
+            this.subjects.refreshTemplate.next(undefined);
             setTimeout(() => {
-              this.subjects.closeAppComponentPopover.next();
+              this.subjects.closeAppComponentPopover.next(undefined);
             }, 1500);
           });
         },(error) => {
           this.isSaving = false;
-          this.subjects.closeAppComponentPopover.next();
+          this.subjects.closeAppComponentPopover.next(undefined);
           if (this.appService.IsDataVersionStaleError(error)) {
             this.appService.RefreshPageWithStaleError(error);
           }

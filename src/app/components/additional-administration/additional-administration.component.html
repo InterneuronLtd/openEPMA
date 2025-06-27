@@ -19,7 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <!--END LICENSE BLOCK--> 
 <div class="modal fade bd-example-modal-lg" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal
-    tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+    tabindex="-1" data-bs-keyboard="false" data-bs-backdrop="static" style="display: block;" role="dialog"
     aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg  modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -172,7 +172,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                 (click)="saveAdministrationForm()" [disabled]="showSpinner"> <span
                                     class="spinner-border spinner-border-sm" *ngIf="showSpinner" role="status"
                                     aria-hidden="true"></span> Confirm</button>
-                            <button *ngIf="!showSpinner" data-dismiss="modal" type="button" class="btn btn-sm btn-secondary"
+                            <button *ngIf="!showSpinner" data-bs-dismiss="modal" type="button" class="btn btn-sm btn-secondary"
                                 (click)="closePopup()">Cancel</button>
                         </div>
 
@@ -183,7 +183,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                 </div>
             </div>
             <!-- <button type="button" class="btn  btn-sm btn-outline-primary">Conferm</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" data-dismiss="modal">Cancel</button> -->
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button> -->
         </div>
     </div>
 </div>

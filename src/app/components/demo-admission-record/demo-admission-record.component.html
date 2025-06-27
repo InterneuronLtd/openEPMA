@@ -21,7 +21,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <ng-template #descriptionTemplate>
   <table style="width: 100%; margin-left: 10px;">
     <tr style="height: 50px; font-size: 10px;">
-      <td rowspan="2" style="width:230px; word-break: break-word;">
+      <td rowspan="2" style="width:40px; word-break: break-word;">
         <span>
           Name : &nbsp;{{' ' +
           patientDetails.fullname?.split(',')[0]}}&nbsp;,&nbsp;{{patientDetails.fullname?.split(',')[1]}}
@@ -48,30 +48,30 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
           {{'NHS Number : ' + patientDetails.nhsnumber}}
         </span>  
       </td>
-      <td colspan="2" style="width:250px;">
+      <td colspan="2" style="width:50px;">
           <span>Department</span><br>
           <span>{{encounterDetails.assignedpatientlocationpointofcare}}</span>
       </td>
-      <td style="width:200px;">
+      <td style="width:35px;">
           <span>Room/Bed</span><br>
           {{(encounterDetails.assignedpatientlocationroom || encounterDetails.assignedpatientlocationbay) + ' / '}}<br>
           {{encounterDetails.assignedpatientlocationbed }}
       </td>
     </tr>
     <tr style="font-size: 10px;">
-      <td style="width:125px;">
+      <td style="width:30px;">
           <span>Admission Date </span><br>
           {{this.encounterDetails.admitdate?.split('-').reverse().join('-')}}<br>
           <span>Hospitalisation Day {{' ' +
             this.encounterDetails.dayspassed}}</span>
       </td>
-      <td style="width:125px;">
+      <td style="width:20px;">
           <span>Consultant </span><br>
           <!-- {{(encounterDetails.attendingdoctortext?.split('
           ')[0] || '')}}&nbsp;&nbsp;{{(encounterDetails.attendingdoctortext?.split(' ')[1] || '')}} -->
           {{encounterDetails.consultingdoctortext}}
       </td>
-      <td style="width:200px;">
+      <td style="width:35px;">
           <span>Known Allergies </span><br>
           {{patientDetails.allergies}}
       </td>
@@ -94,78 +94,188 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
   </ng-container>
 
   <div *ngIf="marType === 'active' || marType === 'empty'">
-    <div *ngFor="let pres of prescription; let i = index; let k = index;">
-      <table data-pdfmake="{'headerRows':3}" [ngStyle]="{'margin' : getMargin()}">
-        <!-- <thead> -->
-          <ng-container *ngIf="marType === 'active'">
-            <tr style="font-size: 10px;">
-          
-              <td colspan="12">
-                <app-prescription-infusion-print-template style="font-size: 9px; word-break: break-all;" *ngIf="marType === 'active' && pres && appService.GetCurrentPosology(pres).infusiontypeid" [prescription]="pres"
-                  componenttype="timeline" [fromPrinting]="true">
-                </app-prescription-infusion-print-template>
-                <app-prescription-non-infusion-print-template style="font-size: 9px; word-break: break-all;" *ngIf="marType === 'active' && pres && !appService.GetCurrentPosology(pres).infusiontypeid" [prescription]="pres"
-                  componenttype="timeline" [fromPrinting]="true">
-                </app-prescription-non-infusion-print-template>
-                <div *ngIf="pres &&  appService.GetCurrentPosology(pres).prn">
-                  PRN
-                </div>
-                <div *ngIf="pres && appService.GetCurrentPosology(pres).doctorsorder">
-                  Prescriber to confirm
-                </div>
-                <div
-                  *ngIf="pres && (pres.infusiontype_id === 'ci' || pres.infusiontype_id === 'pca')  && appService.GetCurrentPosology(pres).frequency !== 'variable' && appService.GetCurrentPosology(pres).prescriptionenddate">
-                  <div>
-                    {{'Treatment End Date: ' + appService.GetCurrentPosology(pres).prescriptionenddate?.split('T')[0]}}
+    <div *ngFor="let group of printGroupedData">
+      <div style="margin-left: 10px;margin-top: 5px;">
+        <strong>{{group.group}}</strong>
+      </div>
+      <div *ngFor="let pres of group.prescriptions; let i = index; let k = index;">
+        <table data-pdfmake="{'headerRows':3}" [ngStyle]="{'margin' : getMargin()}">
+          <!-- <thead> -->
+            <ng-container *ngIf="marType === 'active'">
+              <tr style="font-size: 10px;">
+            
+                <td colspan="12">
+                  <app-prescription-infusion-print-template style="font-size: 9px; word-break: break-all;" *ngIf="marType === 'active' && pres && appService.GetCurrentPosology(pres).infusiontypeid" [prescription]="pres"
+                    componenttype="timeline" [fromPrinting]="true">
+                  </app-prescription-infusion-print-template>
+                  <app-prescription-non-infusion-print-template style="font-size: 9px; word-break: break-all;" *ngIf="marType === 'active' && pres && !appService.GetCurrentPosology(pres).infusiontypeid" [prescription]="pres"
+                    componenttype="timeline" [fromPrinting]="true">
+                  </app-prescription-non-infusion-print-template>
+                  <div *ngIf="pres &&  appService.GetCurrentPosology(pres).prn">
+                    PRN
                   </div>
-                  <div>
-                    {{'Treatment End Time: ' + appService.GetCurrentPosology(pres).prescriptionenddate?.split('T')[1]}}
+                  <div *ngIf="pres && appService.GetCurrentPosology(pres).doctorsorder">
+                    Prescriber to confirm
                   </div>
-   
-                </div>
+                  <div
+                    *ngIf="pres && (pres.infusiontype_id === 'ci' || pres.infusiontype_id === 'pca')  && appService.GetCurrentPosology(pres).frequency !== 'variable' && appService.GetCurrentPosology(pres).prescriptionenddate">
+                    <div>
+                      {{'Treatment End Date: ' + appService.GetCurrentPosology(pres).prescriptionenddate?.split('T')[0]}}
+                    </div>
+                    <div>
+                      {{'Treatment End Time: ' + appService.GetCurrentPosology(pres).prescriptionenddate?.split('T')[1]}}
+                    </div>
+     
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+            <ng-container *ngIf="marType === 'empty'">
+              <tr style="font-size: 10px; height: 100px;">
+            
+                <td colspan="12">
+                  <div style="font-size: 12px;font-weight: bold;">Medication Name: </div>
+                  <div style="font-size: 11px;color: #2a93ba;font-weight: bold;margin-top: 2px"> DOSE: </div>
+                  <div style="color: #7891D8;font-weight: bold; font-size:11px;margin-top: 2px">ROUTE: </div>
+                  <div style="font-size:11px; color: #7891D8;font-weight: bold;margin-top: 2px">FROM: </div>
+                  <div style="font-size:11px; color: #7891D8;font-weight: bold;margin-top: 2px"> PRESCRIBED BY: </div>
+                  <div style="color: #7891D8;font-weight: bold; font-size: 11px;margin-top: 2px">INDICATION: </div>
+                  <div style="font-size:11px; color: #7891D8;font-weight: bold;margin-top: 2px;margin-bottom: 10px;">COMMENTS:  </div>
+                </td>
+              </tr>
+            </ng-container>
+            
+            <tr  style="font-size: 10px;">
+              <td colspan="2" style="width:55px;text-align: center;">
+                <span>Date</span><br>
               </td>
+              <td colspan="2" style="width:55px;text-align: center;">
+                <span *ngIf="marType === 'active'">{{dates[0] | date: 'dd/MM/yyyy'}}</span>
+              </td>
+              <td colspan="2" style="width:55px;text-align: center;">
+                <span></span>
+              </td>
+              <td colspan="2" style="width:55px;text-align: center;">
+                <span *ngIf="marType === 'active'">{{dates[1] | date: 'dd/MM/yyyy'}}</span>
+              </td>
+              <td colspan="2" style="width:55px;text-align: center;">
+                <span></span>
+              </td>
+              <td colspan="2" style="width:55px;text-align: center;">
+                <span *ngIf="marType === 'active'">{{dates[2] | date: 'dd/MM/yyyy'}}</span>
+              </td>
+              <!-- <td colspan="2" style="width:55px;text-align: center;">
+                <span></span>
+              </td> -->
+              <!-- <td colspan="2" style="width:55px;text-align: center;">
+                <span *ngIf="marType === 'active'">{{dates[3] | date: 'dd/MM/yyyy'}}</span>
+              </td> -->
             </tr>
-          </ng-container>
-          <ng-container *ngIf="marType === 'empty'">
-            <tr style="font-size: 10px; height: 100px;">
-          
-              <td colspan="12">
+            <ng-container *ngIf="marType === 'active'">
+              <tr style="font-size: 8px;" [ngStyle]="setHeightWidthForEmptyTemplate()">
+                <ng-container *ngFor="let item of repeatArray;">
+                  <td colspan="2" style="text-align: center;">
+                    <span>Time and Dose/Rate</span>
+                  </td>
+                  <td style="text-align: center;">
+                    <span>Given</span>
+                  </td>
+                  <td style="text-align: center;">
+                    <span>Checked</span>
+                  </td>
+                 </ng-container>
+              </tr>
+             
+            </ng-container>
+  
+  
+          <!-- </thead>
+         
+          <tbody> -->
+          <ng-container *ngIf="marType === 'active'">
+            <tr *ngFor="let item of arrayForTemplate(pres,k); let di = index" style="font-size: 9px;">
+              <ng-container *ngFor="let item of repeatArray; let dj = index">
+                <!-- <div> -->
+                  <ng-container *ngIf="pres && pres.infusiontype_id !== 'ci' && pres.infusiontype_id !== 'pca' && appService.GetCurrentPosology(pres).frequency !== 'protocol'">
+                    <td *ngIf="pres" style="height: 20px; width:50px;">
+                      {{returnTimeDose('x',di,dj,k, pres, dates[dj])}}
+                    </td>
+                  </ng-container>
+        
+                  <td *ngIf="pres && (pres.infusiontype_id === 'ci' || pres.infusiontype_id === 'pca')" style="height: 20px; width:50px;">
+                    {{returnTimeDose('x',di,dj,k,pres, dates[dj])}}
+                  </td>
+        
+                  <ng-container *ngIf="pres && appService.GetCurrentPosology(pres).frequency === 'protocol'">
+                    <td *ngIf="pres" style="height: 20px; width:50px;">
+                      {{returnTimeDose('protocol',di,dj,k,pres, dates[dj])}}
+                    </td>
+                  </ng-container>
+                <!-- </div> -->
                 
-              </td>
+                <!-- <div> -->
+                  <ng-container *ngIf="pres && appService.GetCurrentPosology(pres).frequency !== 'protocol' && pres.infusiontype_id !== 'ci' && pres.infusiontype_id !== 'pca'">
+                    <td *ngIf="pres" style="height: 20px; width:50px;">
+                      {{returnTimeDose('x',di,dj,k,pres, dates[dj],'dose')}}
+                    </td>
+                  </ng-container>
+                  <td *ngIf="pres && (pres.infusiontype_id === 'ci' || pres.infusiontype_id === 'pca')" style="height: 20px; width:50px;">
+                    {{returnTimeDose('x',di, dj, k, pres ,dates[dj], 'dose')}}
+                  </td>
+                  <ng-container *ngIf="pres && appService.GetCurrentPosology(pres).frequency === 'protocol'">
+                    <td *ngIf="pres" style="height: 20px; width:50px;">
+                      {{returnTimeDose('protocol',di,dj,k, pres ,dates[dj], 'dose')}}
+                    </td>
+                  </ng-container>
+                <!-- </div> -->
+      
+                <!-- <div> -->
+                  <ng-container *ngIf="pres && appService.GetCurrentPosology(pres).frequency !== 'protocol' && pres.infusiontype_id !== 'ci' && pres.infusiontype_id !== 'pca'">
+                    <td *ngIf="pres" style="height: 20px; width:50px;">
+                      {{returnTimeDose('x',di,dj,k,pres, dates[dj],'administered')}}
+                    </td>
+                  </ng-container>
+                  <td *ngIf="pres && (pres.infusiontype_id === 'ci' || pres.infusiontype_id === 'pca')" style="height: 20px; width:50px;">
+                    {{returnTimeDose('x',di, dj, k, pres ,dates[dj], 'administered')}}
+                  </td>
+                  <ng-container *ngIf="pres && appService.GetCurrentPosology(pres).frequency === 'protocol'">
+                    <td *ngIf="pres" style="height: 20px; width:50px;">
+                      {{returnTimeDose('protocol',di,dj,k, pres ,dates[dj], 'administered')}}
+                    </td>
+                  </ng-container>
+      
+                <!-- </div> -->
+  
+                <!-- <div> -->
+                  <ng-container *ngIf="pres && appService.GetCurrentPosology(pres).frequency !== 'protocol' && pres.infusiontype_id !== 'ci' && pres.infusiontype_id !== 'pca'">
+                    <td *ngIf="pres" style="height: 20px; width:50px;">
+                      <!-- {{returnTimeDose('x',di,dj,k,pres, dates[dj],'administered')}} -->
+                    </td>
+                  </ng-container>
+                  <td *ngIf="pres && (pres.infusiontype_id === 'ci' || pres.infusiontype_id === 'pca')" style="height: 20px; width:50px;">
+                    <!-- {{returnTimeDose('x',di, dj, k, pres ,dates[dj], 'administered')}} -->
+                  </td>
+                  <ng-container *ngIf="pres && appService.GetCurrentPosology(pres).frequency === 'protocol'">
+                    <td *ngIf="pres" style="height: 20px; width:50px;">
+                      <!-- {{returnTimeDose('protocol',di,dj,k, pres ,dates[dj], 'administered')}} -->
+                    </td>
+      
+                  </ng-container>
+                <!-- </div> -->
+                
+              </ng-container>
             </tr>
           </ng-container>
-          
-          <tr  style="font-size: 10px;">
-            <td colspan="2" style="width:55px;text-align: center;">
-              <span>Date</span><br>
-            </td>
-            <td colspan="2" style="width:55px;text-align: center;">
-              <span *ngIf="marType === 'active'">{{dates[0] | date: 'dd/MM/yyyy'}}</span>
-            </td>
-            <td colspan="2" style="width:55px;text-align: center;">
-              <span></span>
-            </td>
-            <td colspan="2" style="width:55px;text-align: center;">
-              <span *ngIf="marType === 'active'">{{dates[1] | date: 'dd/MM/yyyy'}}</span>
-            </td>
-            <td colspan="2" style="width:55px;text-align: center;">
-              <span></span>
-            </td>
-            <td colspan="2" style="width:55px;text-align: center;">
-              <span *ngIf="marType === 'active'">{{dates[2] | date: 'dd/MM/yyyy'}}</span>
-            </td>
-            <!-- <td colspan="2" style="width:55px;text-align: center;">
-              <span></span>
-            </td> -->
-            <!-- <td colspan="2" style="width:55px;text-align: center;">
-              <span *ngIf="marType === 'active'">{{dates[3] | date: 'dd/MM/yyyy'}}</span>
-            </td> -->
-          </tr>
-          <ng-container *ngIf="marType === 'active'">
-            <tr style="font-size: 8px;" [ngStyle]="setHeightWidthForEmptyTemplate()">
-              <ng-container *ngFor="let item of repeatArray;">
+            
+          <!-- </tbody> -->
+          <ng-container *ngIf="marType === 'empty'">
+            <tr style="font-size: 8px;">
+              <!-- <td [attr.rowspan]="7"></td> -->
+              <!-- <td></td>
+              <td></td> -->
+              <ng-container *ngFor="let item of repeatArray;" style="font-size: 12px;">
                 <td colspan="2" style="text-align: center;">
-                  <span>Time and Dose/Rate</span>
+                  <span>Time/Dose</span>
                 </td>
                 <td style="text-align: center;">
                   <span>Given</span>
@@ -173,196 +283,98 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                 <td style="text-align: center;">
                   <span>Checked</span>
                 </td>
-               </ng-container>
+              </ng-container>
             </tr>
-           
+            
+            <tr style="height: 20px; width:50px;">
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr style="height: 20px; width:35px;">
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr style="height: 20px; width:35px;">
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr style="height: 20px; width:35px;">
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr style="height: 20px; width:35px;">
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr style="height: 20px; width:35px;">
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
           </ng-container>
-
-
-        <!-- </thead>
-       
-        <tbody> -->
-        <ng-container *ngIf="marType === 'active'">
-          <tr *ngFor="let item of arrayForTemplate(pres,k); let di = index" style="font-size: 9px;">
-            <ng-container *ngFor="let item of repeatArray; let dj = index">
-              <!-- <div> -->
-                <ng-container *ngIf="pres && pres.infusiontype_id !== 'ci' && pres.infusiontype_id !== 'pca' && appService.GetCurrentPosology(pres).frequency !== 'protocol'">
-                  <td *ngIf="pres" style="height: 20px; width:50px;">
-                    {{returnTimeDose('x',di,dj,k, pres, dates[dj])}}
-                  </td>
-                </ng-container>
-      
-                <td *ngIf="pres && (pres.infusiontype_id === 'ci' || pres.infusiontype_id === 'pca')" style="height: 20px; width:50px;">
-                  {{returnTimeDose('x',di,dj,k,pres, dates[dj])}}
-                </td>
-      
-                <ng-container *ngIf="pres && appService.GetCurrentPosology(pres).frequency === 'protocol'">
-                  <td *ngIf="pres" style="height: 20px; width:50px;">
-                    {{returnTimeDose('protocol',di,dj,k,pres, dates[dj])}}
-                  </td>
-                </ng-container>
-              <!-- </div> -->
-              
-              <!-- <div> -->
-                <ng-container *ngIf="pres && appService.GetCurrentPosology(pres).frequency !== 'protocol' && pres.infusiontype_id !== 'ci' && pres.infusiontype_id !== 'pca'">
-                  <td *ngIf="pres" style="height: 20px; width:50px;">
-                    {{returnTimeDose('x',di,dj,k,pres, dates[dj],'dose')}}
-                  </td>
-                </ng-container>
-                <td *ngIf="pres && (pres.infusiontype_id === 'ci' || pres.infusiontype_id === 'pca')" style="height: 20px; width:50px;">
-                  {{returnTimeDose('x',di, dj, k, pres ,dates[dj], 'dose')}}
-                </td>
-                <ng-container *ngIf="pres && appService.GetCurrentPosology(pres).frequency === 'protocol'">
-                  <td *ngIf="pres" style="height: 20px; width:50px;">
-                    {{returnTimeDose('protocol',di,dj,k, pres ,dates[dj], 'dose')}}
-                  </td>
-                </ng-container>
-              <!-- </div> -->
-    
-              <!-- <div> -->
-                <ng-container *ngIf="pres && appService.GetCurrentPosology(pres).frequency !== 'protocol' && pres.infusiontype_id !== 'ci' && pres.infusiontype_id !== 'pca'">
-                  <td *ngIf="pres" style="height: 20px; width:50px;">
-                    {{returnTimeDose('x',di,dj,k,pres, dates[dj],'administered')}}
-                  </td>
-                </ng-container>
-                <td *ngIf="pres && (pres.infusiontype_id === 'ci' || pres.infusiontype_id === 'pca')" style="height: 20px; width:50px;">
-                  {{returnTimeDose('x',di, dj, k, pres ,dates[dj], 'administered')}}
-                </td>
-                <ng-container *ngIf="pres && appService.GetCurrentPosology(pres).frequency === 'protocol'">
-                  <td *ngIf="pres" style="height: 20px; width:50px;">
-                    {{returnTimeDose('protocol',di,dj,k, pres ,dates[dj], 'administered')}}
-                  </td>
-                </ng-container>
-    
-              <!-- </div> -->
-
-              <!-- <div> -->
-                <ng-container *ngIf="pres && appService.GetCurrentPosology(pres).frequency !== 'protocol' && pres.infusiontype_id !== 'ci' && pres.infusiontype_id !== 'pca'">
-                  <td *ngIf="pres" style="height: 20px; width:50px;">
-                    <!-- {{returnTimeDose('x',di,dj,k,pres, dates[dj],'administered')}} -->
-                  </td>
-                </ng-container>
-                <td *ngIf="pres && (pres.infusiontype_id === 'ci' || pres.infusiontype_id === 'pca')" style="height: 20px; width:50px;">
-                  <!-- {{returnTimeDose('x',di, dj, k, pres ,dates[dj], 'administered')}} -->
-                </td>
-                <ng-container *ngIf="pres && appService.GetCurrentPosology(pres).frequency === 'protocol'">
-                  <td *ngIf="pres" style="height: 20px; width:50px;">
-                    <!-- {{returnTimeDose('protocol',di,dj,k, pres ,dates[dj], 'administered')}} -->
-                  </td>
-    
-                </ng-container>
-              <!-- </div> -->
-              
-            </ng-container>
-          </tr>
-        </ng-container>
-          
-        <!-- </tbody> -->
-        <ng-container *ngIf="marType === 'empty'">
-          <tr style="font-size: 8px;">
-            <!-- <td [attr.rowspan]="7"></td> -->
-            <!-- <td></td>
-            <td></td> -->
-            <ng-container *ngFor="let item of repeatArray;" style="font-size: 12px;">
-              <td colspan="2" style="text-align: center;">
-                <span>Time/Dose</span>
-              </td>
-              <td style="text-align: center;">
-                <span>Given</span>
-              </td>
-              <td style="text-align: center;">
-                <span>Checked</span>
-              </td>
-            </ng-container>
-          </tr>
-          
-          <tr style="height: 20px; width:50px;">
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-          </tr>
-          <tr style="height: 20px; width:35px;">
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-          </tr>
-          <tr style="height: 20px; width:35px;">
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-          </tr>
-          <tr style="height: 20px; width:35px;">
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-          </tr>
-          <tr style="height: 20px; width:35px;">
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-          </tr>
-          <tr style="height: 20px; width:35px;">
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-          </tr>
-        </ng-container>
-      </table>
+        </table>
+      </div>
     </div>
+    
   </div>
  
 

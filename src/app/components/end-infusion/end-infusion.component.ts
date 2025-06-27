@@ -83,7 +83,7 @@ export class EndInfusionComponent implements OnInit, OnDestroy {
     this.startime = startime;
   }
   closePopup() {
-    this.subjects.closeAppComponentPopover.next();
+    this.subjects.closeAppComponentPopover.next(undefined);
     //this.hideEndInfusionForm.emit()
   }
   saveEndInfusion() {
@@ -156,8 +156,8 @@ export class EndInfusionComponent implements OnInit, OnDestroy {
             this.appService.Prescription.forEach(p => this.appService.UpdatePrescriptionCompletedStatus(p));
             this.showSpinner = false;
             this.appService.UpdatePrescriptionWarningSeverity(this.appService.Prescription, () => {
-              this.subjects.reloadCurrentModule.next();
-             this.subjects.closeAppComponentPopover.next();
+              this.subjects.reloadCurrentModule.next(undefined);
+             this.subjects.closeAppComponentPopover.next(undefined);
             });
           });
         });
@@ -165,8 +165,8 @@ export class EndInfusionComponent implements OnInit, OnDestroy {
         this.dr.getInfusionEvents(() => {
           this.showSpinner = false;
           this.appService.UpdatePrescriptionWarningSeverity(this.appService.Prescription, () => {
-            this.subjects.refreshDrugChart.next();
-           this.subjects.closeAppComponentPopover.next();
+            this.subjects.refreshDrugChart.next(undefined);
+           this.subjects.closeAppComponentPopover.next(undefined);
           });
         });
       }

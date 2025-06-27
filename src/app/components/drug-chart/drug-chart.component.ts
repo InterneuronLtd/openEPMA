@@ -553,7 +553,7 @@ export class DrugChartComponent implements OnInit, OnDestroy {
     let minEventDate = moment(this.appService.changechoosenFilterDate).add(-8, 'days');
     this.timeerHelper.createEvents(minEventDate, MaxEventDate);
 
-    this.subjects.refreshTemplate.next();
+    this.subjects.refreshTemplate.next(undefined);
     for (var timelinearray of this.appService.TimelineArray) {
       let items: any
       items = new DataSet();

@@ -24,18 +24,14 @@
               "src/assets"
             ],
             "styles": [
-              "./node_modules/bootstrap/dist/css/bootstrap.min.css",
               "./node_modules/ngx-bootstrap/datepicker/bs-datepicker.css",
               "./src/styles.css",
               "./node_modules/ngx-toastr/toastr.css"
             ],
             "scripts": [
               "./node_modules/jquery/dist/jquery.min.js",
-              "./node_modules/popper.js/dist/umd/popper.min.js",
-              "./node_modules/bootstrap/dist/js/bootstrap.min.js",
-              "node_modules/document-register-element/build/document-register-element.js",
+              "./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js",
               "node_modules/@webcomponents/custom-elements/src/native-shim.js"
-
            ],
            "vendorChunk": true,
            "extractLicenses": false,
@@ -55,7 +51,6 @@
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
-              "extractCss": true,
               "namedChunks": false,
               "extractLicenses": true,
               "vendorChunk": false,
@@ -64,7 +59,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "2mb",
-                  "maximumError": "8mb"
+                  "maximumError": "10mb"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -89,7 +84,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "terminus-module-epma:build"
+            "buildTarget": "terminus-module-epma:build"
           }
         },
         "test": {
@@ -124,7 +119,6 @@
       }
     }
   },
-  "defaultProject": "terminus-module-epma",
   "cli": {
     "analytics": false
   }

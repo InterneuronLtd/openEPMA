@@ -19,8 +19,8 @@ You should have received a copy of the GNU General Public License
 along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <!--END LICENSE BLOCK--> 
 <div *ngIf="showpopup" class="modal fade bd-example-modal-lg"
-    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
-    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel2"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-bs-keyboard="false"
+    data-bs-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel2"
     aria-hidden="true">
     <div class="modal-dialog  modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -64,7 +64,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
                     <div class="col-8">
 
-                        <!-- <input type="text" class="form-control" [(ngModel)]="locationselected" (ngModelChange)="valuechange($event)"  id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"/> -->
+                        <!-- <input type="text" class="form-control" [(ngModel)]="locationselected" (ngModelChange)="valuechange($event)"  id="dropdownMenu2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"/> -->
 
                         <select class="form-control form-control" name="selectedopPrescriptionType"
                             [(ngModel)]="selectedopPrescriptionType">
@@ -85,7 +85,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
                     <div class="col-8">
 
-                        <!-- <input type="text" class="form-control" [(ngModel)]="locationselected" (ngModelChange)="valuechange($event)"  id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"/> -->
+                        <!-- <input type="text" class="form-control" [(ngModel)]="locationselected" (ngModelChange)="valuechange($event)"  id="dropdownMenu2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"/> -->
 
                         <select class="form-control form-control" name="selectedprescriptioncategory"
                            [(ngModel)]="selectedprescriptioncategory">
@@ -106,7 +106,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
                     <div class="col-8">
 
-                        <!-- <input type="text" class="form-control" [(ngModel)]="locationselected" (ngModelChange)="valuechange($event)"  id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"/> -->
+                        <!-- <input type="text" class="form-control" [(ngModel)]="locationselected" (ngModelChange)="valuechange($event)"  id="dropdownMenu2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"/> -->
 
                         <select class="form-control form-control" name="selectedopPrescriptionType" 
                             [(ngModel)]="selectedispensing">
@@ -128,7 +128,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                     <div class="col-8">
                         <div class="dropdown">
                             <input type="text" style="width:336px;" class="form-control" [(ngModel)]="locationselected"
-                                (ngModelChange)="valuechange($event)" id="dropdownMenu2" data-toggle="dropdown"
+                                (ngModelChange)="valuechange($event)" id="dropdownMenu2" data-bs-toggle="dropdown"
                                 aria-haspopup="true" aria-expanded="false" />
 
                             <div class="dropdown-menu" aria-labelledby="dropdownMenu2">
@@ -160,7 +160,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                 <button type="button" [disabled]="!checkedcondetion" (click)="SavePrescription()"
                     class="btn btn-info">Save</button>
                 <button type="button" (click)="closepopup()" class="btn btn-secondary"
-                    data-dismiss="modal">Close</button>
+                    data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -189,7 +189,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
             <div *ngIf="prescriptions.length > 0 && appService.AuthoriseAction('epma_access_print_op') && !selectedobj.isdeleted "
                 id="automation-printouterdiv" title="Print">
                 <button class="Print_medication_record button-dropdown mt-n2 edit_therapy float-right" type="button"
-                    [disabled]="printing" id="automation-printmenutogglebutton" data-toggle="dropdown"
+                    [disabled]="printing" id="automation-printmenutogglebutton" data-bs-toggle="dropdown"
                     aria-haspopup="true" aria-expanded="false">
                 </button>
                 <div id="automation-printsubmenudiv" class="dropdown-menu options-width"
@@ -339,8 +339,8 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
 
 <div *ngIf="showNotespopup" class="modal fade bd-example-modal-lg"
-    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
-    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel2"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-bs-keyboard="false"
+    data-bs-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel2"
     aria-hidden="true">
     <div class="modal-dialog  modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -367,8 +367,8 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                         <div class="row" *ngFor="let model of OpnotesHistory; let i = index;">
                             <div class=" col-4">{{model.modifiedon| date:"dd-MMM-yyyy"}}</div>
                             <div class=" col-4">{{model.modifiedby}}</div>
-                            <div class=" col-4"><button type="button" data-toggle="modal"
-                                    (click)="sethistorynotes(model.notes)" data-target="#exampleModalnotesOPNotes"
+                            <div class=" col-4"><button type="button" data-bs-toggle="modal"
+                                    (click)="sethistorynotes(model.notes)"
                                     class="btn btn-link">version {{OpnotesHistory.length - i}}</button></div>
 
                         </div>
@@ -382,15 +382,15 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                 <p class="text-danger">{{error}}</p>
                 <button type="button"  *ngIf="!selectedobj.isdeleted" (click)="SavePrescriptionNotes()" class="btn btn-info">Save</button>
                 <button type="button" (click)="closepopupNotes()" class="btn btn-secondary"
-                    data-dismiss="modal">Close</button>
+                    data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
 </div>
 
 <div *ngIf="showDeletepopup" class="modal fade bd-example-modal-lg"
-    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
-    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel2"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-bs-keyboard="false"
+    data-bs-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel2"
     aria-hidden="true">
     <div class="modal-dialog  modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -432,8 +432,8 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
     </div>
 </div>
 <div *ngIf="showDeletepopupConform" class="modal fade bd-example-modal-sm"
-    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
-    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel2"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-bs-keyboard="false"
+    data-bs-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel2"
     aria-hidden="true">
     <div class="modal-dialog  modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -453,13 +453,17 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 </div>
 
 
-    <div class="modal fade" id="exampleModalnotesOPNotes" tabindex="-1" role="dialog"
-        aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
+
+<div *ngIf="showNotespopupversion" class="modal fade bd-example-modal-lg"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-bs-keyboard="false"
+    data-bs-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel2"
+    aria-hidden="true">
+    <div class="modal-dialog  modal-dialog-centered" role="document">
+        <div class="modal-content">
+           
+                <div class="modal-header" style="padding: 0.3rem 1rem; background-color: #E6E6E6">
                     <h5 class="modal-title" id="exampleModalLabel">Notes</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close" (click)="closenotesversion()">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>

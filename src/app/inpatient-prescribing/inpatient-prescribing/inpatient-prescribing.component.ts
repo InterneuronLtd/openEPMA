@@ -251,11 +251,11 @@ export class InpatientPrescribingComponent implements OnInit, OnDestroy, AfterVi
                   else {
                     this.appService.RefreshWarningsFromApi(() => {
                       // if (this.appService.warningServiceIPContext.existingWarningsStatus != true) {
-                      //   this.subjects.showWarnings.next();
+                      //   this.subjects.showWarnings.next(undefined);
                       // }
-                      this.subjects.showWarnings.next();
+                      this.subjects.showWarnings.next(undefined);
                       if (isEdit) {
-                        this.subjects.refreshDrugChart.next();
+                        this.subjects.refreshDrugChart.next(undefined);
                       }
                     })
                   }
@@ -489,7 +489,7 @@ export class InpatientPrescribingComponent implements OnInit, OnDestroy, AfterVi
     this.prescibingMedication = null;
     this.showPrescribingForm = false;
     //this.close_pform.nativeElement.click();
-    this.subjects.closePform.next();
+    this.subjects.closePform.next(undefined);
 
   }
   openInpatientPrescribingModal() {

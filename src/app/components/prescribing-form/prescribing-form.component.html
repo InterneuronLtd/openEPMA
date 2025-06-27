@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <!--END LICENSE BLOCK--> 
-<div id="pform" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+<div id="pform" data-bs-backdrop="static" data-bs-keyboard="false" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog  modal-dialog-centered modal-lg" role="document">
         <div class="modal-content">
             <div class="card-header pt-2 pb-2" *ngIf="formsettings && formsettings.medication">
@@ -246,7 +246,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                                                     <div class="btn-group dropright">
                                                                         <img [hidden]="!(appService.refWeightValue && formsettings.medication.formularyIngredients)"
                                                                             class="dropdown-toggle Calculatorddl"
-                                                                            data-toggle="dropdown" aria-haspopup="true"
+                                                                            data-bs-toggle="dropdown" aria-haspopup="true"
                                                                             aria-expanded="false" />
 
 
@@ -344,7 +344,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                                                     <div class="btn-group dropright">
                                                                         <img [hidden]="!(appService.refWeightValue && formsettings.medication.formularyIngredients)"
                                                                             class="dropdown-toggle Calculatorddl"
-                                                                            data-toggle="dropdown" aria-haspopup="true"
+                                                                            data-bs-toggle="dropdown" aria-haspopup="true"
                                                                             aria-expanded="false" />
 
 
@@ -1007,7 +1007,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                             </div>
                                             <div class="btn-group dropright">
                                                 <img [hidden]="!(appService.refWeightValue && formsettings.medication.formularyIngredients)"
-                                                    class="dropdown-toggle Calculatorddl" data-toggle="dropdown"
+                                                    class="dropdown-toggle Calculatorddl" data-bs-toggle="dropdown"
                                                     aria-haspopup="true" aria-expanded="false" />
                                                 <div class="dropdown-menu">
                                                     <a class="dropdown-item"
@@ -1645,7 +1645,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                             <span>Review Status</span>
                                         </label>
                                         <br>
-                                        <div class="row dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
+                                        <div class="row dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true"
                                             aria-expanded="false" style="text-decoration: underline;">
                                             <div class="col-md-1 btn-group dropright">
                                                 <label>
@@ -1771,7 +1771,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                             <div class="row">
                                 <div class="btn-group dropright">
                                     <img [hidden]="!(appService.refWeightValue && formsettings.medication.formularyIngredients)"
-                                        class="dropdown-toggle Calculatorddl" data-toggle="dropdown"
+                                        class="dropdown-toggle Calculatorddl" data-bs-toggle="dropdown"
                                         aria-haspopup="true" aria-expanded="false" />
                                     <div class="dropdown-menu">
                                         <a class="dropdown-item"
@@ -1951,7 +1951,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                         Apply</button>
                                     <span class="btn-group dropright">
                                         <img [hidden]="!(appService.refWeightValue && formsettings.medication.formularyIngredients)"
-                                            class="dropdown-toggle Calculatorddl ml-1" data-toggle="dropdown"
+                                            class="dropdown-toggle Calculatorddl ml-1" data-bs-toggle="dropdown"
                                             aria-haspopup="true" aria-expanded="false" />
 
                                         <span class="dropdown-menu">
@@ -2171,7 +2171,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                             <div class="row" *ngIf="infusionDoseRateUnits!='/hr'">
                                 <div class="btn-group dropright">
                                     <img [hidden]="!(appService.refWeightValue && formsettings.medication.formularyIngredients)"
-                                        class="dropdown-toggle Calculatorddl" data-toggle="dropdown"
+                                        class="dropdown-toggle Calculatorddl" data-bs-toggle="dropdown"
                                         aria-haspopup="true" aria-expanded="false" />
                                     <div class="dropdown-menu">
                                         <a class="dropdown-item"
@@ -2776,7 +2776,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
             </div>
             <div>
-                <button type="button" hidden data-dismiss="modal" #close_pform>Close</button>
+                <button type="button" hidden data-bs-dismiss="modal" #close_pform>Close</button>
             </div>
         </div>
     </div>
@@ -2789,5 +2789,5 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 </div>
 
 
-<button type="button" hidden data-toggle="modal" data-target="#pform" data-backdrop="static" data-keyboard="false"
+<button type="button" hidden data-bs-toggle="modal" data-bs-target="#pform" 
     #open_pform></button>

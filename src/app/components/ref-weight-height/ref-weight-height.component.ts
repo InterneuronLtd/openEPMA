@@ -158,7 +158,7 @@ export class RefWeightHeightComponent implements OnInit, OnDestroy {
               this.appService.patientInfo.bsa = this.appService.bodySurfaceArea;
               this.appService.patientInfo.weight = this.appService.refWeightValue;
 
-              //this.subjects.weightChanged.next();
+              //this.subjects.weightChanged.next(undefined);
               this.bsModalRef.content.saveDone(true);
               this.bsModalRef.hide();
               this.subjects.showBannerWarnings.next(true);

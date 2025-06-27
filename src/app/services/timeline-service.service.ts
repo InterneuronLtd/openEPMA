@@ -373,7 +373,13 @@ export class TimelineServiceService {
       max: maxUsercanscroll,
       zoomMin: 60000 * 5,
       zoomMax: (1000 * 60 * 60 * 24 * 7 + 10),
-      orientation: { axis: orientation }
+      orientation: { axis: orientation },
+      xss: {
+        disabled: false,
+        filterOptions: {
+          whiteList: { div: ['class'], strong:[] },
+        },
+      }
     };
 
 

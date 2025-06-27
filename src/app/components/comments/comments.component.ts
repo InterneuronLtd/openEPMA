@@ -73,7 +73,7 @@ export class CommentsComponent implements OnInit, OnDestroy {
   }
   closeReasonPopup() {
     //this.showReasonForChange = false;
-    this.subjects.closeAppComponentPopover.next();
+    this.subjects.closeAppComponentPopover.next(undefined);
   }
   createLogicalId(dosedate: any, dose_id: any) {
     let logicalid = moment(dosedate).format('YYYYMMDDHHmm') + "_" + dose_id.toString();
@@ -214,8 +214,8 @@ export class CommentsComponent implements OnInit, OnDestroy {
                   this.dr.PharmacyReviewReset(this.prescription, this.prescriptionEvent.epma_prescriptionevent_id, () => {
                     this.subjects.refreshDrugChart.next("refresh");
                     this.showSpinner = false;
-                    this.subjects.closeAppComponentPopover.next();
-                    this.subjects.reloadCurrentModule.next();
+                    this.subjects.closeAppComponentPopover.next(undefined);
+                    this.subjects.reloadCurrentModule.next(undefined);
                   });
 
                 });
@@ -225,9 +225,9 @@ export class CommentsComponent implements OnInit, OnDestroy {
                     this.dr.PharmacyReviewReset(this.prescription, this.prescriptionEvent.epma_prescriptionevent_id, () => {
                       this.subjects.refreshDrugChart.next("refresh");
                       this.showSpinner = false;
-                      this.subjects.closeAppComponentPopover.next();
-                      this.subjects.showWarnings.next();
-                      this.subjects.reloadCurrentModule.next();
+                      this.subjects.closeAppComponentPopover.next(undefined);
+                      this.subjects.showWarnings.next(undefined);
+                      this.subjects.reloadCurrentModule.next(undefined);
                     });
 
                   });
@@ -246,8 +246,8 @@ export class CommentsComponent implements OnInit, OnDestroy {
                 this.dr.PharmacyReviewReset(this.prescription, this.prescriptionEvent.epma_prescriptionevent_id, () => {
                   this.subjects.refreshDrugChart.next("refresh");
                   this.showSpinner = false;
-                  this.subjects.closeAppComponentPopover.next();
-                  this.subjects.refreshTemplate.next();
+                  this.subjects.closeAppComponentPopover.next(undefined);
+                  this.subjects.refreshTemplate.next(undefined);
                 });
               });
             } else {
@@ -256,9 +256,9 @@ export class CommentsComponent implements OnInit, OnDestroy {
                   this.dr.PharmacyReviewReset(this.prescription, this.prescriptionEvent.epma_prescriptionevent_id, () => {
                     this.subjects.refreshDrugChart.next("refresh");
                     this.showSpinner = false;
-                    this.subjects.closeAppComponentPopover.next();
-                    this.subjects.showWarnings.next();
-                    this.subjects.refreshTemplate.next();
+                    this.subjects.closeAppComponentPopover.next(undefined);
+                    this.subjects.showWarnings.next(undefined);
+                    this.subjects.refreshTemplate.next(undefined);
                   });
 
                 });
@@ -394,8 +394,8 @@ export class CommentsComponent implements OnInit, OnDestroy {
                 this.reasonComments = "";
                 this.subjects.refreshDrugChart.next("refresh");
                 this.showSpinner = false;
-                this.subjects.closeAppComponentPopover.next();
-                this.subjects.refreshTemplate.next();
+                this.subjects.closeAppComponentPopover.next(undefined);
+                this.subjects.refreshTemplate.next(undefined);
               });
             });
           });
@@ -408,9 +408,9 @@ export class CommentsComponent implements OnInit, OnDestroy {
                   this.reasonComments = "";
                   this.subjects.refreshDrugChart.next("refresh");
                   this.showSpinner = false;
-                  this.subjects.closeAppComponentPopover.next();
-                  this.subjects.showWarnings.next();
-                  this.subjects.refreshTemplate.next();
+                  this.subjects.closeAppComponentPopover.next(undefined);
+                  this.subjects.showWarnings.next(undefined);
+                  this.subjects.refreshTemplate.next(undefined);
                 });
               });
             });

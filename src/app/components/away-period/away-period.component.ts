@@ -121,11 +121,11 @@ export class AwayPeriodComponent implements OnInit {
         this.clearFormData();
         this.awayPeriod = new PersonAwayPeriod();
         this.dr.GetManageAwayPeriod(()=> {
-          this.subjects.refreshDrugChart.next();
+          this.subjects.refreshDrugChart.next(undefined);
         });
       }, (error) => {
         this.showSpinner = false;
-        this.subjects.closeAppComponentPopover.next();
+        this.subjects.closeAppComponentPopover.next(undefined);
         if (this.appService.IsDataVersionStaleError(error)) {
           this.appService.RefreshPageWithStaleError(error);
         }
@@ -157,7 +157,7 @@ export class AwayPeriodComponent implements OnInit {
       this.clearFormData();
       this.confirmModalRef.hide();
       this.dr.GetManageAwayPeriod(()=> {
-        this.subjects.refreshDrugChart.next();
+        this.subjects.refreshDrugChart.next(undefined);
       });
     },
       (error) => {
@@ -187,7 +187,7 @@ export class AwayPeriodComponent implements OnInit {
    this.clearFormData();
   }
   closePopup() {
-      this.subjects.closeAppComponentPopover.next();
+      this.subjects.closeAppComponentPopover.next(undefined);
   }
   closeAwayPeriodPopup(){
     this.showAwayPeriodHistory =false;

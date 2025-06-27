@@ -285,3 +285,9 @@
 .menuselected {
     background-color:#d9d9d9 ;
 }
+
+.dropdown-item-print {
+    position: relative;
+    padding: 0px 0px 0px 25px;
+    border-bottom: 1px solid #c8ced3;
+}

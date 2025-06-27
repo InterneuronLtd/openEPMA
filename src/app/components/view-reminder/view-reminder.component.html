@@ -20,7 +20,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <!--END LICENSE BLOCK--> 
 <div *ngIf="isMainReminder && !showAcknowledgeReminder && !isManageReminder && !showNewReminder"
     class="modal fade bd-example-modal-lg" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal
-    tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+    tabindex="-1" data-bs-keyboard="false" data-bs-backdrop="static" style="display: block;" role="dialog"
     aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg  modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -280,7 +280,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
                         </div>
                         <div class="col-6 text-right">
-                            <button data-dismiss="modal" type="button" class="btn btn-sm btn-secondary"
+                            <button data-bs-dismiss="modal" type="button" class="btn btn-sm btn-secondary"
                                 (click)="closeReminderPopup()">Close</button>
                         </div>
                     </div>
@@ -291,7 +291,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 </div>
 <div *ngIf="isManageReminder && !showAcknowledgeReminder && !showNewReminder && !isMainReminder"
     class="modal fade bd-example-modal-lg" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal
-    tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+    tabindex="-1" data-bs-keyboard="false" data-bs-backdrop="static" style="display: block;" role="dialog"
     aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg  modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -389,7 +389,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                         </div>
                         <div class="col-6 text-right">
 
-                            <button data-dismiss="modal" type="button" class="btn btn-sm btn-secondary"
+                            <button data-bs-dismiss="modal" type="button" class="btn btn-sm btn-secondary"
                                 (click)="closeManagerReminder();">Close</button>
                         </div>
 
@@ -401,7 +401,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 </div>
 <div *ngIf="showNewReminder && !isManageReminder && !showAcknowledgeReminder && !isMainReminder"
     class="modal fade bd-example-modal-lg" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal
-    tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+    tabindex="-1" data-bs-keyboard="false" data-bs-backdrop="static" style="display: block;" role="dialog"
     aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg  modal-dialog-centered" role="document">
         <div class="modal-content" style="height: auto!important;">
@@ -505,7 +505,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                                 <button style="color:white" type="submit" class="btn btn-sm btn-info mr-3"> <span
                                         class="spinner-border spinner-border-sm" *ngIf="showSpinner" role="status"
                                         aria-hidden="true"></span>Confirm</button>
-                                <button *ngIf="!showSpinner" style="color:white" data-dismiss="modal" type="button"
+                                <button *ngIf="!showSpinner" style="color:white" data-bs-dismiss="modal" type="button"
                                     class="btn btn-sm btn-secondary" (click)="closeNewReminderPopup()">Cancel</button>
                             </div>
 
@@ -519,7 +519,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
 <div *ngIf="showAcknowledgeReminder && !isManageReminder && !showNewReminder && !isMainReminder"
     class="modal fade bd-example-modal-lg" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal
-    tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+    tabindex="-1" data-bs-keyboard="false" data-bs-backdrop="static" style="display: block;" role="dialog"
     aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg  modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -725,7 +725,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                             <button *ngIf="ackstatus==false" style="color:white" type="button" (click)="saveAcknowledgeReminder()"
                                 class="btn btn-sm btn-info mr-3"> <span class="spinner-border spinner-border-sm"
                                     *ngIf="showSpinner" role="status" aria-hidden="true"></span>Confirm</button>
-                            <button *ngIf="!showSpinner" style="color:white" data-dismiss="modal" type="button"
+                            <button *ngIf="!showSpinner" style="color:white" data-bs-dismiss="modal" type="button"
                                 class="btn btn-sm btn-secondary" (click)="closeAcknowledgePopup()">Close</button>
                         </div>
 

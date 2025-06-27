@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <!--END LICENSE BLOCK--> 
-<div id="warningsop" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+<div id="warningsop" data-bs-backdrop="static" data-bs-keyboard="false" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog  modal-dialog-centered modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-body p-0 pt-0">
@@ -31,11 +31,11 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                     Refresh
                   </button>
                 <button type="button"  *ngIf="appService.warningService && ws  && !ws.loader" (click)="RefreshWarningsFromApi()" class="btn btn-primary">Refresh</button>
-                <button (click)="HideWarning()"  type="button"  class="btn btn-secondary" data-dismiss="modal" #close_warningsop>Close</button>
+                <button (click)="HideWarning()"  type="button"  class="btn btn-secondary" data-bs-dismiss="modal" #close_warningsop>Close</button>
             </div>
         </div>
     </div>
 </div>
 
-<button type="button" hidden data-toggle="modal" data-target="#warningsop" data-backdrop="static" data-keyboard="false"
+<button type="button" hidden data-bs-toggle="modal" data-bs-target="#warningsop" 
     #open_warningsop></button>

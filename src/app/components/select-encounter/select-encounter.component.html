@@ -20,7 +20,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <!--END LICENSE BLOCK--> 
     <button
       [ngClass]="{'btn btn-sm dropdown-toggle text-white':true,  'btn-success':appService.isCurrentEncouner ,'btn-dark': !appService.isCurrentEncouner }"
-      type="button" id="ddlEncounters" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+      type="button" id="ddlEncounters" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
       (click)="encounterClicked()">
       <span>{{ selectedEncounterText }}</span>
     </button>

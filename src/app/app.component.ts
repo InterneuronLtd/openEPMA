@@ -124,7 +124,7 @@ export class AppComponent implements OnDestroy {
     if (e == "SECONDARY_MODULE_CLOSED") {
       this.subjects.showBannerWarnings.next(true);
       this.TriggerWarningUpdateCheck(() => {
-        this.subjects.recheckBasketWarnings.next();
+        this.subjects.recheckBasketWarnings.next(undefined);
       });
     }
     if (e == "RECORD_WEIGHT") {
@@ -215,9 +215,9 @@ export class AppComponent implements OnDestroy {
       this.clonePrescription = false;
       this.cloningExternally = false;
       //this.close_pform.nativeElement.click();
-      this.subjects.closePform.next();
+      this.subjects.closePform.next(undefined);
       this.showPrescribingForm = false;
-      this.subjects.refreshDrugChart.next();
+      this.subjects.refreshDrugChart.next(undefined);
       this.changeGroupType(this.groupFilterType);
       this.TriggerWarningUpdateCheck();
     });
@@ -538,10 +538,10 @@ export class AppComponent implements OnDestroy {
   }
 
   ShowWarnings() {
-    this.subjects.showWarnings.next();
+    this.subjects.showWarnings.next(undefined);
   }
   ShowAwayPeriod() {
-    this.subjects.showAwayPeriod.next();
+    this.subjects.showAwayPeriod.next(undefined);
   }
   EncountersLoaded(e: boolean) {
 
@@ -654,9 +654,9 @@ export class AppComponent implements OnDestroy {
 
             //emit events after getting initial config. //this happens on first load only.
             this.appService.logToConsole("Service reference is being published from init config");
-            this.subjects.apiServiceReferenceChange.next();
+            this.subjects.apiServiceReferenceChange.next(undefined);
             this.appService.logToConsole("personid is being published from init config");
-            this.subjects.personIdChange.next();
+            this.subjects.personIdChange.next(undefined);
 
           }));
 
@@ -668,10 +668,10 @@ export class AppComponent implements OnDestroy {
       }));
   }
   completeReconcilliation() {
-    this.subjects.CompleteReconciliation.next();
+    this.subjects.CompleteReconciliation.next(undefined);
     // this.dr.RefreshIfDataVersionChanged((result) => {
     //   if (result == false)
-    //     this.subjects.CompleteReconciliation.next();
+    //     this.subjects.CompleteReconciliation.next(undefined);
     // })
   }
 
@@ -1117,7 +1117,7 @@ export class AppComponent implements OnDestroy {
     this.showdrugChart = true;
     this.appService.drugRouteOption = this.FilterRoutesby;
     this.appService.drugSortOrder = this.Sorttherapie;
-    this.subjects.therapyOverview.next();
+    this.subjects.therapyOverview.next(undefined);
 
   }
 
@@ -1144,7 +1144,7 @@ export class AppComponent implements OnDestroy {
   setNoOfDaysTherapy(number) {
     this.appService.therapyCurrentDate = moment();
     this.appService.therapyNoOfDays = number;
-    this.subjects.therapyOverview.next();
+    this.subjects.therapyOverview.next(undefined);
   }
   prevDaysTherapy() {
     if (this.appService.therapyNoOfDays == 3) {
@@ -1152,7 +1152,7 @@ export class AppComponent implements OnDestroy {
     } else {
       this.appService.therapyCurrentDate.add(-5, "days");
     }
-    this.subjects.therapyOverview.next();
+    this.subjects.therapyOverview.next(undefined);
   }
   nextDaysTherapy() {
     if (this.appService.therapyNoOfDays == 3) {
@@ -1160,7 +1160,7 @@ export class AppComponent implements OnDestroy {
     } else {
       this.appService.therapyCurrentDate.add(5, "days");
     }
-    this.subjects.therapyOverview.next();
+    this.subjects.therapyOverview.next(undefined);
   }
   // End Therapy Overview
 
@@ -1183,7 +1183,7 @@ export class AppComponent implements OnDestroy {
 
   CheckBannerWarnings(): boolean {
     if (!this.appService.bannerWarningStatus) {
-      this.subjects.showBannerWarnings.next();
+      this.subjects.showBannerWarnings.next(undefined);
       return false;
     }
     // else
@@ -1332,7 +1332,7 @@ export class AppComponent implements OnDestroy {
                               "/PostObject?synapsenamespace=local&synapseentityname=epma_prescriptionmedicaitonsupply", JSON.stringify(patientDrugs), false)
                               .subscribe((saveResponse) => {
                                 this.dr.GetMedicationSupply(() => {
-                                  this.subjects.refreshTemplate.next();
+                                  this.subjects.refreshTemplate.next(undefined);
                                 });
                               }
                               ))
@@ -1472,7 +1472,7 @@ export class AppComponent implements OnDestroy {
     if (this.appService.warningService && this.appService.warningServiceIPContext.loader != true) {
       this.dr.TriggerWarningUpdateOnChanges(() => {
         if (this.appService.warningServiceIPContext.existingWarningsStatus == false) {
-          this.subjects.showWarnings.next();
+          this.subjects.showWarnings.next(undefined);
         }
         if (cb)
           cb();
@@ -1482,7 +1482,7 @@ export class AppComponent implements OnDestroy {
 
   BannerWarningsLoaded() {
     // if (this.appService.bannerWarningStatus == false) {
-    //   this.subjects.showBannerWarnings.next();
+    //   this.subjects.showBannerWarnings.next(undefined);
     // }
   }
 

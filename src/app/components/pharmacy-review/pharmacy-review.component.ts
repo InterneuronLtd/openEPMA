@@ -176,7 +176,7 @@ export class PharmacyReviewComponent implements OnInit, OnDestroy {
 
   closePopup() {
     // this.showthiscomponent = false;
-    this.subjects.closeAppComponentPopover.next();
+    this.subjects.closeAppComponentPopover.next(undefined);
   }
   isShowDateold(starteDate: any) {
     let date = this.distinctDateold.find(
@@ -644,7 +644,7 @@ prescriptionstatuscheck(reviewid){
   }
   editTherapy() {
     // this.showthiscomponent = false;
-    this.subjects.closeAppComponentPopover.next();
+    this.subjects.closeAppComponentPopover.next(undefined);
 
     setTimeout(() => {
       this.subjects.editPrescription.next(this.prescriptioncurrent);

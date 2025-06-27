@@ -131,7 +131,7 @@ export class BannerWarningsComponent implements OnInit, OnDestroy {
   }
   ResolveBannerWarning(warning: Bannerwarningoverrides) {
     if (warning.warninggroup.toLowerCase() == "weight") {
-      this.subjects.captureWeight.next();
+      this.subjects.captureWeight.next(undefined);
       this.CloseBannerWarnings();
     }
     else {
@@ -161,7 +161,7 @@ export class BannerWarningsComponent implements OnInit, OnDestroy {
     if (this.appService.bannerWarningStatus) {
       this.CloseBannerWarnings();
       if (tempstatus != this.appService.bannerWarningStatus) {
-        this.subjects.refreshDrugChart.next();
+        this.subjects.refreshDrugChart.next(undefined);
       }
     }
 

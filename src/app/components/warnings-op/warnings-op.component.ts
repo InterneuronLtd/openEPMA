@@ -89,7 +89,7 @@ export class WarningsOpComponent implements OnInit, OnDestroy {
 
   refreshTemplate() {
     this.appService.UpdatePrescriptionWarningSeverity(this.appService.Prescription, () => {
-      this.subjects.refreshTemplate.next();
+      this.subjects.refreshTemplate.next(undefined);
     }, this.ws);
   }
 
@@ -107,7 +107,7 @@ export class WarningsOpComponent implements OnInit, OnDestroy {
       this.dr.TriggerWarningUpdateOnChanges(() => {
         if (this.ws.existingWarningsStatus == false) {
           this.refreshTemplate();
-          this.subjects.showOPWarnings.next();
+          this.subjects.showOPWarnings.next(undefined);
         }
         else {
           this.refreshTemplate();

@@ -55,7 +55,7 @@ export class WarningsComponent implements OnInit, OnDestroy {
   }
 
   OpenWarnings() {
-    this.subjects.closeBannerWarnings.next();
+    this.subjects.closeBannerWarnings.next(undefined);
     this.open_warnings.nativeElement.click();
   }
   CloseWarnings() {
@@ -88,7 +88,7 @@ export class WarningsComponent implements OnInit, OnDestroy {
 
   refreshTemplate() {
     this.appService.UpdatePrescriptionWarningSeverity(this.appService.Prescription, () => {
-      this.subjects.refreshTemplate.next();
+      this.subjects.refreshTemplate.next(undefined);
     });
   }
 
@@ -111,7 +111,7 @@ export class WarningsComponent implements OnInit, OnDestroy {
         if (this.appService.warningServiceIPContext.existingWarningsStatus == false) {
           this.refreshTemplate();
           if (!this.appService.AuthoriseAction("epma_supress_warningsmodalonload")) {
-            this.subjects.showWarnings.next();
+            this.subjects.showWarnings.next(undefined);
           }
         }
         else {
@@ -149,11 +149,11 @@ export class WarningsComponent implements OnInit, OnDestroy {
           this.appService.UpdateDataVersionNumber({ "version": version });
         }
         this.close_warnings.nativeElement.click();
-        this.subjects.refreshTemplate.next();
+        this.subjects.refreshTemplate.next(undefined);
       }
       else {
         this.saveerror = true;
-        this.subjects.closeWarnings.next();
+        this.subjects.closeWarnings.next(undefined);
         if (this.appService.IsDataVersionStaleError(data)) {
           this.subjects.ShowRefreshPageMessage.next(data);
         }

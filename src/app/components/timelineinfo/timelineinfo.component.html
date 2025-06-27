@@ -19,13 +19,13 @@ You should have received a copy of the GNU General Public License
 along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <!--END LICENSE BLOCK--> 
 <div *ngIf="editpopuptypetype !='Undo Cancel'" class="modal fade bd-example-modal-lg" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal
-    tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+    tabindex="-1" data-bs-keyboard="false" data-bs-backdrop="static" style="display: block;" role="dialog"
     aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
     <div class="modal-dialog  modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header" style="padding: 0.5rem 1rem; background-color: #E6E6E6">
                 <b>{{headerString}}</b>
-                <button type="button" class="close" data-dismiss="modal" (click)="closepopup()" aria-label="Close">
+                <button type="button" class="close" data-bs-dismiss="modal" (click)="closepopup()" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -102,7 +102,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                         <div class="col-2 colfooterBtns" (click)="addDoseEvent()">
                             <b><span>Confirm</span></b>
                         </div>
-                        <div data-dismiss="modal" (click)="closepopup()" class="col-2 colfooterBtns">
+                        <div data-bs-dismiss="modal" (click)="closepopup()" class="col-2 colfooterBtns">
                             <span>Cancel</span>
                         </div>
                     </div>

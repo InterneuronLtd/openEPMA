@@ -18,7 +18,7 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.If not, see<http://www.gnu.org/licenses/>.
 //END LICENSE BLOCK 
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import moment from 'moment';
 import { UpsertTransactionManager } from 'src/app/services/upsert-transaction-manager.service';
 import { Subscription } from 'rxjs';
@@ -38,6 +38,8 @@ import * as html2canvas from 'html2canvas';
 import * as html2pdf from 'html2pdf.js'
 import { Common } from 'src/app/services/enum';
 import { Console } from 'console';
+
+
 
 
 @Component({
@@ -76,9 +78,29 @@ export class OplistComponent implements OnInit, OnDestroy {
   isLoading: boolean = false;
   printing: boolean = false;
   printOPTemplate: any = false;
+  @ViewChild('historynotesmodel') private historynotesmodel: ElementRef;
+  showNotespopupversion=false
 
-
-  constructor(private subjects: SubjectsService, public appService: AppService, private apiRequest: ApirequestService, private cd: ChangeDetectorRef) {
+  constructor(private subjects: SubjectsService,public appService: AppService, private apiRequest: ApirequestService, private cd: ChangeDetectorRef) {
+    this.Editor.defaultConfig = {
+      toolbar: {
+        items: [
+          'heading',
+          '|',
+          'bold',
+          'italic',
+          'underline',
+          '|',
+          'bulletedList',
+          'numberedList',
+          '|',
+          'undo',
+          'redo'
+        ]
+      },
+      language: 'en'
+    };
+    
     this.opPrescriptionType.push("NHS")
     this.opPrescriptionType.push("Private")
     let location = new clinicLocation();
@@ -189,7 +211,7 @@ export class OplistComponent implements OnInit, OnDestroy {
 
   getOPNotesHistory() {
     this.OpnotesHistory = [];
-    this.latestNotes = "";
+    this.latestNotes = '';
     this.subscriptions.add(this.apiRequest.postRequest(this.appService.baseURI + "/GetBaseViewListByPost/epma_outpatientnoteshistory", this.CreateSessionFilter(this.selectedItem)).subscribe(
       (response) => {
         response.sort((a, b) => b._sequenceid - a._sequenceid);
@@ -208,6 +230,12 @@ export class OplistComponent implements OnInit, OnDestroy {
 
   sethistorynotes(notes: any) {
     this.historynotes = notes;
+
+    
+      this.showNotespopupversion=true   
+  }
+  closenotesversion(){
+    this.showNotespopupversion=false   
   }
   SavePrescriptionNotes() {
    

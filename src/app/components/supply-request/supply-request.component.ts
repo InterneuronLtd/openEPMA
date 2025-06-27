@@ -119,6 +119,7 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
   encounterId: string;
   validEncounter:boolean;
   isEditable: boolean;
+  dmdCode: string;
   constructor(
     private apiRequest: ApirequestService,
     public appService: AppService,
@@ -164,6 +165,13 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
     this.prescription = preEvent.prescription;
     this.prescriptionId = preEvent.prescription.prescription_id;
     this.medicationCode = preEvent.prescription.__medications.find(x => x.isprimary).__codes.find(x => x.terminology == "formulary").code;
+    let dmd = (this.prescription.__drugcodes??[]).find(x => (x.additionalCodeSystem ?? "").toLowerCase() == "dmd")
+    if (dmd) {
+        this.dmdCode = dmd.additionalCode;
+    }
+    else {
+      this.dmdCode = this.medicationCode;
+    }
     this.originalProductType = preEvent.prescription.__medications.find(x => x.isprimary).producttype;
     this.isNewMedicine = !this.appService.checkMedicineTypeForMoa(this.prescription);
     this.doseType = this.appService.GetCurrentPosology(this.prescription).dosetype;
@@ -184,7 +192,7 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
     this.initializeForm();
     if (this.productType != 'custom') {
       this.searchProducts(false);
-      this.getProductDetail(this.medicationCode, "load");
+      this.getProductDetail(this.dmdCode, "load");
     } else {
       this.isLoading = false;
     }
@@ -303,7 +311,7 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
       this.therapyType = 'therapy';
     }
 
-    this.searchCode = prescriptionArray[0].__medications[0].__codes[0].code;
+    this.searchCode = this.dmdCode //prescriptionArray[0].__medications[0].__codes[0].code;
     this.productType = prescriptionArray[0].__medications[0].producttype;
     this.isInitializing = true;
     this.productName = this.medicationFullName;
@@ -844,7 +852,7 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
         .subscribe((saveResponse) => {
           this.appService.UpdateDataVersionNumber(saveResponse);
           this.isSaving = false;
-          this.subjects.closeAppComponentPopover.next();
+          this.subjects.closeAppComponentPopover.next(undefined);
         }
         )
       )
@@ -992,8 +1000,8 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
           this.dr.SendEmailForNonFormularyRequest(productNameList, this.supplyrequest.requestquantity, this.supplyrequest.daterequired);
         }
         this.dr.getSupplyRequest(() => {
-          this.subjects.refreshTemplate.next();
-          this.subjects.closeAppComponentPopover.next();
+          this.subjects.refreshTemplate.next(undefined);
+          this.subjects.closeAppComponentPopover.next(undefined);
         });
         upsertManager.destroy();
         this.appService.logToConsole(resp);
@@ -1023,7 +1031,7 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
   onCancel(): void {
     this.isSaving = false;
     //this.showSupplyRequestPopup = false;
-    this.subjects.closeAppComponentPopover.next();
+    this.subjects.closeAppComponentPopover.next(undefined);
   }
   NewPatientDrug() {
     this.subjects.patientDrug.next({ prescription: this.prescription });
@@ -1076,7 +1084,7 @@ export class SupplyRequestComponent implements OnInit, OnDestroy {
   }
 
   closePopup() {
-    this.subjects.closeAppComponentPopover.next();
+    this.subjects.closeAppComponentPopover.next(undefined);
   }
   daysChange(event): void {
 

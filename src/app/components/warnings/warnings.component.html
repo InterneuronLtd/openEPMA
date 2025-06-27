@@ -20,7 +20,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <!--END LICENSE BLOCK--> 
 <!-- <div  [hidden]="!showwarningscreen">
 <div class="modal fade bd-example-modal-lg" [config]="{backdrop: 'static',show: showwarningscreen,  keyboard: false}" bsModal
-    tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+    tabindex="-1" data-bs-keyboard="false" data-bs-backdrop="static" style="display: block;" role="dialog"
     aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
     <div class="modal-dialog  modal-dialog-centered modal-lg" role="document">
         <div class="modal-content">
@@ -40,7 +40,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 </div> -->
 
 
-<div id="warning" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+<div id="warning" data-bs-backdrop="static" data-bs-keyboard="false" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog  modal-dialog-centered modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-body p-0 pt-0">
@@ -61,7 +61,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                         *ngIf="appService.warningService && !appService.warningServiceIPContext.loader && appService.AuthoriseAction('epma_override_warning')"
                         (click)="SaveExistingWarnings()" class="btn btn-primary">Save</button>
                     <button (click)="HideWarning()" 
-                    type="button" class="btn btn-secondary ml-2" data-dismiss="modal"
+                    type="button" class="btn btn-secondary ml-2" data-bs-dismiss="modal"
                         #close_warnings>Close</button>
                 </div>
                 <span *ngIf="saveerror">There was an error saving override reasons</span>
@@ -70,5 +70,5 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
     </div>
 </div>
 
-<button type="button" hidden data-toggle="modal" data-target="#warning" data-backdrop="static" data-keyboard="false"
+<button type="button" hidden data-bs-toggle="modal" data-bs-target="#warning" 
     #open_warnings></button>

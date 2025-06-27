@@ -192,8 +192,8 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 </ng-template>
 
 <div *ngIf="showNotespopup" class="modal fade bd-example-modal-lg"
-    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
-    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel2"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-bs-keyboard="false"
+    data-bs-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel2"
     aria-hidden="true">
     <div class="modal-dialog  modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -222,8 +222,8 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                         <div class="row" *ngFor="let model of OpnotesHistory; let i = index;">
                             <div class=" col-4">{{model.modifiedon| date:"dd-MMM-yyyy"}}</div>
                             <div class=" col-4">{{model.modifiedby}}</div>
-                            <div class=" col-4"><button type="button" data-toggle="modal"
-                                    (click)="sethistorynotes(model.notes)" data-target="#exampleModalnotesOPNotes"
+                            <div class=" col-4"><button type="button" data-bs-toggle="modal"
+                                    (click)="sethistorynotes(model.notes)" data-bs-target="#exampleModalnotesOPNotes"
                                     class="btn btn-link">version {{OpnotesHistory.length - i}}</button></div>
 
                         </div>
@@ -236,7 +236,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
             <div class="modal-footer">
                 <!-- <button type="button" (click)="SavePrescriptionNotes()" class="btn btn-info">Save</button> -->
                 <button type="button" (click)="closepopupNotes()" class="btn btn-secondary"
-                    data-dismiss="modal">Close</button>
+                    data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -285,8 +285,8 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
 
 <div *ngIf="showaddtoorderset" class="modal fade bd-example-modal-lg"
-    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
-    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel2"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-bs-keyboard="false"
+    data-bs-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel2"
     aria-hidden="true">
     <div class="modal-dialog  modal-dialog-centered" role="document">
         <div class="modal-content">

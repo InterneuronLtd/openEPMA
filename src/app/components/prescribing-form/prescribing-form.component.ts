@@ -19,7 +19,7 @@
 //along with this program.If not, see<http://www.gnu.org/licenses/>.
 //END LICENSE BLOCK 
 import { Component, OnInit, Input, ViewChild, ElementRef, Output, EventEmitter, OnDestroy, ChangeDetectorRef, AfterViewInit } from '@angular/core';
-import { FormBuilder, Validators, FormGroup, AbstractControl, FormControl } from '@angular/forms';
+import { UntypedFormBuilder, Validators, UntypedFormGroup, AbstractControl, UntypedFormControl } from '@angular/forms';
 import { CheckboxControl, Diluent, FormSettings, Indication, InfusionRate, PRNMaxDose, ProtocolInterval, Route, Source, Timeslot } from './formhelper';
 import { Dose, MetaPrescriptionduration, MetaReviewstatus, Prescription } from 'src/app/models/EPMA';
 import { Detail, Product } from 'src/app/models/productdetail';
@@ -260,7 +260,7 @@ export class PrescribingFormComponent implements OnInit, OnDestroy, AfterViewIni
   indValContrByMMC: boolean;
   editModeMinStartCompareDateTime: any;
   showPca = false;
-  constructor(private fb: FormBuilder, public appService: AppService, public apiRequest: ApirequestService, public subjects: SubjectsService, public cd: ChangeDetectorRef, public dr: DataRequest) {
+  constructor(private fb: UntypedFormBuilder, public appService: AppService, public apiRequest: ApirequestService, public subjects: SubjectsService, public cd: ChangeDetectorRef, public dr: DataRequest) {
   }
   ngAfterViewInit(): void {
     if (this.formContext == FormContext.ip) {
@@ -446,7 +446,7 @@ export class PrescribingFormComponent implements OnInit, OnDestroy, AfterViewIni
 
     if (this.validationjsonconfig) {
       if (this.validationjsonconfig.Dose != undefined && this.validationjsonconfig.Dose == false) {
-        for (const field in (<FormGroup>this.prescription.get('posology.strength')).controls) {
+        for (const field in (<UntypedFormGroup>this.prescription.get('posology.strength')).controls) {
           const control = this.prescription.get('posology.strength.' + field);
           if (control) {
             control.clearValidators();
@@ -464,7 +464,7 @@ export class PrescribingFormComponent implements OnInit, OnDestroy, AfterViewIni
       }
 
       if (this.validationjsonconfig.Interval != undefined && this.validationjsonconfig.Interval == false) {
-        for (const field in (<FormGroup>this.prescription.get('posology.interval')).controls) {
+        for (const field in (<UntypedFormGroup>this.prescription.get('posology.interval')).controls) {
           const control = this.prescription.get('posology.interval.' + field);
           if (control) {
             control.clearValidators();
@@ -1374,11 +1374,12 @@ export class PrescribingFormComponent implements OnInit, OnDestroy, AfterViewIni
     setTimeout(() => {
       if (this.appService.isTCI) {
         let lastmodifiedfrom = this.appService.GetCurrentPosology(this.editingPrescription).prescriptionstartdate;
-        if (this.editingPrescription.startdatetime == lastmodifiedfrom)
-          this.SetObjectiveFormValue("startdate", moment(this.editingPrescription.startdatetime).toDate());
-        else
-          this.SetObjectiveFormValue("startdate", moment(lastmodifiedfrom).toDate());
-
+        if (lastmodifiedfrom && moment(lastmodifiedfrom).isValid()) {
+          if (this.editingPrescription.startdatetime == lastmodifiedfrom)
+            this.SetObjectiveFormValue("startdate", moment(this.editingPrescription.startdatetime).toDate());
+          else
+            this.SetObjectiveFormValue("startdate", moment(lastmodifiedfrom).toDate());
+        }
         if (moment(this.prescription.get("startdate").value).isBefore(moment(this.minStartDate))) {
           this.prescription.get('startdate').setValue(this.minStartDate);
         }
@@ -2834,13 +2835,13 @@ export class PrescribingFormComponent implements OnInit, OnDestroy, AfterViewIni
   }
 
   FlagFormErrors() {
-    for (const field in (<FormGroup>this.prescription.get('posology.interval')).controls) {
+    for (const field in (<UntypedFormGroup>this.prescription.get('posology.interval')).controls) {
       const control = this.prescription.get('posology.interval.' + field);
       if (control) {
         control.markAsTouched({ onlySelf: true });
       }
     }
-    for (const field in (<FormGroup>this.prescription.get('posology.strength')).controls) {
+    for (const field in (<UntypedFormGroup>this.prescription.get('posology.strength')).controls) {
       const control = this.prescription.get('posology.strength.' + field);
       if (control) {
         control.markAsTouched({ onlySelf: true });
@@ -4113,12 +4114,12 @@ export class PrescribingFormComponent implements OnInit, OnDestroy, AfterViewIni
     return message;
   }
 
-  public isUnansweredValidator(control: FormControl) {
+  public isUnansweredValidator(control: UntypedFormControl) {
     const isUnanswered = control.value == null || (control.value || '').trim() === "null"
     return !isUnanswered ? null : { 'unanswered': true };
   }
 
-  public noWhitespaceValidator(control: FormControl) {
+  public noWhitespaceValidator(control: UntypedFormControl) {
     const isWhitespace = (control.value || '').trim().length === 0;
     const isValid = !isWhitespace;
     return isValid ? null : { 'whitespace': true };
@@ -5022,7 +5023,7 @@ export class PrescribingFormComponent implements OnInit, OnDestroy, AfterViewIni
         let fixed_dose = []
         comps.every(comp => {
           let t = this.FixToDecimalPlaces(+comp);
-          if (t && t != NaN && t != Infinity)
+          if (t && !Number.isNaN(t) && t != Infinity)
             fixed_dose.push(t.toString());
           else {
             fixed_dose = [];
@@ -5422,7 +5423,7 @@ export class PrescribingFormComponent implements OnInit, OnDestroy, AfterViewIni
     this.formsettings.dosing_pattern = [];
     this.formsettings.protocol_dosing_pattern = [];
     this.formsettings.infusion_rate_pattern = [];
-    for (const field in (<FormGroup>this.prescription.get('posology.strength')).controls) {
+    for (const field in (<UntypedFormGroup>this.prescription.get('posology.strength')).controls) {
       const control = this.prescription.get('posology.strength.' + field);
       if (control) {
         control.reset();
@@ -5447,7 +5448,7 @@ export class PrescribingFormComponent implements OnInit, OnDestroy, AfterViewIni
 
 
     //reset frequency
-    for (const field in (<FormGroup>this.prescription.get('posology.interval')).controls) {
+    for (const field in (<UntypedFormGroup>this.prescription.get('posology.interval')).controls) {
       const control = this.prescription.get('posology.interval.' + field);
       if (control) {
         if (field != "times_hours")
@@ -6053,7 +6054,7 @@ export class PrescribingFormComponent implements OnInit, OnDestroy, AfterViewIni
                 let rounded_dose = []
                 comps.every(comp => {
                   let t = fs.RoundtoFactor(+comp);
-                  if (t && t != NaN && t != Infinity)
+                  if (t && !Number.isNaN(t) && t != Infinity)
                     rounded_dose.push(t.toString());
                   else {
                     rounded_dose = [];
@@ -6103,7 +6104,7 @@ export class PrescribingFormComponent implements OnInit, OnDestroy, AfterViewIni
                     }
                     else {
                       let t = fs.RoundtoFactor(+comp);
-                      if (t && t != NaN && t != Infinity)
+                      if (t && !Number.isNaN(t) && t != Infinity)
                         rounded_dose.push(t.toString());
                       else {
                         rounded_dose = [];

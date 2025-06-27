@@ -71,7 +71,7 @@ export class AdditionalAdministrationComponent implements OnInit {
   }
   closePopup() {
     // this.appService.openAdditionalAdministration = false;
-    this.subjects.closeAppComponentPopover.next();
+    this.subjects.closeAppComponentPopover.next(undefined);
   }
   saveAdministrationForm() {
     this.dose.dosestartdatetime = moment(this.doseStartDate, "DD-MM-YYYY").format("DD-MM-YYYY") + " " + this.doseStarTime;
@@ -105,14 +105,14 @@ export class AdditionalAdministrationComponent implements OnInit {
             // this.currentposology.__dose.push(this.dose);
             this.dr.updateDoseForPrescription(this.prescription.prescription_id, () => {
               this.subjects.refreshDrugChart.next("Refresh");
-              this.subjects.closeAppComponentPopover.next();
+              this.subjects.closeAppComponentPopover.next(undefined);
             });
 
 
 
           }, (error) => {
             this.showSpinner = false;
-            this.subjects.closeAppComponentPopover.next();
+            this.subjects.closeAppComponentPopover.next(undefined);
 
             if (this.appService.IsDataVersionStaleError(error)) {
               this.appService.RefreshPageWithStaleError(error);
@@ -211,13 +211,13 @@ export class AdditionalAdministrationComponent implements OnInit {
         //this.appService.Medicationadministration.push(this.administration);
         this.dr.getAdminstrations(() => {
           this.subjects.refreshDrugChart.next("Refresh");
-          this.subjects.closeAppComponentPopover.next();
+          this.subjects.closeAppComponentPopover.next(undefined);
         })
       },
         (error) => {
           this.appService.logToConsole(error);
           upsertManager.destroy();
-          this.subjects.closeAppComponentPopover.next();
+          this.subjects.closeAppComponentPopover.next(undefined);
 
           if (this.appService.IsDataVersionStaleError(error)) {
             this.appService.RefreshPageWithStaleError(error);

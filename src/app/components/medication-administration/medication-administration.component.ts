@@ -1445,8 +1445,16 @@ export class MedicationAdministrationComponent implements OnInit, OnDestroy {
     this.administermultiplemedication = this.administermultiplemedication.filter(x=>x.__codes.find(x=>x.code!= p.__codes[0].code));
   }
   getFormularyDetail(code, cb: (data) => any) {
+    let dmd = (this.prescription.__drugcodes??[]).find(x => (x.additionalCodeSystem ?? "").toLowerCase() == "dmd")
+    let dmdCode = ""
+    if (dmd) {
+        dmdCode = dmd.additionalCode;
+    }
+    else {
+      dmdCode = code;
+    }
     var endpoint = this.appService.appConfig.uris.terminologybaseuri + "/Formulary/getformularydetailruleboundbycode"
-    this.subscriptions.add(this.apiRequest.getRequest(`${endpoint}/${code}?api-version=1.0`)
+    this.subscriptions.add(this.apiRequest.getRequest(`${endpoint}/${dmdCode}?api-version=1.0`)
       .subscribe((response) => {
         this.isLoadingMedication = false;
         if (response && response.length != 0) {

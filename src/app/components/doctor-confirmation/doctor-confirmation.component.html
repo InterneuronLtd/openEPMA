@@ -21,8 +21,8 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <!-- Doctor conformation popup -->
 
 <div  *ngIf="!showEditpopup" class="modal fade bd-example-modal-sm"
-    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
-    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-bs-keyboard="false"
+    data-bs-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
     aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -40,7 +40,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
                     <div class="row">
                         <div class="col-6">
-                            <button  [disabled]="showSpinnerCancel"  data-dismiss="modal"  type="button" class="btn btn-sm btn-secondary btn-block" (click)="cancelAdministration()">
+                            <button  [disabled]="showSpinnerCancel"  data-bs-dismiss="modal"  type="button" class="btn btn-sm btn-secondary btn-block" (click)="cancelAdministration()">
                                 <span class="spinner-border spinner-border-sm" *ngIf="showSpinnerCancel" role="status" aria-hidden="true"></span>  Cancel dose
                             </button>
                             

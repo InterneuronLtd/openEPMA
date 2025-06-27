@@ -91,6 +91,8 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
   medicationAdministration: any;
   rateEventsdata = [];
   headerSection: number = 0;
+  printPrescriptionData = [];
+  printGroupedData=[];
   constructor(public timeerHelper: TimeerHelper, public appService: AppService, public hs: HelperService, private renderer: Renderer2, public dr: DataRequest, private apiRequest: ApirequestService) {
 
   }
@@ -151,7 +153,8 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
     this.encounterDetails.admitdate = this.appService.encounterDetails.admitdatetime?.split('T')[0];
     this.encounterDetails.dayspassed = moment(this.appService.encounterDetails['admitdate']).diff(moment(), 'days');
     this.metaprescriptionstatus = this.appService.MetaPrescriptionstatus;
-    this.appService.FilteredPrescription.forEach(pres => {
+    let clonedArray = JSON.parse(JSON.stringify(this.appService.FilteredPrescription));
+    clonedArray.forEach(pres => {
       this.prescriptionMapping[pres.prescription_id] = pres;
     });
     // console.log('this.prescriptionMapping',this.prescriptionMapping);
@@ -204,12 +207,20 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
           return true;
         }
       });
-      this.appService.FilteredPrescription.forEach(obj => {
+      let clonedArray = JSON.parse(JSON.stringify(this.appService.FilteredPrescription));
+      clonedArray.forEach(obj => {
         this.prescription.push(this.prescriptionMapping[obj.prescription_id]);
       });
 
       // console.log('prescription 1',this.prescription);
-      this.prescription = this.prescription.filter(x => (x.prescriptionstatus_id == "fe406230-be68-4ad6-a979-ef15c42365cf" || x.prescriptionstatus_id == "fd8833de-213b-4570-8cc7-67babfa31393" || x.prescriptionstatus_id == "63e946cd-b4a4-4f60-9c18-a384c49486ea"))
+      // this.prescription = this.prescription.filter(x => (x.prescriptionstatus_id == "fe406230-be68-4ad6-a979-ef15c42365cf" || x.prescriptionstatus_id == "fd8833de-213b-4570-8cc7-67babfa31393" || x.prescriptionstatus_id == "63e946cd-b4a4-4f60-9c18-a384c49486ea"))
+      this.prescription = this.prescription.filter(x => (x.prescriptionstatus_id != "f1e191f1-3985-4d2f-b96b-0b1b48fa7714" && x.prescriptionstatus_id != "5750c99f-75ec-4b33-b10c-782a000cc360" && x.prescriptionstatus_id != "5d78c6a6-2962-4dcd-8fd0-9824ef09135f" && x.prescriptioncontext_id == "18075621-59fd-4daa-a891-6bb492db087e"))
+
+      this.prescription.forEach((p) => {
+        let grouping = this.appService.groupingBasicsForPrintRecord(p);
+        this.printPrescriptionData.push(grouping);
+      });
+      this.printGroupedData = this.groupAndSort(this.printPrescriptionData);
 
       // console.log('prescription 2',this.prescription);
       this.hs.getDosesPrescriptions(this.prescription);
@@ -220,7 +231,6 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
       
       // console.log("pres dictionary", this.hs.prescriptionDictionary);
       this.distributeEvents(pastEvents);
-
 
     } else if (this.marType === 'report') {
       const reportStartDate = moment(this.sdate).subtract(1,'d');
@@ -261,6 +271,24 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
       this.distributeEvents(todayEvents);
     }
 
+  }
+
+  groupAndSort(data: any): [] {
+    const groupedMap = new Map<string, Prescription[]>();
+    // Group by group name
+    data.forEach(item => {
+      if (!groupedMap.has(item.group)) {
+        groupedMap.set(item.group, []);
+      }
+      groupedMap.get(item.group)?.push(item.prescription);
+    });
+    // Convert map to array and sort
+    const groupedArray: any = Array.from(groupedMap.entries()).map(([group, prescriptions]) => ({
+      group,
+      prescriptions: prescriptions.sort((p1, p2) => p1.__medications.find(x => x.isprimary == true).name.localeCompare(p2.__medications.find(x => x.isprimary == true).name))
+    }));
+    // Sort groups by custom order
+    return groupedArray.sort((a, b) => this.appService.DrugeGroupsType.indexOf(a.group) - this.appService.DrugeGroupsType.indexOf(b.group));
   }
 
   getPrescriptionStatus(pres: Prescription | { prescriptionstatus_id: string }) {
@@ -553,9 +581,9 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
             }
             else {
               if(this.prescriptionMapping[obj.prescription_id].infusiontype_id == "rate" && updatedObj.dose_id.includes("end_")){
-                
-                let originalDoseStartTime = this.appService.Prescription.find(x => x.prescription_id == updatedObj.prescription_id).__posology.find(y => y.posology_id == updatedObj.posology_id).__dose.find(z => z.dose_id == updatedObj.dose_id.split("_")[2]).dosestartdatetime;
-                let originalDoseEndTime = this.appService.Prescription.find(x => x.prescription_id == updatedObj.prescription_id).__posology.find(y => y.posology_id == updatedObj.posology_id).__dose.find(z => z.dose_id == updatedObj.dose_id.split("_")[2]).doseenddatatime;
+                let clonedArray = JSON.parse(JSON.stringify(this.appService.Prescription));
+                let originalDoseStartTime = clonedArray.find(x => x.prescription_id == updatedObj.prescription_id).__posology.find(y => y.posology_id == updatedObj.posology_id).__dose.find(z => z.dose_id == updatedObj.dose_id.split("_")[2]).dosestartdatetime;
+                let originalDoseEndTime = clonedArray.find(x => x.prescription_id == updatedObj.prescription_id).__posology.find(y => y.posology_id == updatedObj.posology_id).__dose.find(z => z.dose_id == updatedObj.dose_id.split("_")[2]).doseenddatatime;
                 
                 var a = moment(originalDoseEndTime);//now
                 var b = moment(originalDoseStartTime);
@@ -787,7 +815,8 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
   }
 
   getDose(obj: any) {
-    const posology = this.appService.Prescription.find(pres => pres.prescription_id == obj.prescription_id).__posology.find(poso => poso.posology_id == obj.posology_id);
+    let clonedArray = JSON.parse(JSON.stringify(this.appService.Prescription));
+    const posology = clonedArray.find(pres => pres.prescription_id == obj.prescription_id).__posology.find(poso => poso.posology_id == obj.posology_id);
     // const posology = this.appService.GetCurrentPosology(this.appService.Prescription.filter(pres => pres.prescription_id === obj.prescription_id)[0]);
     let dose;
     dose = posology.__dose.filter(dose => dose.dose_id === obj.dose_id?.split('_')[obj.dose_id.split('_').length - 1])[0];
@@ -1475,8 +1504,9 @@ export class DemoAdmissionRecordComponent implements OnInit, AfterViewInit, OnDe
             let dateFilteredData = this.hs.prescriptionDictionary[pres.prescription_id].filter(x => x.date == moment(currDate).format('YYYYMMDD'));
             if(dateFilteredData.length > 0 && dateFilteredData[i] && dateFilteredData[i].logicalId != undefined && dateFilteredData[i].logicalId.includes('end'))
             {
-              let originalDoseStartTime = this.appService.Prescription.find(x => x.prescription_id == pres.prescription_id).__posology.find(y => y.posology_id == this.appService.GetCurrentPosology(pres).posology_id).__dose.find(z => z.dose_id == dateFilteredData[i].doseId).dosestartdatetime;
-              let originalDoseEndTime = this.appService.Prescription.find(x => x.prescription_id == pres.prescription_id).__posology.find(y => y.posology_id == this.appService.GetCurrentPosology(pres).posology_id).__dose.find(z => z.dose_id == dateFilteredData[i].doseId).doseenddatatime;
+              let clonedArray = JSON.parse(JSON.stringify(this.appService.Prescription));
+              let originalDoseStartTime =clonedArray.find(x => x.prescription_id == pres.prescription_id).__posology.find(y => y.posology_id == this.appService.GetCurrentPosology(pres).posology_id).__dose.find(z => z.dose_id == dateFilteredData[i].doseId).dosestartdatetime;
+              let originalDoseEndTime = clonedArray.find(x => x.prescription_id == pres.prescription_id).__posology.find(y => y.posology_id == this.appService.GetCurrentPosology(pres).posology_id).__dose.find(z => z.dose_id == dateFilteredData[i].doseId).doseenddatatime;
               
               var a = moment(originalDoseEndTime);//now
               var b = moment(originalDoseStartTime);

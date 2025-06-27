@@ -91,7 +91,7 @@ export class WarningsModComponent implements OnInit {
 
   refreshTemplate() {
     this.appService.UpdatePrescriptionWarningSeverity(this.appService.Prescription, () => {
-      this.subjects.refreshTemplate.next();
+      this.subjects.refreshTemplate.next(undefined);
     }, this.ws);
   }
 
@@ -111,7 +111,7 @@ export class WarningsModComponent implements OnInit {
         if (this.appService.warningServiceMODContext.existingWarningsStatus == false) {
           this.refreshTemplate();
           if (!this.appService.AuthoriseAction("epma_supress_warningsmodalonload")) {
-            this.subjects.showMODWarnings.next();
+            this.subjects.showMODWarnings.next(undefined);
           }
           //reset mod complete if there is a new warning based on external changes like allergies
           this.subscriptions.add(forkJoin([

@@ -112,7 +112,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
             style="color:white">Prescribe</button> -->
 
         <button type="button" [disabled]="isFormSaving" (click)="Cancel()" class="btn btn-secondary"
-            data-dismiss="modal">Cancel</button>
+            data-bs-dismiss="modal">Cancel</button>
 
         <!-- <div *ngIf="isFormSaving">
             Please wait...
@@ -122,7 +122,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
     </div>
     <!-- <div class="modal-footer">
         <button type="button" (click)="SaveAllPrescriptions()" class="btn btn-primary">Prescribe</button>
-        <button type="button" (click)="Cancel()" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" (click)="Cancel()" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         <div *ngIf="isFormSaving">
             Please wait...
         </div>
@@ -136,7 +136,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
     [editingFromIpBasket]="editingFromBasket" [therapyList]="PrescriptionBasket"
     (PrescriptionCreated)="AddPrescriptionToBasket($event)" (Cancel)="PrescriptionCancelled()" formContext="ip">
 </app-prescribing-form>
-<!-- <div class="modal fade" id="pform" tabindex="-1" role="dialog" aria-hidden="true">
+<!-- <div class="modal fade" id="pform" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
         <div class="modal-content">
             <app-prescribing-form *ngIf="showPrescribingForm" [editingPrescription]="editingPrescription"
@@ -144,7 +144,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                 [therapyList]="PrescriptionBasket" (PrescriptionCreated)="AddPrescriptionToBasket($event)"
                 (Cancel)="PrescriptionCancelled()">
             </app-prescribing-form>
-            <button type="button" hidden data-dismiss="modal" #close_pform>Close</button>
+            <button type="button" hidden data-bs-dismiss="modal" #close_pform>Close</button>
         </div>
     </div>
 </div> -->
@@ -152,5 +152,5 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
 
 
-<button type="button" hidden data-toggle="modal" data-target="#pform" data-backdrop="static" data-keyboard="false"
+<button type="button" hidden data-bs-toggle="modal" data-bs-target="#pform" 
     #open_pform></button>

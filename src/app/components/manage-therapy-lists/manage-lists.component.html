@@ -126,7 +126,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
             </span> <span *ngIf="formContext=='moa'">Save</span> <span *ngIf="formContext!='moa'">Prescribe</span>
         </button>
         <button type="button" [disabled]="isFormSaving" (click)="Cancel()" class="btn btn-secondary"
-            data-dismiss="modal">Cancel</button>
+            data-bs-dismiss="modal">Cancel</button>
     </div>
 </div>
 
@@ -136,7 +136,5 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
     (PrescriptionCreated)="AddPrescriptionToBasket($event)" (Cancel)="PrescribingCancelled()">
 </app-prescribing-form>
 
-<button type="button" hidden data-toggle="modal" data-target="#pform" data-backdrop="static" data-keyboard="false"
-    #open_pform></button>
 
 <app-warnings-op *ngIf="formContext == 'op' && ws" [warningcontext]="GetOPWarningContext()"></app-warnings-op>

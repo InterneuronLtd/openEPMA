@@ -449,7 +449,7 @@ export class TitrationChartComponent implements OnInit, OnDestroy {
             (error) => {
               this.appService.logToConsole(error);
               upsertManager.destroy();
-              this.subjects.closeAppComponentPopover.next();
+              this.subjects.closeAppComponentPopover.next(undefined);
 
               if (this.appService.IsDataVersionStaleError(error)) {
                 this.appService.RefreshPageWithStaleError(error);
@@ -547,7 +547,7 @@ export class TitrationChartComponent implements OnInit, OnDestroy {
         this.appService.DoseEvents.sort((a, b) => b._sequenceid - a._sequenceid);
         this.showSpinner = false;
         //this.hideTitrationForm.emit();
-        this.subjects.closeAppComponentPopover.next();
+        this.subjects.closeAppComponentPopover.next(undefined);
         this.subjects.refreshTemplate.next(this.prescription.prescription_id);
         this.subjects.refreshDrugChart.next("Refresh");
       });
@@ -559,7 +559,7 @@ export class TitrationChartComponent implements OnInit, OnDestroy {
       (error) => {
         this.appService.logToConsole(error);
         upsertManager.destroy();
-        this.subjects.closeAppComponentPopover.next();
+        this.subjects.closeAppComponentPopover.next(undefined);
 
         if (this.appService.IsDataVersionStaleError(error)) {
           this.appService.RefreshPageWithStaleError(error);
@@ -602,8 +602,8 @@ export class TitrationChartComponent implements OnInit, OnDestroy {
     // } 
   }
   closePopup() {
-    //this.hideTitrationForm.next();
-    this.subjects.closeAppComponentPopover.next();
+    //this.hideTitrationForm.next(undefined);
+    this.subjects.closeAppComponentPopover.next(undefined);
   }
   volumeFordose() {
     // IF dose entered is 10mg, then 

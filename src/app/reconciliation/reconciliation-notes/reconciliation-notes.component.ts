@@ -28,9 +28,7 @@ import { ApirequestService } from 'src/app/services/apirequest.service';
 import { AppService } from 'src/app/services/app.service';
 import { PrescriptionContext } from 'src/app/services/enum';
 import { SubjectsService } from 'src/app/services/subjects.service';
-import { v4 as uuid } from 'uuid';
 import * as ClassicEditor from 'src/assets/stylekit/ds-ckeditor.js';
-import { CKEditor5, ChangeEvent, FocusEvent, BlurEvent } from '@ckeditor/ckeditor5-angular';
 @Component({
   selector: 'app-reconciliation-notes',
   templateUrl: './reconciliation-notes.component.html',
@@ -125,6 +123,7 @@ export class ReconciliationNotesComponent implements OnInit, OnDestroy  {
   NodesType = "";
   showpopup = false;
   showerror = false;
+  Showhistoryversion=false;
   ngOnInit(): void {
 
   }
@@ -178,6 +177,7 @@ export class ReconciliationNotesComponent implements OnInit, OnDestroy  {
     return JSON.stringify(body);
   }
   sethistorynotes(notes: any) {
+    this.Showhistoryversion=true
     this.historynotes = notes;
   }
   saveNotes() {

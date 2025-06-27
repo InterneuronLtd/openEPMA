@@ -520,14 +520,14 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 </div> -->
 
 <div *ngIf="showconform" class="modal fade bd-example-modal-lg"
-    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
-    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-bs-keyboard="false"
+    data-bs-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
     aria-hidden="true">
     <div class="modal-dialog  modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="">
 
-                <button type="button" (click)="closeComplete()" class="mr-2 close" data-dismiss="modal"
+                <button type="button" (click)="closeComplete()" class="mr-2 close" data-bs-dismiss="modal"
                     aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -623,7 +623,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                         <button *ngIf="(appService.isCurrentEncouner || appService.isTCI || !isMODComplete) && !appService.isTCICancelled"
                             type="button " (click)="submitComplete()" class="btn btn-primary btn-sm">Yes</button>
                         <button type="button" (click)="closeComplete()" class="btn btn-sm"
-                            data-dismiss="modal">Close</button>
+                            data-bs-dismiss="modal">Close</button>
                     </div>
 
                 </div>

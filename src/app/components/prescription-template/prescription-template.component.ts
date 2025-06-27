@@ -587,7 +587,7 @@ export class PrescriptionTemplateComponent implements OnInit, OnDestroy {
       if (overdue) {
         if (switchtoOral) {
           this.reminderIconIvtoOral = "template-switch-to-oral-overdue";
-          this.reminderIconDescIvtoOral = "Switch IV to  overdue";
+          this.reminderIconDescIvtoOral = "Switch IV to oral overdue";
         }
       }
     }
@@ -719,7 +719,7 @@ export class PrescriptionTemplateComponent implements OnInit, OnDestroy {
     this.subjects.drugInformation.next(this.prescription.__medications.find(x => x.isprimary == true));
   }
   doseTitration() {
-    //this.showTitrationForm.next();
+    //this.showTitrationForm.next(undefined);
     this.subjects.titrationChart.next({ prescription: this.prescription, isOnlyShowChart: true, componenttype: this.componenttype });
   }
   selfAdministration() {

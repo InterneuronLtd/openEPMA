@@ -19,15 +19,15 @@ You should have received a copy of the GNU General Public License
 along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <!--END LICENSE BLOCK--> 
 <div *ngIf="showpopup" class="modal fade bd-example-modal-lg"
-    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
-    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-bs-keyboard="false"
+    data-bs-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
     aria-hidden="true">
     <div class="modal-dialog  modal-dialog-centered modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">{{NoteHeader}}</h3>
 
-                <button type="button" class="close" (click)="showpopup=false" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" (click)="showpopup=false" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -54,8 +54,8 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                             <div class="row" *ngFor="let model of arrreconcilation; let i = index;">
                                 <div class=" col-3">{{model.modifiedon| date:"dd-MMM-yyyy"}}</div>
                                 <div class=" col-6">{{model.modifiedby}}</div>
-                                <div class=" col-3"><button type="button" data-toggle="modal"
-                                    (click)="sethistorynotes(model.notes)" data-target="#exampleModalnotes"
+                                <div class=" col-3"><button type="button"
+                                    (click)="sethistorynotes(model.notes)"
                                     class="btn btn-link">version {{arrreconcilation.length - i}}</button></div>
 
                             </div>
@@ -74,9 +74,9 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
             </div>
             <div class="modal-footer" style="padding: 0.4rem 0rem;">
 
-                <button *ngIf="appService.AuthoriseAction('epma_access_moanotes_save')" data-dismiss="modal" type="button" (click)="saveNotes()" 
+                <button *ngIf="appService.AuthoriseAction('epma_access_moanotes_save')" data-bs-dismiss="modal" type="button" (click)="saveNotes()" 
                     class="btn btn-primary">Save</button>
-                <button data-dismiss="modal" type="button" (click)="showpopup=false"
+                <button data-bs-dismiss="modal" type="button" (click)="showpopup=false"
                     class="mr-2 btn btn-secondary">Cancel</button>
 
 
@@ -88,13 +88,13 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
 
 
-<div class="modal fade" id="exampleModalnotes" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-    aria-hidden="true">
+<div *ngIf="Showhistoryversion" class="modal fade show" id="Discardis" tabindex="-1" role="dialog"
+    aria-labelledby="exampleModalLabelNotes" style="display: block; padding-right: 17px;" aria-modal="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="exampleModalLabel">Notes</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" (click)="Showhistoryversion =false">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>

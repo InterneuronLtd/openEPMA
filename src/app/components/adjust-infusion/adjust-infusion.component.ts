@@ -181,7 +181,7 @@ export class AdjustInfusionComponent implements OnInit, OnDestroy {
       (error) => {
         this.appService.logToConsole(error);
         upsertManager.destroy();
-        this.subjects.closeAppComponentPopover.next();
+        this.subjects.closeAppComponentPopover.next(undefined);
 
         if (this.appService.IsDataVersionStaleError(error)) {
           this.appService.RefreshPageWithStaleError(error);
@@ -370,8 +370,16 @@ export class AdjustInfusionComponent implements OnInit, OnDestroy {
     this.isWitnessAuthenticate = false;
   }
   getFormularyDetail(code, cb: (data) => any) {
+    let dmd = (this.prescription.__drugcodes??[]).find(x => (x.additionalCodeSystem ?? "").toLowerCase() == "dmd")
+    let dmdCode = ""
+    if (dmd) {
+        dmdCode = dmd.additionalCode;
+    }
+    else {
+      dmdCode = code;
+    }
     var endpoint = this.appService.appConfig.uris.terminologybaseuri + "/Formulary/getformularydetailruleboundbycode"
-    this.subscriptions.add(this.apiRequest.getRequest(`${endpoint}/${code}?api-version=1.0`)
+    this.subscriptions.add(this.apiRequest.getRequest(`${endpoint}/${dmdCode}?api-version=1.0`)
       .subscribe((response) => {
         this.isLoadingMedication = false;
         if (response && response.length != 0) {

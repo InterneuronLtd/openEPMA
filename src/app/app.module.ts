@@ -21,7 +21,7 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { AppComponent } from './app.component';
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ComponentsModule } from './components/components.module';
 import { Injector } from '@angular/core';
 import { createCustomElement } from '@angular/elements';
@@ -34,32 +34,24 @@ import { OutpatientPrescribingModule } from './outpatient-prescribing/outpatient
 import { ToastrModule } from "ngx-toastr";
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
-@NgModule({
-  declarations: [
-    AppComponent
-  ],
-  imports: [
-    BrowserModule,
-    HttpClientModule,
-    ComponentsModule,
-    FormsModule,
-    BsDatepickerModule.forRoot(),
-    InpatientPrescribingModule,
-    ReconciliationModule,
-    OutpatientPrescribingModule,
-    BrowserAnimationsModule,
-    ToastrModule.forRoot({
-      timeOut: 10000,
-      preventDuplicates: true,
-  }),
-  ],
-  providers: [
-    DatePipe
-  ],
-  bootstrap: [],
-  entryComponents: [AppComponent]
-
-})
+@NgModule({ declarations: [
+        AppComponent
+    ],
+    bootstrap: [], imports: [BrowserModule,
+        ComponentsModule,
+        FormsModule,
+        BsDatepickerModule.forRoot(),
+        InpatientPrescribingModule,
+        ReconciliationModule,
+        OutpatientPrescribingModule,
+        BrowserAnimationsModule,
+        ToastrModule.forRoot({
+            timeOut: 10000,
+            preventDuplicates: true,
+        })], providers: [
+        DatePipe,
+        provideHttpClient(withInterceptorsFromDi())
+    ] })
 export class AppModule {
   constructor(private injector: Injector) {
   }

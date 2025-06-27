@@ -90,19 +90,19 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
           <!-- dropdown for printing -->
           <div id="automation-printouterdiv" title="Print" class="dropdown" *ngIf="showPrintIcon">
-            <button class="Print_medication_record button-dropdown" [disabled]="printing" type="button"
-              id="automation-printmenutogglebutton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <button class="Print_medication_record button-dropdown" type="button"
+              id="automation-printmenutogglebutton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             </button>
             <div id="automation-printsubmenudiv" class="dropdown-menu options-width"
               aria-labelledby="automation-printmenutogglebutton" (click)="printing = true">
-              <a id="automation-printrecordanchor" class="dropdown-item Print_medication_record dropdown-options"
-                href="#" (click)="openActivePrintingTemplate()">Medication administration record</a>
-              <a id="automation-printrecordreportanchor" class="dropdown-item Print_medication_record dropdown-options"
-                href="#" (click)="openDatePicker()">Medication administration record - report</a>
-              <a id="automation-printrecordemptyanchor" class="dropdown-item Print_medication_record dropdown-options"
-                href="#" (click)="getPrescriptionNumber()">Medication administration record - empty</a>
-              <a id="automation-printrecordcurrentanchor" class="dropdown-item Print_medication_record dropdown-options"
-                href="#" (click)="openCurrentPrintingTemplate()">Medication administration record - current
+              <a id="automation-printrecordanchor" class="dropdown-item dropdown-item-print Print_medication_record dropdown-options"
+                href="javascript:void(0)" (click)="openActivePrintingTemplate()">Medication administration record</a>
+              <a id="automation-printrecordreportanchor" class="dropdown-item dropdown-item-print Print_medication_record dropdown-options"
+                href="javascript:void(0)" (click)="openDatePicker()">Medication administration record - report</a>
+              <a id="automation-printrecordemptyanchor" class="dropdown-item dropdown-item-print Print_medication_record dropdown-options"
+                href="javascript:void(0)" (click)="getPrescriptionNumber()">Medication administration record - empty</a>
+              <a id="automation-printrecordcurrentanchor" class="dropdown-item dropdown-item-print Print_medication_record dropdown-options"
+                href="javascript:void(0)" (click)="openCurrentPrintingTemplate()">Medication administration record - current
                 day</a>
             </div>
           </div>
@@ -134,31 +134,31 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
         *ngIf="appService.isAppDataReady === true && (currentmodule==='app-drug-chart' || currentmodule==='app-therapy-overview')"
         class="col-6">
         <div class="btn-group float-right">
-          <div class="form-group mb-2 Menu pl-3" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <div class="form-group mb-2 Menu pl-3" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           </div>
 
           <div class="dropdown-menu dropdown-menu-right">
             <div *ngIf="currentmodule==='app-drug-chart'">
               <b>Show therapies</b>
 
-              <button class="dropdown-item" type="button" [ngClass]="{'active': Showtherapies==='Active'}"
+              <button class="dropdown-item dropdown-item-print" type="button" [ngClass]="{'active': Showtherapies==='Active'}"
                 (click)="filterDateAndRought('Active',FilterRoutesby)">Active</button>
-              <button class="dropdown-item" type="button" [ngClass]="{'active': Showtherapies==='stoped'}"
+              <button class="dropdown-item dropdown-item-print" type="button" [ngClass]="{'active': Showtherapies==='stoped'}"
                 (click)="filterDateAndRought('stoped',FilterRoutesby)">Stopped/Completed</button>
-              <button class="dropdown-item" type="button" [ngClass]="{'active': Showtherapies==='ALL'}"
+              <button class="dropdown-item dropdown-item-print" type="button" [ngClass]="{'active': Showtherapies==='ALL'}"
                 (click)="filterDateAndRought('ALL',FilterRoutesby)">All</button>
 
             </div>
 
             <b>Sort</b>
 
-            <button class="dropdown-item" type="button" [ngClass]="{'active': Sorttherapie==='DESCRIPTION-ASC'}"
+            <button class="dropdown-item dropdown-item-print" type="button" [ngClass]="{'active': Sorttherapie==='DESCRIPTION-ASC'}"
               (click)="sortPrescription('DESCRIPTION-ASC')">DESCRIPTION-ASC</button>
-            <button class="dropdown-item" type="button" [ngClass]="{'active': Sorttherapie==='DESCRIPTION-DESC'}"
+            <button class="dropdown-item dropdown-item-print" type="button" [ngClass]="{'active': Sorttherapie==='DESCRIPTION-DESC'}"
               (click)="sortPrescription('DESCRIPTION-DESC')">DESCRIPTION-DESC</button>
-            <button class="dropdown-item" type="button" [ngClass]="{'active': Sorttherapie==='CREATED TIME-ASC'}"
+            <button class="dropdown-item dropdown-item-print" type="button" [ngClass]="{'active': Sorttherapie==='CREATED TIME-ASC'}"
               (click)="sortPrescription('CREATED TIME-ASC')">CREATED TIME-ASC</button>
-            <button class="dropdown-item" type="button" [ngClass]="{'active': Sorttherapie==='CREATED TIME-DESC'}"
+            <button class="dropdown-item dropdown-item-print" type="button" [ngClass]="{'active': Sorttherapie==='CREATED TIME-DESC'}"
               (click)="sortPrescription('CREATED TIME-DESC')">CREATED TIME-DESC</button>
           </div>
         </div>
@@ -280,7 +280,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
 
 
-    <div id="refreshpagemessage" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div id="refreshpagemessage" data-bs-backdrop="static" data-bs-keyboard="false" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog  modal-dialog-centered modal-lg" role="document">
         <div class="modal-content">
           <b class="popover-title popover-header">
@@ -302,8 +302,8 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
     </div>
 
 
-    <button [disabled]="appService.isAppDataReady == false" type="button" hidden data-toggle="modal"
-      data-target="#refreshpagemessage" data-backdrop="static" data-keyboard="false" #open_refreshmessage></button>
+    <button [disabled]="appService.isAppDataReady == false" type="button" hidden data-bs-toggle="modal"
+      data-bs-target="#refreshpagemessage"  #open_refreshmessage></button>
   </div>
   <div *ngIf="noEncountersAvailable">
     <div *ngIf="appService.outpatientPrescribingMode" class="p-2 font-weight-bold">

@@ -675,7 +675,7 @@ export class DataRequest implements OnDestroy {
                         }
                     }
                     this.GetNursingInstructionsAndCustomWarnings(this.appService.Prescription, () => {
-                        this.subjects.refreshTemplate.next();
+                        this.subjects.refreshTemplate.next(undefined);
                         cb();
                     });
                 })
@@ -1342,6 +1342,7 @@ export class DataRequest implements OnDestroy {
         }
         else {
             let medcodes = []
+            let unprocessedCodes=[]
 
             filtered.forEach(p => {
                 const m = p.__medications.find(x => x.isprimary && x.producttype != "custom");
@@ -1421,21 +1422,190 @@ export class DataRequest implements OnDestroy {
                                     }
                                 });
                             }
-                            if (exitcounter == splitrequests)
-                                cb();
+                            if (exitcounter == splitrequests) {
+                                
+                                filtered.filter(x => !x.__drugcodes).forEach(p => {
+                                    const m = p.__medications.find(x => x.isprimary && x.producttype != "custom");
+                                    if (m) {
+                                        const code = m.__codes.find(x => x.terminology == "formulary");
+                                        if (code) {
+                                            if (!unprocessedCodes.find(x => x.code == code.code)) {
+                                                unprocessedCodes.push({ "code": code.code, "name": m.name, "type": m.producttype })
+                                            }
+                                        }
+                                    }
+                                });
+
+                                if (unprocessedCodes.length != 0) {
+                                    this.GetNewCodeForChangedDMDCodes(unprocessedCodes, filtered, cb);
+                                } else {
+                                    cb();
+                                }
+
+                                // cb();
+                            }
                         }, (error) => {
+                            exitcounter++;
                             this.appService.logToConsole(error);
                             console.log("Error loading formulary details by codes");
-                            if (exitcounter == splitrequests)
-                                cb();
-                            if (error.status == 404) //single medication, 404
-                                cb();
+                            if (exitcounter == splitrequests) {
+                                filtered.filter(x => !x.__drugcodes).forEach(p => {
+                                    const m = p.__medications.find(x => x.isprimary && x.producttype != "custom");
+                                    if (m) {
+                                        const code = m.__codes.find(x => x.terminology == "formulary");
+                                        if (code) {
+                                            if (!unprocessedCodes.find(x => x.code == code.code)) {
+                                                unprocessedCodes.push({ "code": code.code, "name": m.name, "type": m.producttype })
+                                            }
+                                        }
+                                    }
+                                });
+
+                                if (unprocessedCodes.length != 0) {
+                                    this.GetNewCodeForChangedDMDCodes(unprocessedCodes, filtered, cb);
+                                } else {
+                                    cb();
+                                }
+
+                                // cb();                               
+                            }
+                            // if (error.status == 404) //single medication, // or all medications  404
+                            // {
+                            //         cb();
+                            // }
                         }));
                 }
             }
             else {
                 cb();
             }
+        }
+    }
+
+    GetNewCodeForChangedDMDCodes(unprocessedCodes, filtered, callback) {
+        let counter = 0;
+        let newcodes = [];
+        for (let i = 0; i < unprocessedCodes.length; i++) {
+            //foreach unprocessed code search formulary 
+            this.SearchFormulary(unprocessedCodes[i].name, unprocessedCodes[i].type, unprocessedCodes[i].code,
+                (results, name, oldcode) => {
+                    counter++;
+                    if (results && results.data.length > 0) {
+                        let allmatches = results.data.filter(x => x.name === name && x.code != oldcode);
+                        // let mostrecentmatch = allmatches.length ? allmatches[allmatches.length - 1] : null;
+                        // if (mostrecentmatch)
+                        // {
+                        //     newcodes.push(mostrecentmatch.code);
+                        // }
+                        allmatches.forEach(m => {
+                            newcodes.push({ "newcode": m.code, "oldcode": oldcode });
+                        });
+                    }
+                    if (counter == unprocessedCodes.length) {
+                        // console.log("newcodes");
+                        // console.log(newcodes);
+
+                        const endpoint = this.appService.appConfig.uris.terminologybaseuri + "/Formulary/getformularybasicdetailruleboundbycodes"
+                        this.subscriptions.add(this.apiRequest.postRequest(endpoint, newcodes.map(x=> x.newcode), false)
+                            .subscribe((response) => {
+                                if (response && response.length != 0) {
+                                    filtered.filter(x=>!x.__drugcodes).forEach(p => {
+                                        const primarymedication = p.__medications.find(x => x.isprimary);
+                                        const dmd = primarymedication.__codes.find(x => x.terminology == "formulary");
+                                        if (dmd && primarymedication.producttype != 'custom') {
+                                            //get first new code response for the old code //there should alwasy be one // code picks first one if there ever is more than one
+                                            const formulary = response.find(x => newcodes.filter(y => y.oldcode == dmd.code).map(n => n.newcode).includes(x.code));
+                                            if (formulary) {
+
+                                                p.__nursinginstructions = [];
+                                                p.__customWarning = [];
+                                                p.__drugcodes = [];
+                                                p.__drugindications = [];
+
+                                                if (formulary.detail.ignoreDuplicateWarnings)
+                                                    p.__ignoreDuplicateWarnings = formulary.detail.ignoreDuplicateWarnings;
+
+                                                if (formulary.detail.customWarnings)
+                                                    p.__customWarning = Object.assign(formulary.detail.customWarnings);
+                                                else
+                                                    p.__customWarning = [];
+
+                                                if (formulary.detail.titrationTypes && formulary.detail.titrationTypes.length > 0) {
+                                                    p.titrationtype = formulary.detail.titrationTypes[0].desc;
+                                                    p.titrationtypecode = formulary.detail.titrationTypes[0].cd;
+                                                }
+
+                                                formulary.detail.endorsements.forEach(e => {
+                                                    p.__nursinginstructions.push(new NursingInstruction(null, "Endorsement", e));
+                                                });
+                                                formulary.detail.medusaPreparationInstructions.forEach(e => {
+                                                    p.__nursinginstructions.push(new NursingInstruction(null, "Medusa Instructions", e));
+                                                });
+
+                                                if (formulary.formularyAdditionalCodes)
+                                                    p.__drugcodes = Object.assign(formulary.formularyAdditionalCodes);
+                                                // else
+                                                //     p.__drugcodes = null;
+
+                                                 p.__drugcodes.push({
+                                                    "additionalCode": `${formulary.code}`,
+                                                    "additionalCodeSystem": "dmd",                                                    
+                                                  })
+                                                
+
+                                                if (formulary.detail.licensedUses)
+                                                    formulary.detail.licensedUses.forEach(u => {
+                                                        p.__drugindications.push(u);
+                                                    });
+                                                if (formulary.detail.unLicensedUses)
+                                                    formulary.detail.unLicensedUses.forEach(u => {
+                                                        p.__drugindications.push(u);
+                                                    });
+                                            }
+
+                                        }
+                                    });
+                                }
+                                callback();
+                            }, (error) => {
+                                this.appService.logToConsole(error);
+                                console.log("Error loading formulary details by new codes");
+                                callback();
+
+                            }));
+
+                    }
+                })
+        }
+    }
+
+    SearchFormulary(searthTerm, producttype, code, cb) {
+        var p = new SearchFormulary_PostData();
+        p.searchTerm = searthTerm;
+        if (p.searchTerm == "")
+           {
+            cb(null, searthTerm,code);
+            return;
+           }  
+        p.formularyStatusCd = [];
+        p.formularyStatusCd.push("001");
+        p.formularyStatusCd.push("002");
+        p.productType = producttype;
+        const postdata = JSON.stringify(p)
+        if (postdata) {
+            this.subscriptions.add(this.apiRequest.postRequest(this.appService.appConfig.uris.terminologybaseuri + "/Formulary/searchformularies?api-version=1.0", postdata)
+                .subscribe((response) => {
+                    if (response && response.data && response.data.length != 0) {
+                        cb(response, searthTerm,code);
+                    }
+                    else {
+                        cb(null, searthTerm,code);
+                    }
+                }, (error) => {
+                    this.appService.logToConsole(error);
+                    console.log("Error searching formulary details for new codes");
+                    cb(null, searthTerm,code);
+                }));
         }
     }
 
@@ -1695,3 +1865,10 @@ export class DataRequest implements OnDestroy {
     }
 }
 
+export class SearchFormulary_PostData{
+    searchTerm: string;
+    hideArchived: boolean;
+    recStatusCds: string[];
+    formularyStatusCd: string[];
+    productType:string;
+}

@@ -55,7 +55,7 @@ aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
 			</div>  
             <div class="row mt-2" *ngIf="_nursingInstructionsHistory && _nursingInstructionsHistory.length>0">
 				<div class="col-12">
-                    <div class="float-right nursing-history" data-toggle="modal" data-target="#nursingnotes"
+                    <div class="float-right nursing-history"  (click) ="showHistory = !showHistory"
                    
                     placement="bottom">                    
                 </div>
@@ -81,8 +81,8 @@ aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
                     <div class="col-6">                         
                     </div>
                     <div class="col-6 text-right">                        
-                        <button *ngIf="!nursingInstructionType"  data-dismiss="modal"  type="button" class="btn btn-sm btn-primary mr-2" (click)="saveNursingInstructions()">Save</button>
-                        <button  data-dismiss="modal"  type="button" class="btn btn-sm btn-secondary" (click)="closeNursingInstructionPopup()">Close</button>
+                        <button *ngIf="!nursingInstructionType"  data-bs-dismiss="modal"  type="button" class="btn btn-sm btn-primary mr-2" (click)="saveNursingInstructions()">Save</button>
+                        <button  data-bs-dismiss="modal"  type="button" class="btn btn-sm btn-secondary" (click)="closeNursingInstructionPopup()">Close</button>
                     </div>
                      
                 </div>               
@@ -101,13 +101,13 @@ aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
     </div>
 </div>
 </div>
-<div class="modal fade" id="nursingnotes" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
+<div *ngIf="showHistory" class="modal fade show" tabindex="-1" role="dialog"
+        aria-labelledby="exampleModalLabeldelete" style="display: block; padding-right: 17px;" aria-modal="true">
+        <div class="modal-dialog  modal-dialog-centered" role="document">
+            <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="exampleModalLabel"></h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" (click) ="showHistory = false" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>

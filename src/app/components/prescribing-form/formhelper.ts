@@ -29,7 +29,7 @@ import { Observable, Subject, Subscription } from 'rxjs';
 import { PrescribingFormComponent } from './prescribing-form.component';
 import { Injectable, OnDestroy } from '@angular/core';
 import { DoseType, InfusionType, FrequencyType, IntervalType, DoseForm, DaysOfWeek, FormContext, ReconciliationListActions, PrescriptionContext, Common } from 'src/app/services/enum';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { SubjectsService } from 'src/app/services/subjects.service';
 
 // TODO: Add Angular decorator.
@@ -278,7 +278,7 @@ export class FormSettings implements OnDestroy {
     this.isPrimaryMedicationUOMLiquid = isliquid;
   }
 
-  public GetMostFrequentVTMUnit(code, form: FormGroup, cb: () => any) {
+  public GetMostFrequentVTMUnit(code, form: UntypedFormGroup, cb: () => any) {
     if (this.vtmstyle) {
       if (this.vtm_dose_units.length == 1) {
         this.dose_units = this.vtm_dose_units[0];
@@ -2194,7 +2194,8 @@ export class FormSettings implements OnDestroy {
         clone[e] = moment(obj[e]).clone().toDate();
       }
       else if (typeof e == "object") {
-        clone[e] = Object.assign(clone[e], this.CloneObject(obj[e]));
+    // @ts-ignore
+    clone[e] = Object.assign(clone[e], this.CloneObject(obj[e]));
       }
       else
         clone[e] = obj[e];

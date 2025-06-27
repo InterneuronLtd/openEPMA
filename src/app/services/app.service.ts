@@ -20,7 +20,7 @@
 //END LICENSE BLOCK 
 import { Injectable } from '@angular/core';
 import { Encounter } from '../models/encounter.model';
-import jwt_decode from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import { Prescription, Posology, Dose, DoseEvents, Medication, Medicationadministration, Medicationcodes, Medicationingredients, Medicationroutes, MetaPrescriptionstatus, MetaPrescriptionduration, DrugChart, MetaPrescriptionadditionalcondition, Prescriptionroutes, InfusionEvents, PrescriptionSource, Oxygendevices, MetaReviewstatus, SupplyRequest, Prescriptionreminders, Prescriptionreviewstatus, MetaPrescriptioncontext, Orderset, PrescriptionEvent, PrescriptionMedicaitonSupply, AdministerMedication, PersonAwayPeriod, NursingInstruction, NursingInstructions, Remindersack } from "src/app/models/EPMA"
 import { action } from '../models/filter.model';
 import { Observation, Observationscaletype, PersonObservationScale } from '../models/observations.model';
@@ -386,7 +386,7 @@ export class AppService {
 
   decodeAccessToken(token: string): any {
     try {
-      return jwt_decode(token);
+      return jwtDecode(token);
     }
     catch (Error) {
       this.logToConsole(`Error: ${Error}`);
@@ -648,19 +648,19 @@ export class AppService {
           this.UpdateDataVersionNumber({ "version": version });
         }
         this.UpdatePrescriptionWarningSeverity(this.Prescription, () => {
-          this.subject.refreshTemplate.next();
+          this.subject.refreshTemplate.next(undefined);
           cb();
         });
       }
       else {
         cb();
-        this.subject.closeWarnings.next();
+        this.subject.closeWarnings.next(undefined);
         if (this.IsDataVersionStaleError(data)) {
           this.subject.ShowRefreshPageMessage.next(data);
         }
       }
     });
-    this.subject.refreshTemplate.next();
+    this.subject.refreshTemplate.next(undefined);
 
   }
 
@@ -842,8 +842,124 @@ export class AppService {
       }
     }
     if (!refreshed) {
-      this.subject.ShowRefreshPageMessage.next();
+      this.subject.ShowRefreshPageMessage.next(undefined);
     }
+  }
+
+  groupingBasicsForPrintRecord(val) {
+    this.dcgroupadded = [];
+        let isIvFluid=false;
+      if (val.__drugcodes) {
+        const customrows = val.__drugcodes.filter(x => x.additionalCodeSystem.toLowerCase() == "custom");
+        const ivfluids = customrows.filter(x => x.additionalCode.toUpperCase() == "BASIC_FLUID");
+        if (ivfluids.length > 0)
+          isIvFluid = true;
+        else
+          isIvFluid = false;
+      }
+      if (val.__posology.find(x => x.iscurrent == true).frequency == "stat") {
+        // this.dcgroupadded.push({ group: "Stat", prescriptionid: val.prescription_id })
+        return { group: "Stat", prescription: val };
+      }
+        let Presindecation = JSON.parse(val.indication)
+        let drug_bnf = "";
+        let drug_fdb = "";
+        if (val.__drugcodes) {
+          const bnfrow = val.__drugcodes.filter(x => x.additionalCodeSystem == "BNF");
+          if (bnfrow.length > 0)
+            drug_bnf = bnfrow[0].additionalCode;
+            const fdbfow = val.__drugcodes.filter(x => x.additionalCodeSystem == "FDB");
+            if (fdbfow.length > 0)
+            drug_fdb = fdbfow[0].additionalCode;
+        }
+        drug_bnf.padEnd(10, "0");
+        drug_fdb.padEnd(10, "0");
+        for (let group of this.DCGroups) {
+          let isbnfmatch = false
+          for (let arrcode of group.MatchConditions.ClassificationCodes) {
+            let drugMatchCode = "";
+            let configMatchCode = (arrcode.Code ?? "").replace(/\./g, "");
+            if(arrcode.CodeType.toLowerCase() == "bnf"){
+              drugMatchCode = (drug_bnf ?? "").replace(/\./g, "").substring(0, configMatchCode.length)
+            }
+            else if(arrcode.CodeType.toLowerCase() == "fdb"){
+              drugMatchCode = (drug_fdb ?? "").replace(/\./g, "").substring(0, configMatchCode.length)
+            }
+            if (drugMatchCode == configMatchCode) {
+              isbnfmatch = true;
+            }
+          }
+          let isindecationmatch = false;
+          for (let arrindecation of group.MatchConditions.Indications) {
+            if (Presindecation) {
+              if (arrindecation.Code == Presindecation.code || arrindecation.Indication == Presindecation?.indication) {
+                isindecationmatch = true
+              }
+            }
+          }
+          if (group.MatchType == "AND") {
+            if (isindecationmatch && isbnfmatch) {
+              const isSkipStat = group.SkipStatGroup && group.SkipStatGroup == true;
+              let isInStat = this.dcgroupadded.find(x => x.prescriptionid == val.prescription_id && x.group == "Stat");
+             if(isSkipStat == true && isInStat){
+                isInStat.group = group.GroupName;
+             }
+              else{
+              if (!this.dcgroupadded.find(x => x.prescriptionid == val.prescription_id)) {// checking is allready add this pres 47  4.0.1.0
+                // this.dcgroupadded.push({ group: group.GroupName, prescriptionid: val.prescription_id })
+                return { group: group.GroupName, prescriptionid: val };
+              }
+            }
+            }
+          }
+          else {
+            if (isindecationmatch || isbnfmatch) {
+              const isSkipStat = group.SkipStatGroup && group.SkipStatGroup == true;
+              let isInStat = this.dcgroupadded.find(x => x.prescriptionid == val.prescription_id && x.group == "Stat");
+             if(isSkipStat == true && isInStat){
+                isInStat.group = group.GroupName;
+             }
+              else{
+              if (!this.dcgroupadded.find(x => x.prescriptionid == val.prescription_id)) {// checking is allready add this pres 47  4.0.1.0
+                // this.dcgroupadded.push({ group: group.GroupName, prescriptionid: val.prescription_id })
+                return { group: group.GroupName, prescription: val };
+              }
+            }
+            }
+          }
+        }
+        if (val.__posology.find(x => x.iscurrent == true).infusiontypeid == 'ci' || val.__posology.find(x => x.iscurrent == true).infusiontypeid == 'pca' || (val.__posology.find(x => x.iscurrent == true).infusiontypeid == 'rate' && val.__posology.find(x => x.iscurrent == true).frequency == "variable")) {
+          if (!this.dcgroupadded.find(x => x.prescriptionid == val.prescription_id)) {// checking is allready add this pres
+            // this.dcgroupadded.push({ group: "Variable/Continuous infusion", prescriptionid: val.prescription_id })
+            return { group: "Variable/Continuous infusion", prescription: val };
+          }
+        }
+        else if (val.__posology.find(x => x.iscurrent == true).prn == true) {
+          if (!this.dcgroupadded.find(x => x.prescriptionid == val.prescription_id)) {// checking is allready add this pres
+            // this.dcgroupadded.push({ group: "PRN", prescriptionid: val.prescription_id })
+            return { group: "PRN", prescription: val };
+          }
+        }
+        else if (isIvFluid) {
+          let i = this.DCGroups.find(x=>x.GroupName =="IV Fluid");
+          let isInStat = this.dcgroupadded.find(x => x.prescriptionid == val.prescription_id && x.group == "Stat");
+          if(i && i.SkipStatGroup && i.SkipStatGroup == "true")
+          {
+              isInStat.group = "IV Fluid";
+          }
+          else{
+          if (!this.dcgroupadded.find(x => x.prescriptionid == val.prescription_id)) {// checking is allready add this pres
+            // this.dcgroupadded.push({ group: "IV Fluid", prescriptionid: val.prescription_id })
+            return { group: "IV Fluid", prescription: val };
+          }
+        }
+        }
+        else {
+          if (!this.dcgroupadded.find(x => x.prescriptionid == val.prescription_id)) {// checking is allready add this pres
+            // this.dcgroupadded.push({ group: "Regular drugs", prescriptionid: val.prescription_id })
+            return { group: "Regular drugs", prescription: val };
+          }
+        }
   }
 
   GroupingBasics(val) {

@@ -46,8 +46,8 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
   </div>
   <div class="modal-footer">
     <div class="row" *ngIf="!isSaving">
-      <div class="col-sm-6">
-        <button *ngIf="appService.AuthoriseAction('epma_update_height')" type="button" class="btn btn-info btn-block" (click)="saveHeightObs()">Confirm</button>
+      <div class="col-sm-6"  *ngIf="appService.AuthoriseAction('epma_update_height')">
+        <button type="button" class="btn btn-info btn-block" (click)="saveHeightObs()">Confirm</button>
       </div>
       <div class="col-sm-6">
         <button type="button" class="btn btn-secondary" (click)="bsModalRef.hide()">Cancel</button>

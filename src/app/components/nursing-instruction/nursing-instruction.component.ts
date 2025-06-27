@@ -45,6 +45,7 @@ export class NursingInstructionComponent implements OnInit {
   isSaving: boolean;
   notesError="";
   nursingInstructionType: string;
+  showHistory = false;
   constructor(public subjects: SubjectsService,
     public dr: DataRequest,
     private apiRequest: ApirequestService,
@@ -75,7 +76,7 @@ export class NursingInstructionComponent implements OnInit {
     this.subscriptions.unsubscribe();
   }
   closeNursingInstructionPopup() {
-    this.subjects.closeAppComponentPopover.next();
+    this.subjects.closeAppComponentPopover.next(undefined);
   }
   saveNursingInstructions() {
     this.notesError="";
@@ -107,12 +108,12 @@ export class NursingInstructionComponent implements OnInit {
         this.dr.GetNursingInstruction(() => {
         this.isSaving = false;
         this.appService.UpdateDataVersionNumber(saveResponse);
-        this.subjects.closeAppComponentPopover.next();
-        this.subjects.refreshTemplate.next();
+        this.subjects.closeAppComponentPopover.next(undefined);
+        this.subjects.refreshTemplate.next(undefined);
         });
       }, (error) => {
         this.isSaving = false;
-        this.subjects.closeAppComponentPopover.next();
+        this.subjects.closeAppComponentPopover.next(undefined);
         if (this.appService.IsDataVersionStaleError(error)) {
           this.appService.RefreshPageWithStaleError(error);
         }

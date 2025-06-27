@@ -29,8 +29,6 @@ import { SubjectsService } from 'src/app/services/subjects.service';
 import { TimeerHelper } from '../drug-chart/timer-helper';
 
 import { v4 as uuid } from 'uuid';
-import { threadId } from 'worker_threads';
-import { UpsertTransactionManager } from '@interneuroncic/interneuron-ngx-core-lib';
 @Component({
   selector: 'app-view-reminder',
   templateUrl: './view-reminder.component.html',
@@ -169,8 +167,8 @@ export class ViewReminderComponent implements OnInit, OnDestroy {
           this.appService.UpdateDataVersionNumber(response);
           this.dr.getReminders(() => {
             this.prepareReminderList();
-            this.subjects.refreshTemplate.next();
-            this.subjects.refreshDrugChart.next();
+            this.subjects.refreshTemplate.next(undefined);
+            this.subjects.refreshDrugChart.next(undefined);
           });
 
         }, (error) => {
@@ -227,8 +225,8 @@ export class ViewReminderComponent implements OnInit, OnDestroy {
           this.validationMesssage = "";
           this.dr.getReminders(() => {
             this.prepareReminderList();
-            this.subjects.refreshTemplate.next();
-            this.subjects.refreshDrugChart.next();
+            this.subjects.refreshTemplate.next(undefined);
+            this.subjects.refreshDrugChart.next(undefined);
           });
 
         }, (error) => {
@@ -243,8 +241,8 @@ export class ViewReminderComponent implements OnInit, OnDestroy {
   closeReminderPopup() {
     clearInterval(this.interval_id);
     this.subjects.refreshTemplate.next(this.prescription.prescription_id);
-    this.subjects.refreshDrugChart.next();
-    this.subjects.closeAppComponentPopover.next();
+    this.subjects.refreshDrugChart.next(undefined);
+    this.subjects.closeAppComponentPopover.next(undefined);
   }
   closeNewReminderPopup() {
     this.isManageReminder = true;
@@ -511,9 +509,9 @@ export class ViewReminderComponent implements OnInit, OnDestroy {
     //   this.showSpinner = false;
     //   this.dr.getReminders(() => {
     //     this.prepareReminderList();
-    //     this.subjects.refreshDrugChart.next();
+    //     this.subjects.refreshDrugChart.next(undefined);
     //     if (this.isAckOpenFromDrugChart == true) {
-    //       this.subjects.closeAppComponentPopover.next();
+    //       this.subjects.closeAppComponentPopover.next(undefined);
     //     } else {
     //       this.isManageReminder = false;
     //       this.isMainReminder = true;
@@ -550,7 +548,7 @@ export class ViewReminderComponent implements OnInit, OnDestroy {
             this.prepareReminderList();
             reminder.__showSpinner = false;
             reminder.isacknowledged = true;
-            this.subjects.refreshDrugChart.next();
+            this.subjects.refreshDrugChart.next(undefined);
             if(this.isAckOpenFromDrugChart ==false) {
               this.isManageReminder =false;
               this.isMainReminder = true;
@@ -588,7 +586,7 @@ export class ViewReminderComponent implements OnInit, OnDestroy {
               this.prepareReminderList();            
               reminder.__showSpinner = false;
               reminder.isacknowledged = true;
-              this.subjects.refreshDrugChart.next();
+              this.subjects.refreshDrugChart.next(undefined);
               if(this.isAckOpenFromDrugChart ==false) {
                 this.isManageReminder =false;
                 this.isMainReminder = true;
@@ -650,8 +648,8 @@ export class ViewReminderComponent implements OnInit, OnDestroy {
   }
   closeAcknowledgePopup() {
     if (this.isAckOpenFromDrugChart == true) {
-      this.subjects.closeAppComponentPopover.next();
-      this.subjects.refreshDrugChart.next();
+      this.subjects.closeAppComponentPopover.next(undefined);
+      this.subjects.refreshDrugChart.next(undefined);
     } else {
       this.showAcknowledgeReminder = false;
       this.isManageReminder = false;

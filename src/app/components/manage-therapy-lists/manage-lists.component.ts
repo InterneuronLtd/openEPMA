@@ -261,7 +261,7 @@ export class ManageListsComponent implements OnInit, OnDestroy {
     this.prescibingMedication = null;
     this.showPrescribingForm = false;
     // this.close_pform.nativeElement.click();
-    this.subjects.closePform.next();
+    this.subjects.closePform.next(undefined);
   }
 
   BasketAction(e) {
@@ -606,10 +606,10 @@ export class ManageListsComponent implements OnInit, OnDestroy {
 
   ShowWarnings() {
     if (this.formContext == FormContext.mod)
-      this.subjects.showMODWarnings.next();
+      this.subjects.showMODWarnings.next(undefined);
     else
       if (this.formContext == FormContext.op)
-        this.subjects.showOPWarnings.next();
+        this.subjects.showOPWarnings.next(undefined);
   }
 
   EditOrderSetPrescription(e: Prescription) {

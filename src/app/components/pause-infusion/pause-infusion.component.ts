@@ -71,7 +71,7 @@ export class PauseInfusionComponent implements OnInit, OnDestroy {
     this.startime = startime;
   }
   closePopup() {
-    this.subjects.closeAppComponentPopover.next();
+    this.subjects.closeAppComponentPopover.next(undefined);
   }
   savePauseInfusion() {
     this.administrationstartime = moment(this.stardate, "DD-MM-YYYY").format("DD-MM-YYYY") + " " + this.startime;
@@ -99,11 +99,11 @@ export class PauseInfusionComponent implements OnInit, OnDestroy {
             this.showSpinner = false;
             this.subjects.refreshDrugChart.next("refresh");
             this.subjects.refreshTemplate.next(this.prescription.prescription_id);
-            this.subjects.closeAppComponentPopover.next();
+            this.subjects.closeAppComponentPopover.next(undefined);
           });
         }, (error) => {
           this.showSpinner = false;
-          this.subjects.closeAppComponentPopover.next();
+          this.subjects.closeAppComponentPopover.next(undefined);
 
           if (this.appService.IsDataVersionStaleError(error)) {
             this.appService.RefreshPageWithStaleError(error);

@@ -21,7 +21,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
 
 <div class="modal fade bd-example-modal-lg" [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal
-tabindex="-1" data-keyboard="false" data-backdrop="static" style="display: block;" role="dialog"
+tabindex="-1" data-bs-keyboard="false" data-bs-backdrop="static" style="display: block;" role="dialog"
 aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
 <div class="modal-dialog modal-lg  modal-dialog-centered" role="document">
     <div class="modal-content">
@@ -132,7 +132,7 @@ aria-labelledby="myExtraLargeModalLabel" aria-hidden="true">
                     </div>
                     <div class="col-6 text-right">
                         <button *ngIf="!(appService.warningService && !appService.warningServiceIPContext.loader && !appService.warningServiceIPContext.existingWarningsStatus)" style="color:white" type="button" class="btn btn-sm btn-info mr-3" (click)="saveRestartInfusion()" [disabled]="showSpinner"> <span class="spinner-border spinner-border-sm" *ngIf="showSpinner" role="status" aria-hidden="true"></span> Confirm</button>
-                        <button  *ngIf="!showSpinner" data-dismiss="modal"  type="button" class="btn btn-sm btn-secondary" (click)="closePopup()">Cancel</button>
+                        <button  *ngIf="!showSpinner" data-bs-dismiss="modal"  type="button" class="btn btn-sm btn-secondary" (click)="closePopup()">Cancel</button>
                     </div>
                      
                 </div>            

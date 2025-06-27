@@ -20,8 +20,8 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <!--END LICENSE BLOCK--> 
 <div>
     <div *ngIf="!changestatus && !showDetails" class="modal fade bd-example-modal-lg"
-        [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
-        data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
+        [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-bs-keyboard="false"
+        data-bs-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-dialogtemp  modal-xl  modal-dialog-centered" role="document">
             <div class="modal-content modal-contenttemp">
@@ -88,8 +88,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
                                 <div class="card" *ngIf="review.precriptionedited || lastindex">
                                     <table
-                                        (click)="assignPrescription(review.__oldprescriptiondata,review.__newprescriptiondata,lastindex)"
-                                        data-toggle="modal" data-target="#exampleModal">
+                                        (click)="assignPrescription(review.__oldprescriptiondata,review.__newprescriptiondata,lastindex)" >
                                         <tr>
 
                                             <td style="width: 30px;">
@@ -527,7 +526,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
 
                                                     <span
-                                                        *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='x' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='h' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='stat' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='mor'  || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='mid' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='eve'">
+                                                        *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='x' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='h' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='stat' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='mor'  || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='mid' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='eve'|| appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='night'">
                                                         <!-- olddata --> <span class="font-italic strickout"
                                                             *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].dosesize != appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].dosesize">{{appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].dosesize
                                                             | number}}
@@ -574,7 +573,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 
 
                                                     <span
-                                                        *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='x' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='h' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='stat' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='mor'  || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='mid' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='eve'">
+                                                        *ngIf="appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='x' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='h' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='stat' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='mor'  || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='mid' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='eve' || appService.GetCurrentPosology(review.__newprescriptiondata).frequency=='night'">
                                                         <!-- olddata -->
                                                         <span class="font-italic strickout"
                                                             *ngIf="appService.GetCurrentPosology(review.__oldprescriptiondata).__dose[0].strengthneumerator != appService.GetCurrentPosology(review.__newprescriptiondata).__dose[0].strengthneumerator">
@@ -883,19 +882,19 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                         <div class="row">
                             <div   class="col-2 text-left">
                                
-                                <button *ngIf="appService.AuthoriseAction('epma_add_pharmacyreviewcomments_ip') && (appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled)) && appService.bannerWarningStatus && appService.warningServiceIPContext.existingWarningsStatus" data-dismiss="modal" type="button" class="btn btn-sm btn-primary"
+                                <button *ngIf="appService.AuthoriseAction('epma_add_pharmacyreviewcomments_ip') && (appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled)) && appService.bannerWarningStatus && appService.warningServiceIPContext.existingWarningsStatus" data-bs-dismiss="modal" type="button" class="btn btn-sm btn-primary"
                                     (click)="changestatus = true">Add Comments</button>
                             </div>
                             <div   class="col-6 text-left">                           
                                
                                 <div  *ngIf="showActionButton">
-                                <button data-dismiss="modal" type="button" class="btn btn-sm btn-primary"
+                                <button data-bs-dismiss="modal" type="button" class="btn btn-sm btn-primary"
                                     *ngIf="showEditPrescription && appService.AuthoriseAction('epma_edit_ip') && (appService.isCurrentEncouner || (appService.isTCI && !appService.isTCICancelled)) && appService.bannerWarningStatus && appService.warningServiceIPContext.existingWarningsStatus" (click)="editTherapy()">Edit Prescription</button>
                                 </div>
                             </div>
 
                             <div class="col-4 text-right">
-                                <button data-dismiss="modal" type="button" class="btn btn-sm btn-success"
+                                <button data-bs-dismiss="modal" type="button" class="btn btn-sm btn-success"
                                     (click)="closePopup()">Close</button>
                             </div>
 
@@ -910,14 +909,14 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
     </div>
 
     <div *ngIf="showDetails" class="modal fade bd-example-modal-lg"
-        [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
-        data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
+        [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-bs-keyboard="false"
+        data-bs-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-xl  modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="p-0 modal-header">
                     <b> Details of edit</b>
-                    <button type="button" class="close" data-dismiss="modal" (click)="showDetails = false"
+                    <button type="button" class="close" data-bs-dismiss="modal" (click)="showDetails = false"
                         aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -1513,8 +1512,8 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
     </div>
     <!-- -------------------status change--------------------- -->
     <div *ngIf="changestatus" class="modal fade bd-example-modal-lg"
-        [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
-        data-backdrop="static" style="display: block; " role="dialog" aria-labelledby="myExtraLargeModalLabel"
+        [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-bs-keyboard="false"
+        data-bs-backdrop="static" style="display: block; " role="dialog" aria-labelledby="myExtraLargeModalLabel"
         aria-hidden="true">
         <div class="modal-dialog  modal-dialog-centered modal-lg" role="document">
             <div class="modal-content">
@@ -1610,9 +1609,9 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                 </div>
                 <div class="modal-footer" style="padding: 0.4rem 1rem;">
 
-                    <button data-dismiss="modal" type="button" class="btn btn-primary"
+                    <button data-bs-dismiss="modal" type="button" class="btn btn-primary"
                         (click)="currentreviewstatuschange()">Save</button>
-                    <button data-dismiss="modal" type="button" class="btn btn-secondary"
+                    <button data-bs-dismiss="modal" type="button" class="btn btn-secondary"
                         (click)="closechangestatus()">Cancel</button>
 
 

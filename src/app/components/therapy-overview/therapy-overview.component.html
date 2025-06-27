@@ -70,7 +70,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                 <div [attr.id]="'accordion'+ indexOfelement" *ngIf="groupCountData[indexOfelement]">
                     <div *ngIf="groupCountData[indexOfelement].count>0">
                         <div style="cursor: pointer; font-size: 13px; background-color: #eff1f5; border: none; border-bottom: 1px solid #BBB;"
-                            data-toggle="" [attr.data-target]="'#collapse'+indexOfelement" aria-expanded="true"
+                            data-bs-toggle="" [attr.data-bs-target]="'#collapse'+indexOfelement" aria-expanded="true"
                             aria-controls="'collapse'+indexOfelement">
                             <div class="row">
                                 <div class="col-12">

@@ -19,8 +19,8 @@ You should have received a copy of the GNU General Public License
 along with this program.If not, see<http://www.gnu.org/licenses/>. -->
 <!--END LICENSE BLOCK--> 
 <div *ngIf="showconform" class="modal fade bd-example-modal-lg"
-    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-keyboard="false"
-    data-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
+    [config]="{backdrop: 'static',show: true,  keyboard: false}" bsModal tabindex="-1" data-bs-keyboard="false"
+    data-bs-backdrop="static" style="display: block;" role="dialog" aria-labelledby="myExtraLargeModalLabel"
     aria-hidden="true">
     <div class="modal-dialog modal-lg  modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -28,7 +28,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                 <h6 class='col-12 modal-title text-center'>
                     Pharmacy Review
 
-                    <button type="button" (click)="closeComplete()" class="mr-2 close" data-dismiss="modal"
+                    <button type="button" (click)="closeComplete()" class="mr-2 close" data-bs-dismiss="modal"
                         aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -56,7 +56,7 @@ along with this program.If not, see<http://www.gnu.org/licenses/>. -->
                             <button type="button" *ngIf="appService.isCurrentEncouner" (click)="submitComplete()"
                                 class="btn btn-primary btn-sm">Save</button>
                             <button type="button" (click)="closeComplete()" class="btn btn-sm"
-                                data-dismiss="modal">Cancel</button>
+                                data-bs-dismiss="modal">Cancel</button>
                         </div>
                     </div>
 

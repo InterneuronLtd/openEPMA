@@ -664,7 +664,7 @@ export class ReconciliationComponent implements OnInit, OnDestroy {
     this.appService.logToConsole(this.appService.warningService);
     this.appService.logToConsole(this.appService.warningServiceMODContext);
     this.appService.logToConsole(this.appService.warningServiceMODContext.loader);
-    this.subjects.showMODWarnings.next();
+    this.subjects.showMODWarnings.next(undefined);
   }
 
 }
